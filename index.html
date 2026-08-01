@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0B0E14" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="盤勢監控" />
+<title>全球盤勢監控 · Global Markets Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0B0E14;          /* page background */
+    --panel:#141B29;        /* tile background */
+    --line:#2A3448;         /* hairline borders */
+    --text:#EDF0F6;         /* primary text */
+    --muted:#8390A6;        /* secondary text */
+    --gold:#C9A96A;         /* single accent */
+    --open:#3FB68B;         /* market open */
+    --closed:#525A6B;       /* market closed */
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:"Space Grotesk","PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+    --sans:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ink);color:var(--text);font-family:var(--sans)}
+  body{min-height:100vh;padding:calc(18px + env(safe-area-inset-top)) clamp(14px,3vw,34px) calc(28px + env(safe-area-inset-bottom))}
+
+  /* ---------- header ---------- */
+  .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;
+    padding-bottom:16px;border-bottom:1px solid var(--line);position:relative}
+  .top::after{content:"";position:absolute;left:0;bottom:-1px;width:120px;height:2px;
+    background:linear-gradient(90deg,var(--gold),transparent)}
+  .brand h1{font-family:var(--disp);font-size:clamp(20px,2.6vw,30px);font-weight:700;
+    letter-spacing:.02em;line-height:1}
+  .brand .sub{margin-top:6px;color:var(--muted);font-family:var(--mono);font-size:12px;
+    letter-spacing:.14em;text-transform:uppercase}
+  .brand .sub b{color:var(--gold);font-weight:600}
+
+  /* ---------- timezone / session strip (signature) ---------- */
+  .zones{display:flex;flex-wrap:wrap;gap:10px}
+  .zone{display:flex;align-items:center;gap:9px;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:132px}
+  .zone .dot{width:8px;height:8px;border-radius:50%;background:var(--closed);flex:0 0 auto}
+  .zone.live .dot{background:var(--open);box-shadow:0 0 0 0 rgba(63,182,139,.55);
+    animation:pulse 2.4s ease-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(63,182,139,.5)}70%{box-shadow:0 0 0 7px rgba(63,182,139,0)}100%{box-shadow:0 0 0 0 rgba(63,182,139,0)}}
+  .zone .meta{display:flex;flex-direction:column;line-height:1.25}
+  .zone .city{font-size:12px;color:var(--text)}
+  .zone .clock{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.02em}
+  .zone .state{font-size:11px;color:var(--muted)}
+  .zone.live .state{color:var(--open)}
+
+  /* ---------- grid ---------- */
+  .grid{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){
+    .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .tile{min-height:172px;border-radius:12px}
+    .tile .head{padding:9px 10px 6px}
+    .tile .name{font-size:12px}
+    .tile .code{font-size:9px}
+    .tile .expand{width:22px;height:22px;font-size:12px}
+  }
+
+  .tile{position:relative;background:var(--panel);border:1px solid var(--line);
+    border-top:3px solid var(--c,var(--line));border-radius:14px;
+    overflow:hidden;display:flex;flex-direction:column;min-height:236px;
+    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+  .tile::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(130% 90% at 0% 0%, color-mix(in srgb, var(--c,transparent) 14%, transparent), transparent 62%)}
+  .tile>*{position:relative;z-index:1}
+  .tile:hover{transform:translateY(-2px);box-shadow:0 10px 28px -14px var(--c,#000)}
+  .tile .head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    padding:12px 14px 8px}
+  .tile .name{font-size:14px;font-weight:600;letter-spacing:.01em;color:var(--c,var(--text))}
+  .tile .code{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.03em;
+    white-space:nowrap}
+  .tile .chart{flex:1;min-height:0;position:relative}
+  .tile .tradingview-widget-container,
+  .tile .tradingview-widget-container__widget{height:100%;width:100%}
+  .tile .fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:0 18px;color:var(--muted);font-size:12px;line-height:1.6}
+
+  /* ---------- footer ---------- */
+  footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:11.5px;line-height:1.9;max-width:900px}
+  footer b{color:var(--text);font-weight:600}
+  footer .warn{color:var(--gold)}
+
+  /* ---------- expand button ---------- */
+  .tile .head{align-items:center}
+  .tile .expand{margin-left:6px;background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:7px;width:26px;height:26px;font-size:14px;line-height:1;cursor:pointer;flex:0 0 auto;
+    transition:color .15s ease,border-color .15s ease}
+  .tile .expand:hover{color:var(--gold);border-color:var(--gold)}
+
+  /* ---------- modal (full chart) ---------- */
+  .modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+    background:rgba(6,9,14,.82);backdrop-filter:blur(3px);padding:clamp(12px,3vw,40px)}
+  .modal.show{display:flex}
+  .modal-box{width:min(1120px,96vw);height:min(78vh,760px);background:var(--panel);
+    border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 24px 60px rgba(0,0,0,.55)}
+  .modal-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 16px;border-bottom:1px solid var(--line)}
+  .modal-bar .t{font-size:15px;font-weight:600}
+  .modal-bar .t span{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:8px}
+  .modal-close{background:transparent;border:1px solid var(--line);color:var(--text);border-radius:8px;
+    width:32px;height:32px;font-size:15px;cursor:pointer;flex:0 0 auto;
+    transition:color .15s ease,border-color .15s ease}
+  .modal-close:hover{color:var(--gold);border-color:var(--gold)}
+  .modal-chart{flex:1;min-height:0}
+  .modal-chart .tradingview-widget-container,
+  .modal-chart .tradingview-widget-container__widget{height:100%;width:100%}
+
+  @media(prefers-reduced-motion:reduce){.zone.live .dot{animation:none}}
+</style>
+</head>
+<body>
+
+  <header class="top">
+    <div class="brand">
+      <h1>全球盤勢監控</h1>
+      <div class="sub">Global Markets Monitor · <b id="tpe">--:--:--</b> 台北</div>
+    </div>
+    <div class="zones" id="zones"></div>
+  </header>
+
+  <main class="grid" id="grid"></main>
+
+  <footer>
+    <div><b>標的：</b>道瓊/那斯達克/日經為券商 CFD（近 24 小時，反映電子盤走勢）；KOSPI 以美掛牌韓國 ETF（EWY）替代，僅美股時段變動；美元含美元指數（DXY，近 24h CFD）與美元/台幣匯率；原油為西德州 WTI；債券以 7–10 年債反向 ETF（TBX）替代，與 10 年期殖利率「同向」（殖利率上升→上漲）。</div>
+    <div class="warn">※ 顏色為國際慣例「綠漲紅跌」，與台股「紅漲綠跌」相反，判讀請留意。</div>
+    <div>※ 資料來源 TradingView。免費行情可能延遲約 10–15 分鐘（期貨盤尤其），僅供參考，非交易或下單依據。</div>
+  </footer>
+
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="完整K線圖">
+    <div class="modal-box">
+      <div class="modal-bar">
+        <div class="t" id="modalTitle">—</div>
+        <button class="modal-close" id="modalClose" aria-label="關閉">✕</button>
+      </div>
+      <div class="modal-chart" id="modalChart"></div>
+    </div>
+  </div>
+
+<script>
+/* ---------------- 標的設定（可自行增刪 / 換代碼） ---------------- */
+const SYMBOLS = [
+  { name:"道瓊 電子盤",    code:"OANDA:US30USD",   color:"#4C8DFF" }, // 美股：藍
+  { name:"那斯達克 電子盤", code:"OANDA:NAS100USD", color:"#4C8DFF" }, // 美股：藍
+  { name:"日經 225",      code:"OANDA:JP225USD",  color:"#9B7BFF" }, // 亞股：紫
+  { name:"韓國 KOSPI",    code:"AMEX:EWY",        color:"#9B7BFF" }, // 亞股：紫（EWY 僅美股時段變動；想試真指數改 KRX:KOSPI）
+  { name:"美元指數 DXY",  code:"CAPITALCOM:DXY",  color:"#E6B450" }, // 美元：金（若空白改 PEPPERSTONE:USDX 或 AMEX:UUP）
+  { name:"美元/台幣",     code:"FX_IDC:USDTWD",   color:"#E6B450" }, // 美元：金
+  { name:"比特幣",        code:"BINANCE:BTCUSDT", color:"#F7931A" }, // 加密：橘
+  { name:"原油 WTI",      code:"TVC:USOIL",       color:"#E5654B" }, // 原油：紅橘
+  { name:"美10年債·PST", code:"AMEX:PST", range:"3M", color:"#2DD4BF" }, // 債券：青綠。與10Y殖利率同向；多日趨勢平滑曲線。想賭24h連續可改 CBOT:ZN1!（期貨，可能被擋）
+];
+
+/* ---------------- 建立每個 mini chart tile ---------------- */
+function rgba(hex,a){
+  const h=hex.replace("#",""); const n=parseInt(h.length===3?h.replace(/(.)/g,"$1$1"):h,16);
+  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
+}
+const grid = document.getElementById("grid");
+SYMBOLS.forEach(s=>{
+  const tile = document.createElement("section");
+  tile.className = "tile";
+  if(s.color) tile.style.setProperty("--c", s.color);
+  tile.innerHTML =
+    '<div class="head"><span class="name">'+s.name+'</span>'+
+    '<span class="code">'+s.code+'</span>'+
+    '<button class="expand" title="放大完整K線圖" aria-label="放大">⤢</button></div>'+
+    '<div class="chart"><div class="fallback">載入中…（若持續空白，多半是離線或瀏覽器擋外部腳本，'+
+    '請直接部署到網站或用一般瀏覽器開啟）</div></div>';
+  grid.appendChild(tile);
+  tile.querySelector(".expand").addEventListener("click",e=>{ e.stopPropagation(); openModal(s); });
+
+  const chart = tile.querySelector(".chart");
+  const box = document.createElement("div");
+  box.className = "tradingview-widget-container";
+  const w = document.createElement("div");
+  w.className = "tradingview-widget-container__widget";
+  box.appendChild(w);
+
+  const line = s.color || "#6BA5E7";
+  const cfg = {
+    symbol: s.code, width:"100%", height:"100%", locale:"zh_TW",
+    dateRange:(s.range||"1D"), colorTheme:"dark", isTransparent:true, autosize:true,
+    chartOnly:false, noTimeScale:false,
+    trendLineColor:line,
+    underLineColor:rgba(line,0.20),
+    underLineBottomColor:rgba(line,0)
+  };
+  const script = document.createElement("script");
+  script.type = "text/javascript";
+  script.async = true;
+  script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
+  script.text = JSON.stringify(cfg);
+  box.appendChild(script);
+
+  // widget 載入後會蓋掉 fallback 提示
+  script.addEventListener("load", ()=>{ const f=chart.querySelector(".fallback"); if(f) f.remove(); });
+  chart.appendChild(box);
+});
+
+/* ---------------- 多時區時鐘 + 交易時段狀態 ---------------- */
+const MARKETS = [
+  { city:"台北", tz:"Asia/Taipei",     sessions:[[540,810]] },              // 09:00-13:30
+  { city:"紐約", tz:"America/New_York", sessions:[[570,960]] },              // 09:30-16:00
+  { city:"東京", tz:"Asia/Tokyo",       sessions:[[540,690],[750,930]] },    // 09:00-11:30, 12:30-15:30（2024/11 起延長）
+  { city:"首爾", tz:"Asia/Seoul",       sessions:[[540,930]] },              // 09:00-15:30
+];
+const WD = {Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+
+function tzParts(tz){
+  const p = new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,
+    weekday:"short",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date());
+  const o={}; p.forEach(x=>o[x.type]=x.value);
+  let h = parseInt(o.hour,10); if(h===24) h=0;
+  return { wd:WD[o.weekday], h, m:parseInt(o.minute,10), s:parseInt(o.second,10) };
+}
+function isOpen(mk){
+  const t = tzParts(mk.tz);
+  if(t.wd===0 || t.wd===6) return false;            // 週末休市
+  const mins = t.h*60 + t.m;
+  return mk.sessions.some(([a,b])=> mins>=a && mins<b);
+}
+const pad=n=>String(n).padStart(2,"0");
+
+const zonesEl = document.getElementById("zones");
+MARKETS.forEach(mk=>{
+  const el=document.createElement("div"); el.className="zone"; el.dataset.tz=mk.tz;
+  el.innerHTML='<span class="dot"></span><div class="meta">'+
+    '<span class="city">'+mk.city+'</span>'+
+    '<span class="clock">--:--</span>'+
+    '<span class="state">—</span></div>';
+  zonesEl.appendChild(el);
+});
+
+function tick(){
+  const tpe=tzParts("Asia/Taipei");
+  document.getElementById("tpe").textContent=pad(tpe.h)+":"+pad(tpe.m)+":"+pad(tpe.s);
+  document.querySelectorAll(".zone").forEach((el,i)=>{
+    const mk=MARKETS[i], t=tzParts(mk.tz), open=isOpen(mk);
+    el.querySelector(".clock").textContent=pad(t.h)+":"+pad(t.m);
+    el.querySelector(".state").textContent=open?"交易中":"收盤";
+    el.classList.toggle("live",open);
+  });
+}
+tick(); setInterval(tick,1000);
+
+/* ---------------- 「放大」→ 完整 K 線圖 ---------------- */
+const modal=document.getElementById("modal");
+const modalChart=document.getElementById("modalChart");
+const modalTitle=document.getElementById("modalTitle");
+function openModal(s){
+  modalTitle.innerHTML=s.name+' <span>'+s.code+'</span>';
+  modalChart.innerHTML="";
+  const box=document.createElement("div");
+  box.className="tradingview-widget-container";
+  const w=document.createElement("div"); w.className="tradingview-widget-container__widget"; box.appendChild(w);
+  const cfg={
+    autosize:true, symbol:s.code, interval:"D", timezone:"Asia/Taipei",
+    theme:"dark", style:"1", locale:"zh_TW", hide_side_toolbar:false,
+    allow_symbol_change:true, calendar:false, support_host:"https://www.tradingview.com"
+  };
+  const sc=document.createElement("script"); sc.type="text/javascript"; sc.async=true;
+  sc.src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+  sc.text=JSON.stringify(cfg); box.appendChild(sc);
+  modalChart.appendChild(box);
+  modal.classList.add("show");
+}
+function closeModal(){ modal.classList.remove("show"); modalChart.innerHTML=""; }
+document.getElementById("modalClose").addEventListener("click",closeModal);
+modal.addEventListener("click",e=>{ if(e.target===modal) closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+</script>
+</body>
+</html>
