@@ -134,7 +134,7 @@
   <main class="grid" id="grid"></main>
 
   <footer>
-    <div><b>標的：</b>道瓊/那斯達克/日經為券商 CFD（近 24 小時，反映電子盤走勢）；KOSPI 以美掛牌韓國 ETF（EWY）替代，僅美股時段變動；美元含美元指數（DXY，近 24h CFD）與美元/台幣匯率；原油為西德州 WTI；債券以 7–10 年債反向 ETF（TBX）替代，與 10 年期殖利率「同向」（殖利率上升→上漲）。</div>
+    <div><b>標的：</b>道瓊/那斯達克/日經為券商 CFD（近 24 小時，反映電子盤走勢）；SK海力士為美股 ADR（SKHY，僅美股時段變動、對首爾本尊有溢價）；日本半導體/材料股（鎧俠、TEL、迪思科、信越、樂斯科、Ibiden、村田）為東證個股，日本盤時段（約台灣 08:00–14:30）變動，若某格被擋可改美股 OTC ADR；美元含美元指數（DXY）、美元/台幣、美元/日圓；原油為西德州 WTI；債券以 7–10 年債反向 ETF（PST）替代，與 10 年期殖利率「同向」（殖利率上升→上漲）。</div>
     <div class="warn">※ 顏色為國際慣例「綠漲紅跌」，與台股「紅漲綠跌」相反，判讀請留意。</div>
     <div>※ 資料來源 TradingView。免費行情可能延遲約 10–15 分鐘（期貨盤尤其），僅供參考，非交易或下單依據。</div>
   </footer>
@@ -155,9 +155,17 @@ const SYMBOLS = [
   { name:"道瓊 電子盤",    code:"OANDA:US30USD",   color:"#4C8DFF" }, // 美股：藍
   { name:"那斯達克 電子盤", code:"OANDA:NAS100USD", color:"#4C8DFF" }, // 美股：藍
   { name:"日經 225",      code:"OANDA:JP225USD",  color:"#9B7BFF" }, // 亞股：紫
-  { name:"韓國 KOSPI",    code:"AMEX:EWY",        color:"#9B7BFF" }, // 亞股：紫（EWY 僅美股時段變動；想試真指數改 KRX:KOSPI）
+  { name:"SK海力士",      code:"NASDAQ:SKHY",     color:"#9B7BFF" }, // 韓國半導體·美股ADR（KRX:000660 被免費widget擋）。只在美股時段動、對首爾本尊有溢價
+  { name:"鎧俠 Kioxia",   code:"TSE:285A",        color:"#E06BB0" }, // 日本半導體：NAND記憶體。TSE專屬、無美股ADR，被擋較難替代
+  { name:"科創 TEL",      code:"TSE:8035",        color:"#E06BB0" }, // 半導體設備。若空白改 OTC ADR：TOELY（美股時段）
+  { name:"迪思科 Disco",  code:"TSE:6146",        color:"#E06BB0" }, // HBM研磨/切割設備
+  { name:"信越化學",      code:"TSE:4063",        color:"#E06BB0" }, // 矽晶圓龍頭。若空白改 OTC ADR：SHECY
+  { name:"樂斯科 Resonac", code:"TSE:4004",       color:"#E06BB0" }, // 先進封裝材料
+  { name:"Ibiden",       code:"TSE:4062",        color:"#E06BB0" }, // ABF載板龍頭
+  { name:"村田製作所",     code:"TSE:6981",        color:"#E06BB0" }, // MLCC龍頭。若空白改 OTC ADR：MRAAY
   { name:"美元指數 DXY",  code:"CAPITALCOM:DXY",  color:"#E6B450" }, // 美元：金（若空白改 PEPPERSTONE:USDX 或 AMEX:UUP）
   { name:"美元/台幣",     code:"FX_IDC:USDTWD",   color:"#E6B450" }, // 美元：金
+  { name:"美元/日圓",     code:"FX_IDC:USDJPY",   color:"#E6B450" }, // 日圓匯率(全球基準)；想看日圓/台幣改 FX_IDC:JPYTWD
   { name:"比特幣",        code:"BINANCE:BTCUSDT", color:"#F7931A" }, // 加密：橘
   { name:"原油 WTI",      code:"TVC:USOIL",       color:"#E5654B" }, // 原油：紅橘
   { name:"美10年債·PST", code:"AMEX:PST", range:"3M", color:"#2DD4BF" }, // 債券：青綠。與10Y殖利率同向；多日趨勢平滑曲線。想賭24h連續可改 CBOT:ZN1!（期貨，可能被擋）
