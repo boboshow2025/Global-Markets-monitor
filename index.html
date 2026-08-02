@@ -118,23 +118,6 @@
   .modal-chart .tradingview-widget-container,
   .modal-chart .tradingview-widget-container__widget{height:100%;width:100%}
 
-  /* ---------- bottom news bar ---------- */
-  .newsbar{margin-top:14px;background:var(--panel);border:1px solid var(--line);
-    border-top:3px solid #E06BB0;border-radius:14px;overflow:hidden}
-  .newsbar-tabs{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);
-    overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
-  .newsbar-tabs button{flex:0 0 auto;background:transparent;border:1px solid var(--line);
-    color:var(--muted);border-radius:999px;padding:5px 12px;font-size:12px;cursor:pointer;
-    white-space:nowrap;transition:color .15s ease,background .15s ease,border-color .15s ease}
-  .newsbar-tabs button:hover{color:var(--text);border-color:#3A4560}
-  .newsbar-tabs button.active{color:#0B0E14;background:#E06BB0;border-color:#E06BB0;font-weight:600}
-  .newsbar-body{height:300px;position:relative}
-  .newsbar-body .tradingview-widget-container,
-  .newsbar-body .tradingview-widget-container__widget{height:100%;width:100%}
-  .newsbar-body .fallback{position:absolute;inset:0;display:flex;align-items:center;
-    justify-content:center;color:var(--muted);font-size:12px}
-  @media(max-width:560px){.newsbar-body{height:260px}}
-
   @media(prefers-reduced-motion:reduce){.zone.live .dot{animation:none}}
 </style>
 </head>
@@ -150,13 +133,8 @@
 
   <main class="grid" id="grid"></main>
 
-  <section class="newsbar">
-    <div class="newsbar-tabs" id="newsTabs"></div>
-    <div class="newsbar-body" id="newsbar"><div class="fallback">載入新聞中…</div></div>
-  </section>
-
   <footer>
-    <div><b>標的：</b>道瓊/那斯達克/日經為券商 CFD（近 24 小時，反映電子盤走勢）；美元含美元指數（DXY）、美元/台幣、美元/日圓；原油為西德州 WTI；債券以 7–10 年債反向 ETF（PST）替代，與 10 年期殖利率「同向」（殖利率上升→上漲）。日韓晶片股（鎧俠、TEL、迪思科、信越、樂斯科、Ibiden、村田、SK海力士）因 TSE/KRX 價格圖受免費 widget 限制，改由底部「市場新聞」列掌握——大漲大跌通常會有頭條；真正的到價／漲跌警示需用 TradingView App 或券商 App。</div>
+    <div><b>標的：</b>道瓊/那斯達克/日經為券商 CFD（近 24 小時，反映電子盤走勢）；美元含美元指數（DXY）、美元/台幣、美元/日圓；原油為西德州 WTI；債券以 7–10 年債反向 ETF（PST）替代，與 10 年期殖利率「同向」（殖利率上升→上漲）。</div>
     <div class="warn">※ 顏色為國際慣例「綠漲紅跌」，與台股「紅漲綠跌」相反，判讀請留意。</div>
     <div>※ 資料來源 TradingView。免費行情可能延遲約 10–15 分鐘（期貨盤尤其），僅供參考，非交易或下單依據。</div>
   </footer>
@@ -195,14 +173,13 @@ SYMBOLS.forEach(s=>{
   const tile = document.createElement("section");
   tile.className = "tile";
   if(s.color) tile.style.setProperty("--c", s.color);
-  const isNews = s.type === "news";
   tile.innerHTML =
     '<div class="head"><span class="name">'+s.name+'</span>'+
-    '<span class="code">'+(isNews ? '新聞' : s.code)+'</span>'+
-    (isNews ? '' : '<button class="expand" title="放大完整K線圖" aria-label="放大">⤢</button>')+
+    '<span class="code">'+s.code+'</span>'+
+    '<button class="expand" title="放大完整K線圖" aria-label="放大">⤢</button>'+
     '</div>'+
     '<div class="chart"><div class="fallback">'+
-    (isNews ? '載入新聞中…' : '載入中…（若持續空白，多半是離線或瀏覽器擋外部腳本，請直接部署到網站或用一般瀏覽器開啟）')+
+    '載入中…（若持續空白，多半是離線或瀏覽器擋外部腳本，請直接部署到網站或用一般瀏覽器開啟）'+
     '</div></div>';
   grid.appendChild(tile);
   const expandBtn = tile.querySelector(".expand");
@@ -215,77 +192,23 @@ SYMBOLS.forEach(s=>{
   w.className = "tradingview-widget-container__widget";
   box.appendChild(w);
 
+  const line = s.color || "#6BA5E7";
   const script = document.createElement("script");
   script.type = "text/javascript";
   script.async = true;
-  if(isNews){
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
-    script.text = JSON.stringify({
-      feedMode:"symbol", symbol:s.code, colorTheme:"dark", isTransparent:true,
-      displayMode:"regular", width:"100%", height:"100%", locale:"zh_TW"
-    });
-  } else {
-    const line = s.color || "#6BA5E7";
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
-    script.text = JSON.stringify({
-      symbol: s.code, width:"100%", height:"100%", locale:"zh_TW",
-      dateRange:(s.range||"1D"), colorTheme:"dark", isTransparent:true, autosize:true,
-      chartOnly:false, noTimeScale:false,
-      trendLineColor:line, underLineColor:rgba(line,0.20), underLineBottomColor:rgba(line,0)
-    });
-  }
+  script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
+  script.text = JSON.stringify({
+    symbol: s.code, width:"100%", height:"100%", locale:"zh_TW",
+    dateRange:(s.range||"1D"), colorTheme:"dark", isTransparent:true, autosize:true,
+    chartOnly:false, noTimeScale:false,
+    trendLineColor:line, underLineColor:rgba(line,0.20), underLineBottomColor:rgba(line,0)
+  });
   box.appendChild(script);
 
   // widget 載入後會蓋掉 fallback 提示
   script.addEventListener("load", ()=>{ const f=chart.querySelector(".fallback"); if(f) f.remove(); });
   chart.appendChild(box);
 });
-
-/* ---------------- 底部新聞列（分頁：各晶片股 + 市場） ---------------- */
-(function(){
-  const NEWS_TABS = [
-    { name:"鎧俠",   sym:"TSE:285A" },
-    { name:"海力士", sym:"NASDAQ:SKHY" },
-    { name:"TEL",    sym:"TSE:8035" },
-    { name:"迪思科", sym:"TSE:6146" },
-    { name:"信越",   sym:"TSE:4063" },
-    { name:"樂斯科", sym:"TSE:4004" },
-    { name:"Ibiden", sym:"TSE:4062" },
-    { name:"村田",   sym:"TSE:6981" },
-    { name:"市場",   sym:null }   // 綜合市場新聞
-  ];
-  const tabsEl = document.getElementById("newsTabs");
-  const body = document.getElementById("newsbar");
-
-  function loadNews(t, btn){
-    tabsEl.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
-    if(btn) btn.classList.add("active");
-    body.innerHTML = '<div class="fallback">載入新聞中…</div>';
-    const box = document.createElement("div");
-    box.className = "tradingview-widget-container";
-    const w = document.createElement("div");
-    w.className = "tradingview-widget-container__widget";
-    box.appendChild(w);
-    const cfg = t.sym
-      ? { feedMode:"symbol", symbol:t.sym, colorTheme:"dark", isTransparent:true, displayMode:"regular", width:"100%", height:"100%", locale:"zh_TW" }
-      : { feedMode:"all_symbols", colorTheme:"dark", isTransparent:true, displayMode:"regular", width:"100%", height:"100%", locale:"zh_TW" };
-    const sc = document.createElement("script");
-    sc.type="text/javascript"; sc.async=true;
-    sc.src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
-    sc.text=JSON.stringify(cfg);
-    sc.addEventListener("load", ()=>{ const f=body.querySelector(".fallback"); if(f) f.remove(); });
-    box.appendChild(sc);
-    body.appendChild(box);
-  }
-
-  NEWS_TABS.forEach((t,i)=>{
-    const btn=document.createElement("button");
-    btn.textContent=t.name;
-    btn.addEventListener("click",()=>loadNews(t,btn));
-    tabsEl.appendChild(btn);
-    if(i===0) loadNews(t,btn);   // 預設顯示第一檔
-  });
-})();
 
 /* ---------------- 多時區時鐘 + 交易時段狀態 ---------------- */
 const MARKETS = [
