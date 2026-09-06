@@ -131,6 +131,410 @@
     <div class="zones" id="zones"></div>
   </header>
 
+<section class="tx" id="tx-panel" data-src="./data/correlations.json">
+  <style>
+  /* 全部選擇器都掛在 .tx 底下，不會污染既有樣式 */
+  .tx{
+    /* 直接沿用頁面既有的設計變數，模組才不會像外掛上去的 */
+    --tx-surface:transparent;
+    --tx-card:var(--panel);
+    --tx-ink:var(--text);
+    --tx-muted:var(--muted);
+    --tx-line:var(--line);
+    --tx-line-strong:#3C4863;
+    --tx-calm:var(--open);      /* 平靜：沿用「交易中」的綠 */
+    --tx-watch:var(--gold);     /* 留意：沿用主色金 */
+    --tx-alert:#E5654B;         /* 警戒：沿用原油磚紅 */
+    --tx-unknown:var(--closed);
+    --tx-neg:#4C8DFF;           /* 負相關：沿用美股藍 */
+    --tx-pos:#9B7BFF;           /* 正相關：沿用亞股紫 */
+    --tx-mono:var(--mono);
+    --tx-sans:var(--sans);
+    background:var(--tx-surface); color:var(--tx-ink); font-family:var(--tx-sans);
+    padding:24px 0 4px; margin:24px 0 0; border-top:1px solid var(--line);
+    container-type:inline-size; position:relative;
+  }
+  .tx::after{content:"";position:absolute;left:0;top:-1px;width:120px;height:2px;
+    background:linear-gradient(90deg,var(--gold),transparent)}
+  .tx-title{font-family:var(--disp) !important; font-weight:700 !important}
+  .tx *{box-sizing:border-box}
+
+  .tx-eyebrow{font:600 10px/1 var(--tx-mono); letter-spacing:.22em; text-transform:uppercase;
+    color:var(--tx-muted); margin:0 0 6px}
+  .tx-head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap}
+  .tx-title{font:600 19px/1.25 var(--tx-sans); letter-spacing:-.01em; margin:0}
+  .tx-stamp{font:400 11px/1.4 var(--tx-mono); color:var(--tx-muted); text-align:right}
+  .tx-pill{display:inline-flex; align-items:center; gap:7px; font:600 12px/1 var(--tx-sans);
+    padding:6px 12px; border-radius:999px; border:1px solid var(--tx-line-strong)}
+  .tx-pill i{width:7px; height:7px; border-radius:50%; background:currentColor; flex:none}
+  .tx-lede{font:400 13px/1.6 var(--tx-sans); color:var(--tx-muted); margin:10px 0 20px; max-width:62ch}
+
+  /* ---- 訊號燈：鏈條本體 ---- */
+  .tx-chain{display:flex; align-items:stretch; gap:0; margin-bottom:26px}
+  .tx-node{flex:1 1 0; min-width:0; background:var(--tx-card); border:1px solid var(--tx-line);
+    border-radius:10px; padding:12px 12px 11px; position:relative;
+    opacity:0; transform:translateY(6px); animation:tx-in .5s ease forwards}
+  .tx-node::before{content:""; position:absolute; inset:0 auto 0 0; width:3px;
+    border-radius:10px 0 0 10px; background:var(--st)}
+  .tx-node[data-state=calm]{--st:var(--tx-calm)}
+  .tx-node[data-state=watch]{--st:var(--tx-watch)}
+  .tx-node[data-state=alert]{--st:var(--tx-alert)}
+  .tx-node[data-state=unknown]{--st:var(--tx-unknown)}
+  .tx-node-label{font:600 12px/1.3 var(--tx-sans); margin:0 0 2px; display:flex; gap:6px; align-items:center}
+  .tx-node-label b{width:6px; height:6px; border-radius:50%; background:var(--st); flex:none}
+  .tx-node-sub{font:400 10px/1 var(--tx-mono); letter-spacing:.08em; color:var(--tx-muted); text-transform:uppercase}
+  .tx-node-metric{font:600 21px/1.15 var(--tx-mono); letter-spacing:-.02em; margin:8px 0 1px;
+    font-variant-numeric:tabular-nums; color:var(--st)}
+  .tx-node-metric small{font-size:11px; font-weight:400; margin-left:1px}
+  .tx-node-value{font:400 11px/1.3 var(--tx-mono); color:var(--tx-muted); font-variant-numeric:tabular-nums}
+  .tx-node-note{font:400 11px/1.45 var(--tx-sans); color:var(--tx-muted); margin-top:7px}
+
+  /* 連接線：粗細與不透明度來自實測相關強度 */
+  .tx-link{flex:0 0 34px; display:flex; align-items:center; justify-content:center; position:relative}
+  .tx-link svg{width:100%; height:20px; overflow:visible}
+  .tx-link-val{position:absolute; top:calc(50% + 13px); left:50%; transform:translateX(-50%);
+    font:500 9px/1 var(--tx-mono); color:var(--tx-muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+  .tx-link-lag{position:absolute; top:calc(50% - 26px); left:50%; transform:translateX(-50%);
+    font:600 8px/1 var(--tx-mono); letter-spacing:.1em; color:var(--tx-muted); white-space:nowrap}
+
+  /* ---- 下半部 ---- */
+  .tx-grid{display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:18px; margin-bottom:20px}
+  .tx-card{background:var(--tx-card); border:1px solid var(--tx-line); border-radius:10px; padding:15px 16px 16px}
+  .tx-card-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px}
+  .tx-card-title{font:600 13px/1.3 var(--tx-sans); margin:0}
+  .tx-toggle{display:inline-flex; border:1px solid var(--tx-line-strong); border-radius:7px; overflow:hidden}
+  .tx-toggle button{appearance:none; background:none; border:0; cursor:pointer; padding:4px 10px;
+    font:500 11px/1 var(--tx-mono); color:var(--tx-muted)}
+  .tx-toggle button[aria-pressed=true]{background:var(--tx-line); color:var(--tx-ink)}
+  .tx-toggle button:focus-visible{outline:2px solid var(--tx-ink); outline-offset:-2px}
+
+  .tx-matrix{width:100%; border-collapse:separate; border-spacing:2px; font-variant-numeric:tabular-nums}
+  .tx-matrix th{font:500 10px/1.2 var(--tx-mono); color:var(--tx-muted); font-weight:500; padding:2px}
+  .tx-matrix thead th{font-size:11px; padding-bottom:5px; white-space:nowrap}
+  .tx-matrix tbody th{text-align:right; padding-right:7px; white-space:nowrap}
+  .tx-matrix td{font:500 11px/1 var(--tx-mono); text-align:center; padding:7px 3px; border-radius:4px;
+    color:var(--tx-ink)}
+  .tx-matrix td.tx-diag{color:var(--tx-muted); background:none !important}
+  .tx-matrix td.tx-na{color:var(--tx-muted)}
+
+  .tx-bars{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px}
+  .tx-bars li{display:grid; grid-template-columns:76px 1fr 46px; align-items:center; gap:9px}
+  .tx-bars span:first-child{font:500 11px/1.2 var(--tx-sans); color:var(--tx-muted)}
+  .tx-bar{position:relative; height:16px; background:var(--tx-line); border-radius:3px; overflow:hidden}
+  .tx-bar i{position:absolute; top:0; bottom:0; left:50%; display:block; border-radius:2px}
+  .tx-bar::after{content:""; position:absolute; top:-2px; bottom:-2px; left:50%; width:1px;
+    background:var(--tx-line-strong)}
+  .tx-bars b{font:600 11px/1 var(--tx-mono); text-align:right; font-variant-numeric:tabular-nums}
+
+  .tx-chart-wrap{position:relative}
+  .tx-chart{width:100%; display:block; overflow:visible}
+  .tx-legend{display:flex; flex-wrap:wrap; gap:6px; margin-top:11px}
+  .tx-legend button{appearance:none; cursor:pointer; background:none; border:1px solid var(--tx-line-strong);
+    border-radius:999px; padding:4px 10px; font:500 11px/1 var(--tx-sans); color:var(--tx-muted);
+    display:inline-flex; align-items:center; gap:6px}
+  .tx-legend button i{width:8px; height:2px; border-radius:1px; background:currentColor}
+  .tx-legend button[aria-pressed=true]{color:var(--tx-ink); border-color:currentColor}
+  .tx-legend button:focus-visible{outline:2px solid var(--tx-ink); outline-offset:2px}
+
+  .tx-foot{font:400 11px/1.6 var(--tx-sans); color:var(--tx-muted); margin:16px 0 0; max-width:74ch}
+  .tx-state{padding:26px 4px; font:400 13px/1.7 var(--tx-sans); color:var(--tx-muted)}
+  .tx-state code{font:400 12px/1 var(--tx-mono); background:var(--tx-line); padding:2px 5px; border-radius:3px}
+  .tx-state button{margin-top:12px; appearance:none; cursor:pointer; background:none; color:inherit;
+    border:1px solid var(--tx-line-strong); border-radius:7px; padding:7px 14px; font:500 12px/1 var(--tx-sans)}
+
+  @keyframes tx-in{to{opacity:1; transform:none}}
+
+  @container (max-width:880px){
+    .tx-grid{grid-template-columns:1fr}
+  }
+  @container (max-width:680px){
+    .tx-chain{flex-direction:column}
+    .tx-link{flex:0 0 26px; width:100%}
+    .tx-link svg{height:26px; width:26px}
+    .tx-link-val{top:50%; left:calc(50% + 26px); transform:translateY(-50%)}
+    .tx-link-lag{top:50%; left:auto; right:calc(50% + 26px); transform:translateY(-50%)}
+    .tx-node-metric{font-size:19px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .tx-node{animation:none; opacity:1; transform:none}
+  }
+  </style>
+
+  <p class="tx-eyebrow">Transmission chain</p>
+  <div class="tx-head">
+    <h2 class="tx-title">傳導鏈訊號</h2>
+    <div class="tx-stamp" id="tx-stamp"></div>
+  </div>
+  <p class="tx-lede">油價牽動通膨預期，通膨預期牽動殖利率與美元，美元與費半決定外資要不要進來。台股在鏈條末端，對上游沒有回饋能力——所以由左往右讀。</p>
+
+  <div id="tx-body" hidden>
+    <div class="tx-chain" id="tx-chain"></div>
+
+    <div class="tx-grid">
+      <div class="tx-card">
+        <div class="tx-card-head">
+          <h3 class="tx-card-title">日報酬相關矩陣</h3>
+          <div class="tx-toggle" id="tx-window" role="group" aria-label="計算區間">
+            <button type="button" data-w="20" aria-pressed="false">20 日</button>
+            <button type="button" data-w="60" aria-pressed="true">60 日</button>
+          </div>
+        </div>
+        <table class="tx-matrix" id="tx-matrix"></table>
+      </div>
+
+      <div class="tx-card">
+        <div class="tx-card-head">
+          <h3 class="tx-card-title">台股當日 vs 各資產前一日</h3>
+          <span class="tx-node-sub">60 日</span>
+        </div>
+        <ul class="tx-bars" id="tx-bars"></ul>
+        <p class="tx-foot" style="margin-top:13px">落後相關明顯大於同日相關，代表傳導確實是隔夜單向的。若兩者趨近，就是台股開始被同步交易，讀夜盤的參考價值下降。</p>
+      </div>
+    </div>
+
+    <div class="tx-card tx-chart-wrap">
+      <div class="tx-card-head">
+        <h3 class="tx-card-title">60 日滾動相關走勢</h3>
+        <span class="tx-node-sub">近 180 個交易日</span>
+      </div>
+      <svg class="tx-chart" id="tx-chart" viewBox="0 0 720 210"
+           role="img" aria-label="關鍵配對的 60 日滾動相關係數走勢"></svg>
+      <div class="tx-legend" id="tx-legend"></div>
+      <p class="tx-foot">這張圖是用來抓「規律失效」的。線在零軸附近亂跳，表示該配對此刻沒有交易價值；線穩定停在正負一端，那條規律才可以拿來下判斷。</p>
+    </div>
+
+    <p class="tx-foot">※ 本區塊顏色代表<b>風險狀態</b>（綠＝平靜、金＝留意、紅＝警戒），不是漲跌，與上方走勢圖的配色規則無關。</p>
+    <p class="tx-foot" id="tx-missing" hidden></p>
+  </div>
+
+  <div class="tx-state" id="tx-state">載入資料中…</div>
+
+  <script>
+  (function () {
+    const root = document.getElementById('tx-panel');
+    const SRC  = root.dataset.src || './data/correlations.json';
+    const $    = (id) => document.getElementById(id);
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    const fmt = (v, d = 2) => (v === null || v === undefined) ? '—' : v.toFixed(d);
+    const sgn = (v, d = 2) => (v === null || v === undefined) ? '—' : (v > 0 ? '+' : '') + v.toFixed(d);
+
+    const STATE_TEXT = { calm: '平靜', watch: '留意', alert: '警戒', unknown: '無資料' };
+    const cssVar = (n) => getComputedStyle(root).getPropertyValue(n).trim();
+
+    let DATA = null, activeWindow = '60', hidden = new Set();
+
+    fetch(SRC, { cache: 'no-store' })
+      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then((d) => { DATA = d; render(); })
+      .catch((err) => {
+        $('tx-state').innerHTML =
+          '讀不到 <code>' + SRC + '</code>（' + err.message + '）。<br>' +
+          '在專案根目錄執行 <code>python market_corr.py</code> 產生資料檔，再把 <code>data/</code> 一起推上 GitHub。' +
+          '<br><button type="button">重新載入</button>';
+        $('tx-state').querySelector('button').onclick = () => location.reload();
+      });
+
+    function render() {
+      $('tx-state').hidden = true;
+      $('tx-body').hidden = false;
+
+      const st = DATA.overall || 'unknown';
+      $('tx-stamp').innerHTML =
+        '<span class="tx-pill" style="color:var(--tx-' + st + ')"><i></i>' + (STATE_TEXT[st] || st) + '</span><br>' +
+        '資料日期 ' + DATA.as_of + ' · 更新 ' + (DATA.generated_at || '').slice(5, 16).replace('T', ' ');
+
+      renderChain();
+      renderMatrix();
+      renderBars();
+      renderChart();
+
+      if (DATA.missing && DATA.missing.length) {
+        const m = $('tx-missing');
+        m.hidden = false;
+        m.textContent = '本次缺少資料：' + DATA.missing.join('、') + '。相關的節點與係數會顯示為 —。';
+      }
+
+      $('tx-window').querySelectorAll('button').forEach((b) => {
+        b.onclick = () => {
+          activeWindow = b.dataset.w;
+          $('tx-window').querySelectorAll('button')
+            .forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          renderMatrix();
+        };
+      });
+    }
+
+    // ---- 鏈條 ----------------------------------------------------------
+    function renderChain() {
+      const wrap = $('tx-chain');
+      const links = DATA.chain || [];
+      wrap.innerHTML = '';
+
+      DATA.signals.forEach((s, i) => {
+        const n = document.createElement('div');
+        n.className = 'tx-node';
+        n.dataset.state = s.state;
+        n.style.animationDelay = (i * 55) + 'ms';
+        n.title = s.rule || '';
+        n.innerHTML =
+          '<p class="tx-node-label"><b></b>' + s.label + '</p>' +
+          '<p class="tx-node-sub">' + (s.sub || '') + '</p>' +
+          '<p class="tx-node-metric">' + sgn(s.metric) + '<small>' + (s.unit || '') + '</small></p>' +
+          '<p class="tx-node-value">現值 ' + fmt(s.value) + '</p>' +
+          (s.note ? '<p class="tx-node-note">' + s.note + '</p>' : '');
+        wrap.appendChild(n);
+
+        const link = links[i];
+        if (link) wrap.appendChild(makeLink(link));
+      });
+    }
+
+    function makeLink(link) {
+      const el = document.createElement('div');
+      el.className = 'tx-link';
+      const c = link.corr;
+      const strength = c === null ? 0 : clamp(Math.abs(c), 0, 1);
+      const w = 1 + strength * 4.5;               // 線寬直接反映耦合強度
+      const op = 0.22 + strength * 0.68;
+      const col = c === null ? cssVar('--tx-unknown') : (c < 0 ? cssVar('--tx-neg') : cssVar('--tx-pos'));
+      const dash = link.lag ? 'stroke-dasharray="5 3"' : '';
+      const vertical = window.matchMedia('(max-width:680px)').matches;
+
+      el.innerHTML = vertical
+        ? '<svg viewBox="0 0 26 26"><path d="M13 2 V17" stroke="' + col + '" stroke-width="' + w +
+          '" opacity="' + op + '" ' + dash + ' fill="none"/><path d="M9 15 L13 21 L17 15" stroke="' + col +
+          '" stroke-width="' + w + '" opacity="' + op + '" fill="none" stroke-linejoin="round"/></svg>'
+        : '<svg viewBox="0 0 34 20" preserveAspectRatio="none"><path d="M2 10 H24" stroke="' + col +
+          '" stroke-width="' + w + '" opacity="' + op + '" ' + dash + ' fill="none" vector-effect="non-scaling-stroke"/>' +
+          '<path d="M22 6 L28 10 L22 14" stroke="' + col + '" stroke-width="' + w + '" opacity="' + op +
+          '" fill="none" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>' +
+          '<span class="tx-link-val">' + (c === null ? '—' : (c > 0 ? '+' : '') + c.toFixed(2)) + '</span>' +
+          (link.lag ? '<span class="tx-link-lag">隔夜</span>' : '');
+      el.title = link.from + ' → ' + link.to +
+        (link.lag ? '（落後 1 日）' : '（同日）') + ' 60 日相關 ' + (c === null ? '無' : c.toFixed(2));
+      return el;
+    }
+
+    // ---- 矩陣 ----------------------------------------------------------
+    function heat(v) {
+      if (v === null || v === undefined) return 'transparent';
+      const a = clamp(Math.abs(v), 0, 1) * 0.72;
+      const base = v < 0 ? cssVar('--tx-neg') : cssVar('--tx-pos');
+      return mixAlpha(base, a);
+    }
+    function mixAlpha(hex, a) {
+      const h = hex.replace('#', '');
+      const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
+      return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a.toFixed(3) + ')';
+    }
+
+    function renderMatrix() {
+      const block = DATA.correlations[activeWindow];
+      const names  = Object.fromEntries(DATA.assets.map((a) => [a.key, a.name]));
+      const shorts = Object.fromEntries(DATA.assets.map((a) => [a.key, a.short || a.name]));
+      const keys = block.keys, m = block.matrix;
+      let html = '<thead><tr><th></th>';
+      keys.forEach((k) => {
+        html += '<th scope="col" title="' + (names[k] || k) + '">' + (shorts[k] || k) + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+      keys.forEach((k, i) => {
+        html += '<tr><th scope="row">' + (names[k] || k) + '</th>';
+        keys.forEach((_, j) => {
+          const v = m[i][j];
+          if (i === j) { html += '<td class="tx-diag">·</td>'; return; }
+          html += '<td' + (v === null ? ' class="tx-na"' : '') +
+            ' style="background:' + heat(v) + '">' +
+            (v === null ? '—' : (v > 0 ? '+' : '') + v.toFixed(2)) + '</td>';
+        });
+        html += '</tr>';
+      });
+      $('tx-matrix').innerHTML = html + '</tbody>';
+    }
+
+    // ---- 領先落後 ------------------------------------------------------
+    function renderBars() {
+      const names = Object.fromEntries(DATA.assets.map((a) => [a.key, a.name]));
+      const rows = (DATA.lead_lag && DATA.lead_lag.rows) || [];
+      $('tx-bars').innerHTML = rows.map((r) => {
+        const v = r.lagged, a = v === null ? 0 : clamp(Math.abs(v), 0, 1);
+        const col = v === null ? cssVar('--tx-unknown') : (v < 0 ? cssVar('--tx-neg') : cssVar('--tx-pos'));
+        const style = v === null ? 'width:0'
+          : (v < 0 ? 'right:50%; left:auto; width:' + (a * 50) + '%' : 'left:50%; width:' + (a * 50) + '%');
+        return '<li><span>' + (names[r.asset] || r.asset) + '</span>' +
+          '<span class="tx-bar" title="同日相關 ' + fmt(r.same_day) + '">' +
+          '<i style="' + style + '; background:' + col + '"></i></span>' +
+          '<b style="color:' + col + '">' + sgn(v) + '</b></li>';
+      }).join('');
+    }
+
+    // ---- 折線圖 --------------------------------------------------------
+    function renderChart() {
+      const series = (DATA.history && DATA.history.series) || [];
+      const svg = $('tx-chart');
+      // 讓 viewBox 單位＝實際像素，字級才不會在手機上被縮到看不清
+      const W = Math.max(300, Math.round(svg.getBoundingClientRect().width) || 720);
+      const H = W < 480 ? 165 : 210;
+      const PL = 34, PR = 8, PT = 10, PB = 20;
+      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      svg.style.height = H + 'px';
+      const palette = [cssVar('--tx-neg'), cssVar('--tx-pos'), cssVar('--tx-calm'), cssVar('--tx-watch')];
+      if (!series.length) { svg.innerHTML = ''; return; }
+
+      const n = Math.max(...series.map((s) => s.points.length));
+      const x = (i) => PL + (i / Math.max(1, n - 1)) * (W - PL - PR);
+      const y = (v) => PT + ((1 - v) / 2) * (H - PT - PB);
+
+      let g = '';
+      [1, 0.5, 0, -0.5, -1].forEach((t) => {
+        const isZero = t === 0;
+        g += '<line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + y(t) + '" y2="' + y(t) +
+          '" stroke="' + cssVar(isZero ? '--tx-line-strong' : '--tx-line') + '" stroke-width="1"/>' +
+          '<text x="' + (PL - 7) + '" y="' + (y(t) + 3.5) + '" text-anchor="end" fill="' + cssVar('--tx-muted') +
+          '" font-size="9" font-family="var(--tx-mono)">' + (t > 0 ? '+' : '') + t.toFixed(1) + '</text>';
+      });
+
+      series.forEach((s, si) => {
+        if (hidden.has(s.id)) return;
+        const off = n - s.points.length;
+        const d = s.points.map((p, i) =>
+          (i ? 'L' : 'M') + x(i + off).toFixed(1) + ' ' + y(p.v).toFixed(1)).join(' ');
+        g += '<path d="' + d + '" fill="none" stroke="' + palette[si % palette.length] +
+          '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>';
+        const last = s.points[s.points.length - 1];
+        g += '<circle cx="' + x(n - 1).toFixed(1) + '" cy="' + y(last.v).toFixed(1) +
+          '" r="2.6" fill="' + palette[si % palette.length] + '"/>';
+      });
+
+      const first = series[0].points[0], last0 = series[0].points[series[0].points.length - 1];
+      g += '<text x="' + PL + '" y="' + (H - 5) + '" fill="' + cssVar('--tx-muted') +
+        '" font-size="9" font-family="var(--tx-mono)">' + first.d + '</text>' +
+        '<text x="' + (W - PR) + '" y="' + (H - 5) + '" text-anchor="end" fill="' + cssVar('--tx-muted') +
+        '" font-size="9" font-family="var(--tx-mono)">' + last0.d + '</text>';
+      svg.innerHTML = g;
+
+      $('tx-legend').innerHTML = series.map((s, i) =>
+        '<button type="button" data-id="' + s.id + '" aria-pressed="' + !hidden.has(s.id) +
+        '" style="color:' + palette[i % palette.length] + '"><i></i>' + s.label +
+        ' <span style="font-family:var(--tx-mono)">' + sgn(s.latest) + '</span></button>').join('');
+      $('tx-legend').querySelectorAll('button').forEach((b) => {
+        b.onclick = () => {
+          const id = b.dataset.id;
+          hidden.has(id) ? hidden.delete(id) : hidden.add(id);
+          renderChart();
+        };
+      });
+    }
+
+    let rt;
+    window.addEventListener('resize', () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => { if (DATA) { renderChain(); renderChart(); } }, 180);
+    });
+  })();
+  </script>
+</section>
+
   <main class="grid" id="grid"></main>
 
   <footer>
@@ -282,5 +686,6 @@ document.getElementById("modalClose").addEventListener("click",closeModal);
 modal.addEventListener("click",e=>{ if(e.target===modal) closeModal(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
 </script>
+
 </body>
 </html>
