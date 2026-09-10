@@ -188,6 +188,12 @@
   .tx-node-metric small{font-size:11px; font-weight:400; margin-left:1px}
   .tx-node-value{font:400 11px/1.3 var(--tx-mono); color:var(--tx-muted); font-variant-numeric:tabular-nums}
   .tx-node-note{font:400 11px/1.45 var(--tx-sans); color:var(--tx-muted); margin-top:7px}
+  .tx-aux{margin-top:9px; padding-top:8px; border-top:1px dashed var(--tx-line)}
+  .tx-aux-label{display:block; font:400 10px/1.3 var(--tx-sans); color:var(--tx-muted);
+    white-space:nowrap}
+  .tx-aux-val{display:block; margin-top:2px; font:600 14px/1 var(--tx-mono);
+    font-variant-numeric:tabular-nums; color:var(--ax); white-space:nowrap}
+  .tx-aux-val em{font-style:normal; font-size:10px; font-weight:400; color:var(--tx-muted); margin-left:6px}
 
   /* 連接線：粗細與不透明度來自實測相關強度 */
   .tx-link{flex:0 0 34px; display:flex; align-items:center; justify-content:center; position:relative}
@@ -381,12 +387,21 @@
           '<p class="tx-node-sub">' + (s.sub || '') + '</p>' +
           '<p class="tx-node-metric">' + sgn(s.metric) + '<small>' + (s.unit || '') + '</small></p>' +
           '<p class="tx-node-value">現值 ' + fmt(s.value) + '</p>' +
-          (s.note ? '<p class="tx-node-note">' + s.note + '</p>' : '');
+          (s.note ? '<p class="tx-node-note">' + s.note + '</p>' : '') +
+          (s.aux ? auxRow(s.aux) : '');
         wrap.appendChild(n);
 
         const link = links[i];
         if (link) wrap.appendChild(makeLink(link));
       });
+    }
+
+    function auxRow(a) {
+      const col = 'var(--tx-' + (a.state || 'unknown') + ')';
+      return '<div class="tx-aux" style="--ax:' + col + '" title="' + (a.rule || '') + '">' +
+        '<span class="tx-aux-label">' + a.label + ' 價差</span>' +
+        '<span class="tx-aux-val">' + fmt(a.value) +
+        '<em>5日 ' + sgn(a.metric) + '</em></span></div>';
     }
 
     function makeLink(link) {
@@ -538,7 +553,7 @@
   <main class="grid" id="grid"></main>
 
   <footer>
-    <div><b>標的：</b>道瓊/那斯達克/日經為券商 CFD（近 24 小時，反映電子盤走勢）；美元含美元指數（DXY）、美元/台幣、美元/日圓；原油為西德州 WTI；債券以 7–10 年債反向 ETF（PST）替代，與 10 年期殖利率「同向」（殖利率上升→上漲）。</div>
+    <div><b>標的：</b>道瓊/那斯達克/日經為券商 CFD（近 24 小時，反映電子盤走勢）；美元含美元指數（DXY）、美元/台幣、美元/日圓；原油為布蘭特（海運定價，反映中東供給風險）；債券以 7–10 年債反向 ETF（PST）替代，與 10 年期殖利率「同向」（殖利率上升→上漲）。</div>
     <div class="warn">※ 顏色為國際慣例「綠漲紅跌」，與台股「紅漲綠跌」相反，判讀請留意。</div>
     <div>※ 資料來源 TradingView。免費行情可能延遲約 10–15 分鐘（期貨盤尤其），僅供參考，非交易或下單依據。</div>
   </footer>
@@ -563,7 +578,7 @@ const SYMBOLS = [
   { name:"美元/台幣",     code:"FX_IDC:USDTWD",   color:"#E6B450" }, // 美元：金
   { name:"美元/日圓",     code:"FX_IDC:USDJPY",   color:"#E6B450" }, // 日圓匯率(全球基準)；想看日圓/台幣改 FX_IDC:JPYTWD
   { name:"比特幣",        code:"BINANCE:BTCUSDT", color:"#F7931A" }, // 加密：橘
-  { name:"原油 WTI",      code:"TVC:USOIL",       color:"#E5654B" }, // 原油：紅橘
+  { name:"布蘭特原油",    code:"TVC:UKOIL",       color:"#E5654B" }, // 原油：紅橘。中東地緣風險看布蘭特，不看 WTI
   { name:"美10年債·PST", code:"AMEX:PST", range:"3M", color:"#2DD4BF" }, // 債券：青綠。與10Y殖利率同向；多日趨勢平滑曲線。想賭24h連續可改 CBOT:ZN1!（期貨，可能被擋）
 ];
 

@@ -52,6 +52,7 @@ ASSETS = [
 
 # 輔助資產：不進傳導鏈，只用來做「股匯同向」確認與美元參照
 AUX = [
+    ("WTI",     "西德州原油",   "WTI",  "CL=F",      "cl.f",     "price"),
     ("USDTWD",  "美元/台幣",    "台幣", "TWD=X",     "usdtwd",   "price"),
     ("EURUSD",  "歐元/美元",    "歐元", "EURUSD=X",  "eurusd",   "price"),
 ]
@@ -67,6 +68,7 @@ THRESHOLDS = {
     "DXY":    {"watch": 99.5, "alert": 100.5},  # 絕對水位
     "USDJPY": {"watch": -1.5, "alert": -3.0},   # 5 日變動 %（負值＝日圓急升）
     "SOX":    {"watch": -0.8, "alert": -2.0},   # 單日漲跌 %
+    "SPREAD": {"watch": 6.0,  "alert": 7.5},    # 布蘭特 − WTI 價差（美元）
 }
 
 STATE_ORDER = {"calm": 0, "watch": 1, "alert": 2}
@@ -292,6 +294,25 @@ def build_signals(prices: pd.DataFrame) -> list[dict]:
         "rule": "5 日漲逾 2.5% 留意、逾 5% 警戒。油價是通膨預期的源頭。",
     })
 
+    # 1b 布蘭特 − WTI 價差：分辨「中東供給溢價」還是「全球需求」
+    sp_now = sp_5d = None
+    if "BRENT" in prices.columns and "WTI" in prices.columns:
+        pair = prices[["BRENT", "WTI"]].dropna()
+        if len(pair) > 5:
+            diff = pair["BRENT"] - pair["WTI"]
+            sp_now = float(diff.iloc[-1])
+            sp_5d = sp_now - float(diff.iloc[-6])
+    if sp_now is not None:
+        sig[-1]["aux"] = {
+            "label": "布蘭特−WTI",
+            "value": _r(sp_now, 2),
+            "metric": _r(sp_5d, 2),
+            "unit": "美元",
+            "state": _grade(sp_now, t["SPREAD"]["watch"], t["SPREAD"]["alert"], "up"),
+            "rule": "常態 3～5 美元。價差擴大＝市場在為海運中斷加碼溢價，才是真的中東事件；"
+                    "布蘭特與 WTI 齊漲而價差不變，多半是全球需求或美元因素。",
+        }
+
     # 2 美10年殖利率：目前比美元水位更關鍵
     last, cbp = _chg(prices, "US10Y", 1, as_bp=True)
     sig.append({
@@ -401,6 +422,7 @@ def synthetic_prices(n: int = 400) -> pd.DataFrame:
     rng = np.random.default_rng(20260822)
     idx = pd.bdate_range(end=pd.Timestamp("2026-08-21"), periods=n)
     oil = rng.normal(0, 1.6, n)
+    wti = oil * 0.95 + rng.normal(0, 0.4, n)   # 與布蘭特高度連動但略有偏離
     y10 = 0.35 * oil + rng.normal(0, 1.0, n)
     dxy = 0.30 * y10 + rng.normal(0, 0.35, n)
     jpy = 0.45 * y10 + rng.normal(0, 0.5, n)
@@ -413,7 +435,7 @@ def synthetic_prices(n: int = 400) -> pd.DataFrame:
         return start * np.exp(np.cumsum(r / 100.0))
 
     return pd.DataFrame({
-        "BRENT": walk(oil, 68), "DXY": walk(dxy, 96), "USDJPY": walk(jpy, 150),
+        "BRENT": walk(oil, 68), "WTI": walk(wti, 63), "DXY": walk(dxy, 96), "USDJPY": walk(jpy, 150),
         "SOX": walk(sox, 5200), "TAIEX": walk(tw, 40000), "USDTWD": walk(twd, 32.5),
         "EURUSD": walk(eur, 1.10), "US10Y": 4.2 + np.cumsum(y10) / 100.0,
     }, index=idx)
