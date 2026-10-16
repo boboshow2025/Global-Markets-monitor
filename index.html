@@ -40,6 +40,9 @@
   .brand .sub{margin-top:6px;color:var(--muted);font-family:var(--mono);font-size:12px;
     letter-spacing:.14em;text-transform:uppercase}
   .brand .sub b{color:var(--gold);font-weight:600}
+  .screener-link{display:inline-block;margin-top:10px;padding:7px 12px;border:1px solid var(--gold);
+    border-radius:8px;color:var(--gold);font-size:13px;text-decoration:none}
+  .screener-link:hover{background:rgba(201,169,106,.12)}
 
   /* ---------- timezone / session strip (signature) ---------- */
   .zones{display:flex;flex-wrap:wrap;gap:10px}
@@ -127,6 +130,7 @@
     <div class="brand">
       <h1>全球盤勢監控</h1>
       <div class="sub">Global Markets Monitor · <b id="tpe">--:--:--</b> 台北</div>
+      <a class="screener-link" href="./screener.html">台股市場寬度＋每日選股 →</a>
     </div>
     <div class="zones" id="zones"></div>
   </header>
@@ -296,44 +300,6 @@
   <div id="tx-body" hidden>
     <div class="tx-chain" id="tx-chain"></div>
 
-    <div class="tx-grid">
-      <details class="tx-card tx-fold">
-        <summary class="tx-card-head">
-          <h3 class="tx-card-title">日報酬相關矩陣</h3>
-          <span class="tx-fold-hint"></span>
-        </summary>
-        <div class="tx-fold-body">
-          <div class="tx-toggle" id="tx-window" role="group" aria-label="計算區間">
-            <button type="button" data-w="20" aria-pressed="false">20 日</button>
-            <button type="button" data-w="60" aria-pressed="true">60 日</button>
-          </div>
-          <table class="tx-matrix" id="tx-matrix"></table>
-        </div>
-      </details>
-
-      <details class="tx-card tx-fold">
-        <summary class="tx-card-head">
-          <h3 class="tx-card-title">台股當日 vs 各資產前一日</h3>
-          <span class="tx-fold-hint"></span>
-        </summary>
-        <div class="tx-fold-body">
-          <ul class="tx-bars" id="tx-bars"></ul>
-          <p class="tx-foot" style="margin-top:13px">落後相關明顯大於同日相關，代表傳導確實是隔夜單向的。若兩者趨近，就是台股開始被同步交易，讀夜盤的參考價值下降。</p>
-        </div>
-      </details>
-    </div>
-
-    <div class="tx-card tx-chart-wrap">
-      <div class="tx-card-head">
-        <h3 class="tx-card-title">60 日滾動相關走勢</h3>
-        <span class="tx-node-sub">近 180 個交易日</span>
-      </div>
-      <svg class="tx-chart" id="tx-chart" viewBox="0 0 720 210"
-           role="img" aria-label="關鍵配對的 60 日滾動相關係數走勢"></svg>
-      <div class="tx-legend" id="tx-legend"></div>
-      <p class="tx-foot">這張圖是用來抓「規律失效」的。線在零軸附近亂跳，表示該配對此刻沒有交易價值；線穩定停在正負一端，那條規律才可以拿來下判斷。</p>
-    </div>
-
     <p class="tx-foot">※ 本區塊顏色代表<b>風險狀態</b>（綠＝平靜、金＝留意、紅＝警戒），不是漲跌，與上方走勢圖的配色規則無關。</p>
     <p class="tx-foot" id="tx-missing" hidden></p>
   </div>
@@ -375,9 +341,6 @@
         '資料日期 ' + DATA.as_of + ' · 更新 ' + (DATA.generated_at || '').slice(5, 16).replace('T', ' ');
 
       renderChain();
-      renderMatrix();
-      renderBars();
-      renderChart();
 
       if (DATA.missing && DATA.missing.length) {
         const m = $('tx-missing');
@@ -385,14 +348,6 @@
         m.textContent = '本次缺少資料：' + DATA.missing.join('、') + '。相關的節點與係數會顯示為 —。';
       }
 
-      $('tx-window').querySelectorAll('button').forEach((b) => {
-        b.onclick = () => {
-          activeWindow = b.dataset.w;
-          $('tx-window').querySelectorAll('button')
-            .forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-          renderMatrix();
-        };
-      });
     }
 
     // ---- 鏈條 ----------------------------------------------------------
@@ -572,7 +527,7 @@
     let rt;
     window.addEventListener('resize', () => {
       clearTimeout(rt);
-      rt = setTimeout(() => { if (DATA) { renderChain(); renderChart(); } }, 180);
+      rt = setTimeout(() => { if (DATA) { renderChain(); } }, 180);
     });
   })();
   </script>
