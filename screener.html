@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#0B0E14" />
+<meta name="theme-color" content="#2F4245" />
 <meta name="robots" content="noindex, nofollow" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -13,8 +13,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --ink:#0B0E14; --panel:#141B29; --panel2:#101624; --line:#2A3448; --text:#EDF0F6; --muted:#8390A6;
-    --gold:#C9A96A; --up:#E5534B; --down:#3FB68B; --warn:#E3A33B;
+    --ink:#2F4245; --panel:#283A3D; --panel2:#243538; --line:#476064; --text:#F2EFEA; --muted:#C6D0CF;
+    --gold:#F0D9C6; --up:#D58079; --down:#8DB5A0; --warn:#CDAE72;
     --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
     --disp:"Space Grotesk","PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
     --sans:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -30,7 +30,7 @@
   .sub{margin-top:6px;color:var(--muted);font-family:var(--mono);font-size:12px;letter-spacing:.08em}
   .links{display:flex;gap:8px;flex-wrap:wrap}
   .btn{display:inline-block;padding:7px 12px;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-size:13px;text-decoration:none}
-  .btn:hover{background:rgba(201,169,106,.12)}
+  .btn:hover{background:rgba(207,179,159,.10)}
   h2{font-family:var(--disp);font-size:16px;font-weight:600;letter-spacing:.02em;margin:22px 0 10px}
   h2 small{font-family:var(--sans);font-weight:400;font-size:12px;color:var(--muted);margin-left:8px;letter-spacing:0}
 
@@ -59,9 +59,9 @@
   th.l,td.l{text-align:left}
   tr:last-child td{border-bottom:none}
   td.num{font-family:var(--mono)}
-  tr.first td{background:rgba(201,169,106,.07)}
+  tr.first td{background:rgba(207,179,159,.08)}
   .st{display:inline-block;font-family:var(--mono);font-size:12px;padding:0 6px;margin-right:3px;border:1px solid var(--line);border-radius:4px}
-  .st.s1{color:var(--gold);border-color:rgba(201,169,106,.5)}
+  .st.s1{color:var(--gold);border-color:rgba(207,179,159,.55)}
   .meta{font-size:12px;color:var(--muted);margin:-4px 0 8px}
   .empty{padding:28px 16px;text-align:center;color:var(--muted)}
   .legend{font-size:12px;color:var(--muted);line-height:1.7;margin-top:8px}
@@ -74,9 +74,9 @@
   .zs{border-radius:16px;padding:14px clamp(12px,2vw,18px) 16px;margin-top:18px;background:var(--sb);border:1px solid var(--sl);position:relative}
   .zs::before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:4px;border-radius:0 4px 4px 0;background:var(--acc)}
   .zs > h2:first-child{margin-top:0;color:var(--acc)}
-  .zs-a{--sb:#17140D;--sl:#3B3220;--panel:#211C12;--panel2:#1A160E;--line:#3E3420;--acc:#E0B45C}
-  .zs-b{--sb:#0B1820;--sl:#1E3B4A;--panel:#10232E;--panel2:#0D1C25;--line:#24485A;--acc:#4FB8DE}
-  .zs-c{--sb:#130F22;--sl:#2E2650;--panel:#1A1530;--panel2:#150F28;--line:#332B57;--acc:#A08CFF}
+  .zs-a{--sb:#C1C0AF;--sl:#A2A190;--panel:#D5D4C7;--panel2:#CBCABC;--line:#A2A190;--acc:#34342D;--text:#24292C;--muted:#55574D;--gold:#6B4E37;--up:#963B36;--down:#3F6B58;--warn:#6F5719;color:var(--text)}
+  .zs-b{--sb:#CFB39F;--sl:#B09581;--panel:#DEC8B8;--panel2:#D6BFAE;--line:#B09581;--acc:#3A322D;--text:#24292C;--muted:#5C4C41;--gold:#6B4E37;--up:#963B36;--down:#3F6B58;--warn:#6F5719;color:var(--text)}
+  .zs-c{--sb:#D8CAC8;--sl:#B5A3A1;--panel:#E6DCDA;--panel2:#DFD2D0;--line:#B5A3A1;--acc:#3A2E2E;--text:#24292C;--muted:#5E4F4F;--gold:#6B4E37;--up:#963B36;--down:#3F6B58;--warn:#6F5719;color:var(--text)}
   .zs .ctx{margin-top:0}
   @media (max-width:640px){ .ctx{grid-template-columns:1fr} th,td{padding:8px 7px;font-size:13px} .hide-s{display:none} }
 </style>
@@ -114,13 +114,13 @@
 <div class="chartbox"><svg id="ch" role="img" aria-label="多空差趨勢圖"></svg><div class="tip" id="tip"></div></div>
 </section>
 
-<p class="note">燈號門檻來自 2022/9–2026/10 回測（多空差 &lt; −40、空方擴散度 &gt; 60%、多方健康度 &lt; 20%、跌停暴增之後 20 天偏多；多空差 &gt; +20 時新訊號表現最差）。選股為程式依規則篩選，皆不構成買賣建議。更新時間 2026-10-17 19:57</p>
+<p class="note">燈號門檻來自 2022/9–2026/10 回測（多空差 &lt; −40、空方擴散度 &gt; 60%、多方健康度 &lt; 20%、跌停暴增之後 20 天偏多；多空差 &gt; +20 時新訊號表現最差）。選股為程式依規則篩選，皆不構成買賣建議。更新時間 2026-10-17 20:50</p>
 
 <script>
 const D = {"date": ["2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-13", "2026-07-14", "2026-07-15", "2026-07-16", "2026-07-17", "2026-07-20", "2026-07-21", "2026-07-22", "2026-07-23", "2026-07-24", "2026-07-27", "2026-07-28", "2026-07-29", "2026-07-30", "2026-07-31", "2026-08-03", "2026-08-04", "2026-08-05", "2026-08-06", "2026-08-07", "2026-08-10", "2026-08-11", "2026-08-12", "2026-08-13", "2026-08-14", "2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21", "2026-08-24", "2026-08-25", "2026-08-26", "2026-08-27", "2026-08-28", "2026-08-31", "2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-07", "2026-09-08", "2026-09-09", "2026-09-10", "2026-09-11", "2026-09-14", "2026-09-15", "2026-09-16", "2026-09-17", "2026-09-18", "2026-09-21", "2026-09-22", "2026-09-23", "2026-09-24", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"], "diff": [4.1, -1.2, -1.2, -2.3, -4.4, -1.8, 1.9, 2.9, 5.9, 5.5, 7.7, 4.6, 2.3, -0.8, -5.2, -7.0, -10.9, -13.1, -4.2, 2.6, 6.0, 5.0, 2.7, 2.1, 10.0, 20.4, 23.0, 33.4, 37.8, 37.4, 16.1, 21.7, 12.1, 9.1, 14.1, 21.0, 17.7, 21.0, 25.8, 28.0, 21.4, 19.1, 14.0, -3.7, -3.0, 3.7, 1.4, 5.7, 20.5, 22.6, 2.6, 0.5, -0.8, -5.6, -15.5, -11.2, -14.6, -36.2, -43.4, -38.6, -37.9, -40.5, -43.0, -41.4, -51.1, -56.2, -61.9, -57.3, -56.9, -52.8, -42.8, -36.5, -32.5, -15.7, -15.1, -7.3, -4.7, -10.6, -10.0, -19.0, -20.6, -10.9, -6.5, -12.0, -13.5, 0.3, -0.2, 0.6, -0.7, 0.6, -3.3, -13.4, -12.1, -14.3, -21.0, -22.2, -26.6, -34.2, -38.9, -44.2, -40.8, -35.2, -24.6, -18.0, -18.2, -18.3, -18.3, -19.9, -11.9, -12.2, -8.8, -11.4, -8.3, -2.8, 0.1, 5.5, -0.3, 7.7, 0.9, 5.2]};
 (function () {
   const svg = document.getElementById('ch'), tip = document.getElementById('tip'), box = svg.parentNode;
-  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const css = n => getComputedStyle(box).getPropertyValue(n).trim();
   function draw() {
     const W = Math.max(300, box.clientWidth - 24), H = W < 500 ? 220 : 260, m = { l: 34, r: 8, t: 10, b: 22 };
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = '';
