@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ETF 持股增減報告 2026-10-17</title>
+<style>
+  body { font-family: "Microsoft JhengHei", Arial, sans-serif; background:#f4f6f8; color:#222; margin:0; padding:24px; }
+  h1 { font-size:22px; margin-bottom:4px; }
+  .subtitle { color:#666; margin-bottom:16px; }
+  .note { background:#fff8e1; border:1px solid #f0d78c; border-radius:6px; padding:8px 12px; margin-bottom:16px; font-size:14px; }
+  .section { background:#fff; border-radius:8px; padding:16px 20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+  .section h2 { font-size:16px; margin:0 0 12px 0; border-left:4px solid #4472C4; padding-left:8px; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th { background:#4472C4; color:#fff; padding:8px 10px; text-align:left; white-space:nowrap; }
+  td { padding:6px 10px; border-bottom:1px solid #eee; }
+  tr:hover td { background:#f9fbff; }
+  td.pos { color:#c00000; font-weight:bold; }
+  td.neg { color:#0a7d34; font-weight:bold; }
+  td.hot { background:#ffe0e0; font-weight:bold; }
+  td.warm { background:#fff3e0; }
+  .empty-msg { color:#888; font-style:italic; }
+  .badge { padding:2px 10px; border-radius:12px; font-size:12px; color:#fff; white-space:nowrap; }
+  .badge-strong-up { background:#a30000; } .badge-up { background:#e06666; }
+  .badge-strong-down { background:#0a7d34; } .badge-down { background:#5cb85c; }
+  .badge-neutral { background:#999; }
+  .table-wrap { overflow-x:auto; }
+  .legend { color:#666; font-size:12px; margin-top:24px; line-height:1.7; }
+</style>
+</head>
+<body>
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:-8px 0 16px;font-size:14px"><a href="../index.html" style="color:#4472C4;text-decoration:none">← 回盤勢監控</a><span style="color:#999">｜</span><label>歷史報告 <select onchange="location.href=this.value" style="font-size:14px;padding:2px 6px"><option value="../etf/2026-10-17.html" selected>2026-10-17</option><option value="../etf/2026-10-16.html">2026-10-16</option></select></label></div>
+  <h1>📊 ETF 持股增減報告（v2）</h1>
+  <div class="subtitle">執行日期：2026-10-17｜今日有新持股資料的ETF：0 檔｜只列今天第一次看到的動作</div>
+<!--GAUGE-START-->
+<style>
+  .rg { background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,.08); padding:16px 18px; margin:0 0 20px; font-family:"Microsoft JhengHei",Arial,sans-serif; }
+  .rg-head { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:10px; }
+  .rg-title { font-size:17px; font-weight:700; color:#1c2b4a; }
+  .rg-state { font-size:18px; font-weight:700; color:#fff; padding:4px 16px; border-radius:16px; }
+  .rg-meta { color:#666; font-size:13px; }
+  .rg-alert { background:#fff3cd; border:1px solid #f0c36d; border-radius:6px; padding:8px 12px; margin:8px 0 12px; font-size:14px; }
+  .rg-hint { background:#f2f6fb; border-radius:6px; padding:6px 12px; margin:8px 0 12px; font-size:13px; color:#33475b; }
+  .rg-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+  .rg-card { border:1px solid #e6eaf0; border-radius:8px; padding:10px 12px; }
+  .rg-name { font-size:13px; color:#555; }
+  .rg-val { font-size:18px; font-weight:700; margin:2px 0; }
+  .rg-up { font-size:12px; color:#c62828; font-weight:600; }
+  .rg-down { font-size:12px; color:#2e7d32; font-weight:600; }
+  .rg-sub { font-size:12px; color:#888; margin-bottom:4px; }
+  .rg-foot { font-size:12px; color:#888; margin-top:10px; line-height:1.6; }
+  .spark { display:block; max-width:100%; }
+</style>
+<div class="rg">
+  <div class="rg-head">
+    <span class="rg-title">🧭 資金輪動儀表</span>
+    <span class="rg-state" style="background:#1b5e20">強烈防守</span>
+    <span class="rg-meta">依 2026-10-15 收盤｜目前狀態自 10/15 起，已 1 個交易日</span>
+  </div>
+  <div class="rg-alert">🔔 今日訊號翻轉：<b>轉守</b> — 主動ETF相對0050跌破MA20，資金開始從成長股撤出：建議降低進攻部位</div>
+  <div class="rg-grid">
+      <div class="rg-card">
+        <div class="rg-name">主動ETF ÷ 0050</div>
+        <div class="rg-val">96.01 <span class="rg-down">跌破 MA20 -1.28%</span></div>
+        <div class="rg-sub">已連續跌破 1 天</div>
+        <svg width="100%" height="48" viewBox="0 0 220 48" preserveAspectRatio="none" class="spark"><polyline points="2.0,3.0 5.7,4.2 9.3,5.7 13.0,7.7 16.6,9.5 20.3,11.4 24.0,13.9 27.6,16.4 31.3,19.1 34.9,21.3 38.6,22.3 42.3,22.9 45.9,23.1 49.6,23.7 53.3,24.0 56.9,24.0 60.6,24.2 64.2,23.8 67.9,22.9 71.6,21.8 75.2,20.9 78.9,20.4 82.5,20.0 86.2,19.7 89.9,19.5 93.5,18.7 97.2,17.4 100.8,15.9 104.5,14.3 108.2,13.4 111.8,13.2 115.5,13.1 119.2,13.5 122.8,13.6 126.5,13.9 130.1,14.4 133.8,15.0 137.5,15.7 141.1,16.5 144.8,17.6 148.4,18.7 152.1,19.6 155.8,20.7 159.4,21.2 163.1,21.8 166.7,22.2 170.4,22.7 174.1,23.3 177.7,23.9 181.4,24.4 185.1,24.8 188.7,24.9 192.4,24.8 196.0,24.7 199.7,24.5 203.4,24.2 207.0,23.9 210.7,23.8 214.3,23.6 218.0,23.8" fill="none" stroke="#9aa3ad" stroke-width="1.2" stroke-dasharray="3 2"/><polyline points="2.0,24.1 5.7,18.1 9.3,17.7 13.0,23.2 16.6,22.4 20.3,32.4 24.0,40.5 27.6,42.5 31.3,45.0 34.9,32.1 38.6,18.6 42.3,18.2 45.9,13.9 49.6,17.8 53.3,16.3 56.9,16.8 60.6,13.3 64.2,10.4 67.9,8.3 71.6,4.3 75.2,6.2 78.9,8.3 82.5,9.1 86.2,17.6 89.9,17.8 93.5,16.9 97.2,15.0 100.8,11.3 104.5,12.8 108.2,14.9 111.8,15.4 115.5,15.9 119.2,21.2 122.8,19.9 126.5,23.5 130.1,26.4 133.8,24.9 137.5,24.2 141.1,25.3 144.8,25.3 148.4,28.2 152.1,27.1 155.8,31.1 159.4,27.0 163.1,29.1 166.7,25.4 170.4,25.2 174.1,23.8 177.7,24.8 181.4,24.0 185.1,23.4 188.7,18.4 192.4,18.3 196.0,19.6 199.7,19.3 203.4,19.3 207.0,18.4 210.7,22.9 214.3,22.4 218.0,29.2" fill="none" stroke="#1f3b73" stroke-width="1.8"/></svg>
+      </div>
+      <div class="rg-card">
+        <div class="rg-name">0052 ÷ 00713</div>
+        <div class="rg-val">0.9641 <span class="rg-down">跌破 MA20 -6.12%</span></div>
+        <div class="rg-sub">已連續跌破 3 天</div>
+        <svg width="100%" height="48" viewBox="0 0 220 48" preserveAspectRatio="none" class="spark"><polyline points="2.0,11.2 5.7,12.2 9.3,12.7 13.0,13.5 16.6,14.1 20.3,15.2 24.0,17.2 27.6,19.5 31.3,20.8 34.9,21.8 38.6,22.8 42.3,23.3 45.9,23.8 49.6,24.3 53.3,24.7 56.9,25.0 60.6,25.3 64.2,25.3 67.9,24.5 71.6,23.7 75.2,23.5 78.9,23.6 82.5,23.9 86.2,23.7 89.9,23.5 93.5,22.8 97.2,21.4 100.8,20.0 104.5,19.6 108.2,19.2 111.8,18.6 115.5,18.6 119.2,18.8 122.8,18.7 126.5,18.6 130.1,18.6 133.8,18.7 137.5,18.9 141.1,19.5 144.8,20.2 148.4,20.8 152.1,21.2 155.8,21.5 159.4,21.6 163.1,21.5 166.7,21.4 170.4,21.3 174.1,21.2 177.7,21.2 181.4,21.0 185.1,20.7 188.7,20.1 192.4,19.1 196.0,18.1 199.7,17.5 203.4,17.0 207.0,16.6 210.7,16.6 214.3,16.4 218.0,16.7" fill="none" stroke="#9aa3ad" stroke-width="1.2" stroke-dasharray="3 2"/><polyline points="2.0,20.8 5.7,19.2 9.3,17.0 13.0,25.1 16.6,26.8 20.3,35.1 24.0,44.4 27.6,45.0 31.3,25.1 34.9,26.0 38.6,28.0 42.3,20.5 45.9,21.4 49.6,23.3 53.3,19.9 56.9,18.6 60.6,17.3 64.2,12.9 67.9,13.8 71.6,13.6 75.2,17.5 78.9,21.6 82.5,21.6 86.2,21.6 89.9,22.3 93.5,21.4 97.2,17.3 100.8,17.3 104.5,15.1 108.2,18.8 111.8,15.6 115.5,21.8 119.2,24.9 122.8,21.7 126.5,17.3 130.1,18.8 133.8,18.2 137.5,18.8 141.1,24.0 144.8,28.7 148.4,29.5 152.1,28.7 155.8,27.8 159.4,23.9 163.1,20.4 166.7,19.4 170.4,16.3 174.1,14.6 177.7,15.2 181.4,13.6 185.1,10.6 188.7,10.2 192.4,3.8 196.0,3.0 199.7,5.6 203.4,8.2 207.0,10.6 210.7,18.8 214.3,20.1 218.0,33.0" fill="none" stroke="#1f3b73" stroke-width="1.8"/></svg>
+      </div>
+      <div class="rg-card">
+        <div class="rg-name">0050</div>
+        <div class="rg-val">108.90 <span class="rg-down">跌破 MA20 -2.80%</span></div>
+        <div class="rg-sub">已連續跌破 1 天</div>
+        <svg width="100%" height="48" viewBox="0 0 220 48" preserveAspectRatio="none" class="spark"><polyline points="2.0,23.5 5.7,24.0 9.3,24.3 13.0,24.7 16.6,24.8 20.3,25.4 24.0,26.6 27.6,28.0 31.3,28.5 34.9,29.0 38.6,29.7 42.3,29.8 45.9,30.0 49.6,30.2 53.3,30.3 56.9,30.2 60.6,30.3 64.2,30.2 67.9,29.6 71.6,28.9 75.2,28.6 78.9,28.7 82.5,28.7 86.2,28.4 89.9,28.2 93.5,27.6 97.2,26.5 100.8,25.3 104.5,24.9 108.2,24.5 111.8,23.8 115.5,23.6 119.2,23.3 122.8,22.8 126.5,22.3 130.1,21.9 133.8,21.5 137.5,21.2 141.1,21.1 144.8,21.1 148.4,20.9 152.1,20.6 155.8,20.2 159.4,19.7 163.1,19.0 166.7,18.4 170.4,17.8 174.1,17.2 177.7,16.8 181.4,16.3 185.1,15.9 188.7,15.3 192.4,14.4 196.0,13.6 199.7,13.1 203.4,12.6 207.0,12.1 210.7,11.8 214.3,11.3 218.0,11.2" fill="none" stroke="#9aa3ad" stroke-width="1.2" stroke-dasharray="3 2"/><polyline points="2.0,28.6 5.7,26.1 9.3,26.0 13.0,30.0 16.6,30.5 20.3,38.3 24.0,44.6 27.6,45.0 31.3,27.9 34.9,29.5 38.6,31.9 42.3,26.2 45.9,27.1 49.6,27.9 53.3,25.4 56.9,24.7 60.6,23.6 64.2,20.9 67.9,21.4 71.6,21.4 75.2,24.2 78.9,27.5 82.5,26.2 86.2,24.6 89.9,26.2 93.5,25.1 97.2,22.4 100.8,22.1 104.5,20.4 108.2,21.7 111.8,17.7 115.5,20.7 119.2,21.8 122.8,18.7 126.5,15.1 130.1,15.5 133.8,15.5 137.5,16.4 141.1,19.1 144.8,20.5 148.4,21.7 152.1,20.5 155.8,18.4 159.4,15.1 163.1,12.4 166.7,11.5 170.4,10.4 174.1,10.5 177.7,12.5 181.4,11.1 185.1,9.6 188.7,9.8 192.4,4.0 196.0,3.0 199.7,3.8 203.4,5.8 207.0,6.1 210.7,10.5 214.3,9.4 218.0,16.9" fill="none" stroke="#1f3b73" stroke-width="1.8"/></svg>
+      </div>
+  </div>
+  <div class="rg-foot">
+    規則：①主動ETF÷0050 跌破MA20 → 轉守；①連續3天站上MA20 → 轉攻。②③ 同時跌破時為「強烈防守」。
+    實線＝比值，虛線＝MA20（近60日）。近期翻轉：05/13 轉攻、05/15 轉守、05/26 轉攻、05/28 轉守、08/06 轉攻、08/31 轉守、10/02 轉攻、10/15 轉守<br>
+    這是確認工具，不是預測：轉守通常比大盤早幾天；轉攻通常在低點反彈約一成後才確認。
+  </div>
+</div>
+<!--GAUGE-END-->
+  
+  <div class="section">
+    <h2>🤝 多檔ETF共識買進（近3個資料日 ≥2 檔）</h2>
+    <div class="table-wrap"><p class="empty-msg">今日無資料</p></div>
+  </div>
+  <div class="section">
+    <h2>⚠️ 多檔ETF共識賣出（近3個資料日 ≥2 檔）</h2>
+    <div class="table-wrap"><p class="empty-msg">今日無資料</p></div>
+  </div>
+  <div class="section">
+    <h2>🚀 新增潛力股</h2>
+    <div class="table-wrap"><p class="empty-msg">今日無資料</p></div>
+  </div>
+  <div class="section">
+    <h2>🗑️ 移出持股</h2>
+    <div class="table-wrap"><p class="empty-msg">今日無資料</p></div>
+  </div>
+  <div class="section">
+    <h2>📈 顯著加碼</h2>
+    <div class="table-wrap"><p class="empty-msg">今日無資料</p></div>
+  </div>
+  <div class="section">
+    <h2>📉 顯著減碼</h2>
+    <div class="table-wrap"><p class="empty-msg">今日無資料</p></div>
+  </div>
+  <div class="legend">
+    買賣量占均量% = 經理人這次主動買(賣)的股數 ÷ 前20個交易日平均成交量；≥5% 橘底、≥10% 紅底，代表這筆買賣對股價有份量。<br>
+    近3日共識檔數 = 最近3個資料日內，有幾檔主動ETF對同一檔股票同方向動作（含本檔）。<br>
+    近5日漲跌% = 資料日收盤相對5個交易日前；已經大漲的股票，追進去的空間通常較小。<br>
+    ≤1,000股的殘股不列入；資金流日（申購贖回）已先扣除當天所有持股的中位數股數變動。
+  </div>
+</body>
+</html>
