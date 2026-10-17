@@ -1,174 +1,104 @@
 # -*- coding: utf-8 -*-
 """
-market_corr.py  --  Global-Markets-monitor 傳導鏈資料產生器
+market_corr.py  --  Global-Markets-monitor 開盤前訊號產生器（v2）
 
-每日收盤後執行，抓取六個節點的日線資料，計算：
-  1. 訊號燈狀態（油價 / 美10年殖利率 / 美元指數 / 日圓 / 費半 / 台股台幣同向）
-  2. 20 日與 60 日滾動相關係數矩陣
-  3. 領先落後相關（台股 t 對其他資產 t-1）
-  4. 近 180 日滾動相關的歷史序列（給折線圖）
+只回答一個問題：台股開盤前，要不要調整部位？
 
-輸出：data/correlations.json
+核心訊號（決定總燈號）
+  1. 費城半導體隔夜漲跌      —— 與台股隔日報酬相關最高的單一變數
+  2. 台指期夜盤漲跌（選配）  —— 抓得到就優先用，它已經消化了美股
+  3. 外資現貨買賣超          —— 確認用，不單獨決定燈號
 
-資料來源：yfinance 為主，Stooq CSV 為備援（兩者皆免費、免金鑰）。
+背景（只顯示，不進總燈號）
+  油價 5 日、美10年殖利率單日、美元指數 5 日、美元/日圓 5 日、布蘭特−WTI 價差
+
+所有門檻都是「跟自己過去 60 個交易日比」的 z 分數，不再用固定水位，
+所以市場換了區間也不會一直亮紅燈。
+
+另外會：
+  - 用近兩年資料回測同一套規則，算出各燈號之後台股隔日的實際表現
+  - 每天把燈號寫進 data/signal_log.csv，等台股收盤後回填結果，累積實戰命中率
+  - 沒有新資料（週末、假日）就不重寫 JSON，排程也就不會產生空 commit
+
+資料來源（皆免費免金鑰）
+  台股加權指數、外資買賣超：證交所（官方，當日收盤後即更新）
+  台指期夜盤：期交所 OpenAPI
+  其餘：yfinance 為主，Stooq 備援
 
 用法：
-    python market_corr.py                 # 寫到 ./data/correlations.json
-    python market_corr.py --out X:\\path\\correlations.json
-    python market_corr.py --offline-test  # 用合成資料跑一遍，驗證流程
+    python market_corr.py
+    python market_corr.py --force          # 就算沒有新資料也重寫
+    python market_corr.py --offline-test   # 合成資料，驗證流程
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import io
 import json
 import math
+import ssl
 import sys
+import time
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+TPE = timezone(timedelta(hours=8))
+UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
 # --------------------------------------------------------------------------
 # 設定
 # --------------------------------------------------------------------------
 
-TPE = timezone(timedelta(hours=8))
-
-# 傳導鏈順序即為顯示順序，不要隨意調換
-ASSETS = [
-    # key,      中文名,        簡稱,   yfinance,    stooq,      單位型別
-    ("BRENT",   "布蘭特原油",   "油價", "BZ=F",      "cb.f",     "price"),
-    ("US10Y",   "美10年殖利率", "10Y",  "^TNX",      "10usy.b",  "yield"),
-    ("DXY",     "美元指數",     "美元", "DX-Y.NYB",  "dx.f",     "price"),
-    ("USDJPY",  "美元/日圓",    "日圓", "JPY=X",     "usdjpy",   "price"),
-    ("SOX",     "費城半導體",   "費半", "^SOX",      "^sox",     "price"),
-    ("TAIEX",   "台股加權",     "台股", "^TWII",     "^twse",    "price"),
+# key, 中文名, yfinance, stooq, 型別
+MARKET = [
+    ("SOX",    "費城半導體",   "^SOX",     "^sox",    "price"),
+    ("BRENT",  "布蘭特原油",   "BZ=F",     "cb.f",    "price"),
+    ("WTI",    "西德州原油",   "CL=F",     "cl.f",    "price"),
+    ("US10Y",  "美10年殖利率", "^TNX",     "10usy.b", "yield"),
+    ("DXY",    "美元指數",     "DX-Y.NYB", "dx.f",    "price"),
+    ("USDJPY", "美元/日圓",    "JPY=X",    "usdjpy",  "price"),
+    ("USDTWD", "美元/台幣",    "TWD=X",    "usdtwd",  "price"),
+    ("TWII",   "台股（Yahoo 備援）", "^TWII", "^twse", "price"),
 ]
 
-# 輔助資產：不進傳導鏈，只用來做「股匯同向」確認與美元參照
-AUX = [
-    ("WTI",     "西德州原油",   "WTI",  "CL=F",      "cl.f",     "price"),
-    ("USDTWD",  "美元/台幣",    "台幣", "TWD=X",     "usdtwd",   "price"),
-    ("EURUSD",  "歐元/美元",    "歐元", "EURUSD=X",  "eurusd",   "price"),
-]
-
-WINDOWS = [20, 60]
-HISTORY_DAYS = 180
 LOOKBACK_PERIOD = "2y"
+Z_WINDOW = 60
 
-# 門檻可自行調整；規則說明會一併寫進 JSON，網頁上 hover 就看得到
-THRESHOLDS = {
-    "BRENT":  {"watch": 2.5,  "alert": 5.0},    # 5 日漲幅 %
-    "US10Y":  {"watch": 5.0,  "alert": 8.0},    # 單日變動 bp
-    "DXY":    {"watch": 99.5, "alert": 100.5},  # 絕對水位
-    "USDJPY": {"watch": -1.5, "alert": -3.0},   # 5 日變動 %（負值＝日圓急升）
-    "SOX":    {"watch": -0.8, "alert": -2.0},   # 單日漲跌 %
-    "SPREAD": {"watch": 6.0,  "alert": 7.5},    # 布蘭特 − WTI 價差（美元）
+# 總燈號門檻（z 分數；負值＝利空）
+CORE_Z = {"watch": -1.0, "alert": -2.0, "up": 1.0}
+# 背景項目：|z| 超過多少算「異常」
+BG_Z = {"watch": 1.5, "alert": 2.5}
+
+STATE_TEXT = {
+    "alert": "強烈偏空",
+    "watch": "偏空",
+    "calm":  "中性",
+    "up":    "偏多",
+    "unknown": "無資料",
+}
+ACTION_TEXT = {
+    "alert": "開盤不追價，考慮先減碼或避險",
+    "watch": "保守操作，新倉等盤中確認",
+    "calm":  "照原計畫",
+    "up":    "環境有利，可依計畫進場",
+    "unknown": "資料不足，不做判讀",
 }
 
-STATE_ORDER = {"calm": 0, "watch": 1, "alert": 2}
+DATA_DIR = Path("data")
 
 
 # --------------------------------------------------------------------------
-# 抓資料
+# 小工具
 # --------------------------------------------------------------------------
-
-def _fetch_yfinance(tickers: list[str], period: str) -> pd.DataFrame:
-    import yfinance as yf
-    raw = yf.download(
-        tickers, period=period, interval="1d",
-        auto_adjust=False, progress=False, group_by="column", threads=True,
-    )
-    if raw is None or len(raw) == 0:
-        raise RuntimeError("yfinance 回傳空資料")
-    if isinstance(raw.columns, pd.MultiIndex):
-        close = raw["Close"]
-    else:
-        close = raw[["Close"]].rename(columns={"Close": tickers[0]})
-    return close
-
-
-def _fetch_stooq(symbol: str) -> pd.Series:
-    url = "https://stooq.com/q/d/l/?s=" + urllib.parse.quote(symbol, safe="") + "&i=d"
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        body = resp.read().decode("utf-8", errors="replace")
-    if "Close" not in body:
-        # 把實際回應印出來，才知道是符號錯、被擋、還是超過每日次數
-        snippet = " ".join(body.split())[:90] or "(空白回應)"
-        raise RuntimeError(f"{symbol} → {snippet}")
-    df = pd.read_csv(io.StringIO(body))
-    df["Date"] = pd.to_datetime(df["Date"])
-    return df.set_index("Date")["Close"].sort_index()
-
-
-def load_prices(verbose: bool = True) -> pd.DataFrame:
-    """回傳一張以日期為索引、欄位為資產 key 的收盤價表。"""
-    spec = ASSETS + AUX
-    frames: dict[str, pd.Series] = {}
-
-    if verbose:
-        print("[symbols] " + "  ".join(f"{k}={y}" for k, _n, _sh, y, _st, _kd in spec))
-
-    # 先試 yfinance 批次抓
-    try:
-        tickers = [yf_sym for _k, _n, _sh, yf_sym, _st, _kind in spec]
-        close = _fetch_yfinance(tickers, LOOKBACK_PERIOD)
-        for key, _name, _short, yf_sym, _stooq_sym, _kind in spec:
-            if yf_sym in close.columns:
-                s = pd.to_numeric(close[yf_sym], errors="coerce").dropna()
-                if len(s) > 100:
-                    frames[key] = s
-        if verbose:
-            print(f"[yfinance] 取得 {len(frames)}/{len(spec)} 檔")
-    except Exception as exc:  # noqa: BLE001
-        if verbose:
-            print(f"[yfinance] 失敗，改用 Stooq：{exc}")
-
-    # 缺的用 Stooq 補
-    for key, name, _short, _yf_sym, stooq_sym, _kind in spec:
-        if key in frames:
-            continue
-        try:
-            frames[key] = _fetch_stooq(stooq_sym)
-            if verbose:
-                print(f"[stooq] 補上 {key}（{name}）")
-        except Exception as exc:  # noqa: BLE001
-            if verbose:
-                print(f"[warn] {key}（{name}）兩個來源都抓不到：{exc}")
-
-    if not frames:
-        raise RuntimeError("所有資料來源都失敗，沒有東西可以算")
-
-    df = pd.DataFrame(frames).sort_index()
-    df.index = pd.to_datetime(df.index).tz_localize(None).normalize()
-    return df
-
-
-# --------------------------------------------------------------------------
-# 計算
-# --------------------------------------------------------------------------
-
-def to_returns(prices: pd.DataFrame) -> pd.DataFrame:
-    """殖利率取水位差（bp），其餘取日報酬（%）。"""
-    kinds = {k: kind for k, _n, _sh, _y, _s, kind in ASSETS + AUX}
-    out = {}
-    for col in prices.columns:
-        s = prices[col].dropna()
-        if kinds.get(col) == "yield":
-            out[col] = s.diff() * 100.0          # ^TNX 以 % 報價，×100 得 bp
-        else:
-            out[col] = s.pct_change() * 100.0
-    return pd.DataFrame(out).dropna(how="all")
-
 
 def _r(x, nd=3):
-    """安全四捨五入，NaN 轉 None 好讓 JSON 乾淨。"""
     if x is None:
         return None
     try:
@@ -178,295 +108,627 @@ def _r(x, nd=3):
     return None if math.isnan(f) or math.isinf(f) else round(f, nd)
 
 
-def corr_matrix(rets: pd.DataFrame, keys: list[str], window: int) -> list[list[float | None]]:
-    tail = rets[keys].tail(window)
-    m = tail.corr(min_periods=max(10, window // 3))
-    return [[_r(m.loc[a, b]) for b in keys] for a in keys]
+def _num(s) -> float | None:
+    if s is None:
+        return None
+    s = str(s).replace(",", "").replace("+", "").strip()
+    if s in ("", "-", "--", "X"):
+        return None
+    try:
+        return float(s)
+    except ValueError:
+        return None
 
 
-def lead_lag(rets: pd.DataFrame, keys: list[str], window: int, target: str = "TAIEX"):
-    """台股當日 vs 其他資產前一日。台股對上游沒有回饋能力，所以只算單向。"""
-    out = []
-    if target not in rets.columns:
-        return out
-    y = rets[target]
-    for k in keys:
-        if k == target or k not in rets.columns:
-            continue
-        pair = pd.concat([y, rets[k].shift(1)], axis=1).dropna().tail(window)
-        same = pd.concat([y, rets[k]], axis=1).dropna().tail(window)
-        out.append({
-            "asset": k,
-            "lagged": _r(pair.iloc[:, 0].corr(pair.iloc[:, 1])) if len(pair) > 10 else None,
-            "same_day": _r(same.iloc[:, 0].corr(same.iloc[:, 1])) if len(same) > 10 else None,
-        })
+def _ssl_context() -> ssl.SSLContext:
+    """證交所憑證缺 Subject Key Identifier，Python 3.13 起的嚴格模式會拒絕。
+    這裡只關掉 X509_STRICT 這一項額外檢查，憑證鏈與主機名稱照常驗證。"""
+    try:
+        import certifi
+        ctx = ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        ctx = ssl.create_default_context()
+    ctx.verify_flags &= ~getattr(ssl, "VERIFY_X509_STRICT", 0)
+    return ctx
+
+
+_SSL = _ssl_context()
+
+
+def _get(url: str, timeout: int = 30) -> bytes:
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=timeout, context=_SSL) as resp:
+        return resp.read()
+
+
+def _roc_to_date(s: str) -> date:
+    y, m, d = s.strip().split("/")
+    return date(int(y) + 1911, int(m), int(d))
+
+
+def zscore_last(series: pd.Series, window: int = Z_WINDOW) -> float | None:
+    """最後一筆相對於「它之前 window 筆」的 z 分數（不含自己，避免稀釋）。"""
+    s = series.dropna()
+    if len(s) < window // 2 + 1:
+        return None
+    hist = s.iloc[-window - 1:-1]
+    sd = hist.std()
+    if not sd or math.isnan(sd):
+        return None
+    return float((s.iloc[-1] - hist.mean()) / sd)
+
+
+def rolling_z(series: pd.Series, window: int = Z_WINDOW) -> pd.Series:
+    s = series.dropna()
+    mu = s.shift(1).rolling(window, min_periods=window // 2).mean()
+    sd = s.shift(1).rolling(window, min_periods=window // 2).std()
+    return (s - mu) / sd
+
+
+# --------------------------------------------------------------------------
+# 抓資料：證交所
+# --------------------------------------------------------------------------
+
+def _month_starts(n_months: int) -> list[date]:
+    today = datetime.now(TPE).date()
+    out, y, m = [], today.year, today.month
+    for _ in range(n_months):
+        out.append(date(y, m, 1))
+        m -= 1
+        if m == 0:
+            y, m = y - 1, 12
     return out
 
 
-def chain_links(rets: pd.DataFrame, window: int):
-    """相鄰節點的關聯強度，網頁用它決定連接線的粗細。"""
-    keys = [a[0] for a in ASSETS]
-    links = []
-    for i in range(len(keys) - 1):
-        a, b = keys[i], keys[i + 1]
-        if a not in rets.columns or b not in rets.columns:
-            links.append({"from": a, "to": b, "corr": None, "lag": 0})
-            continue
-        # 費半→台股是隔夜傳導，用 lag 1；其餘同步
-        lag = 1 if (a == "SOX" and b == "TAIEX") else 0
-        pair = pd.concat([rets[b], rets[a].shift(lag)], axis=1).dropna().tail(window)
-        c = pair.iloc[:, 0].corr(pair.iloc[:, 1]) if len(pair) > 10 else None
-        links.append({"from": a, "to": b, "corr": _r(c), "lag": lag})
-    return links
+def fetch_taiex_twse(cache: Path, verbose: bool) -> pd.Series:
+    """證交所 FMTQIK：每月一包，含每日加權指數收盤。快取後每次只補最近兩個月。"""
+    old = pd.Series(dtype=float)
+    if cache.exists():
+        df = pd.read_csv(cache, parse_dates=["date"])
+        old = df.set_index("date")["close"]
+    months = _month_starts(2 if len(old) > 300 else 25)
+    got = {}
+    fails = 0
+    for i, ms in enumerate(months):
+        if fails >= 3:
+            if verbose:
+                print("[twse] 加權指數連續失敗 3 次，這次先跳過")
+            break
+        url = ("https://www.twse.com.tw/rwd/zh/afterTrading/FMTQIK?response=json&date="
+               + ms.strftime("%Y%m%d"))
+        fails += 1
+        try:
+            j = json.loads(_get(url).decode("utf-8"))
+            fails = 0
+            if j.get("stat") != "OK":
+                continue
+            fi = j["fields"].index("發行量加權股價指數")
+            for row in j.get("data", []):
+                v = _num(row[fi])
+                if v:
+                    got[pd.Timestamp(_roc_to_date(row[0]))] = v
+        except Exception as exc:  # noqa: BLE001
+            if verbose:
+                print(f"[twse] {ms:%Y-%m} 失敗：{exc}")
+        if i < len(months) - 1:
+            time.sleep(1.2)   # 證交所會擋太密集的請求
+    parts = [x for x in (old, pd.Series(got, dtype=float)) if len(x)]
+    s = pd.concat(parts) if parts else pd.Series(dtype=float)
+    s = s[~s.index.duplicated(keep="last")].sort_index()
+    if len(s):
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame({"date": s.index.strftime("%Y-%m-%d"), "close": s.values}).to_csv(cache, index=False)
+    if verbose:
+        print(f"[twse] 加權指數 {len(s)} 筆，最新 {s.index[-1]:%Y-%m-%d} = {s.iloc[-1]:,.2f}" if len(s)
+              else "[twse] 加權指數抓不到")
+    return s
 
 
-def rolling_history(rets: pd.DataFrame, window: int, days: int):
-    """幾條關鍵配對的滾動相關走勢，用來看『規律有沒有失效』。"""
-    pairs = [
-        ("TAIEX", "DXY",    0, "台股 vs 美元指數"),
-        ("TAIEX", "SOX",    1, "台股 vs 費半（隔夜）"),
-        ("TAIEX", "USDJPY", 0, "台股 vs 美元/日圓"),
-        ("TAIEX", "US10Y",  0, "台股 vs 美10年殖利率"),
-    ]
-    series = []
-    for a, b, lag, label in pairs:
-        if a not in rets.columns or b not in rets.columns:
-            continue
-        x, y = rets[a], rets[b].shift(lag)
-        c = x.rolling(window, min_periods=max(10, window // 2)).corr(y).dropna().tail(days)
-        if c.empty:
-            continue
-        series.append({
-            "id": f"{a}_{b}",
-            "label": label,
-            "latest": _r(c.iloc[-1]),
-            "points": [{"d": d.strftime("%Y-%m-%d"), "v": _r(v)} for d, v in c.items()],
-        })
-    return series
-
-
-# --------------------------------------------------------------------------
-# 訊號燈
-# --------------------------------------------------------------------------
-
-def _grade(value, watch, alert, direction: str) -> str:
-    """direction='up' 代表數字愈大愈危險；'down' 代表愈小愈危險。"""
-    if value is None:
-        return "unknown"
-    if direction == "up":
-        if value >= alert:
-            return "alert"
-        if value >= watch:
-            return "watch"
-    else:
-        if value <= alert:
-            return "alert"
-        if value <= watch:
-            return "watch"
-    return "calm"
-
-
-def _chg(prices: pd.DataFrame, key: str, n: int, as_bp: bool = False):
-    if key not in prices.columns:
-        return None, None
-    s = prices[key].dropna()
-    if len(s) <= n:
-        return None, None
-    last = float(s.iloc[-1])
-    prev = float(s.iloc[-1 - n])
-    if as_bp:
-        return last, (last - prev) * 100.0
-    if prev == 0:
-        return last, None
-    return last, (last - prev) / prev * 100.0
-
-
-def build_signals(prices: pd.DataFrame) -> list[dict]:
-    sig = []
-    t = THRESHOLDS
-
-    # 1 油價：鏈條的源頭
-    last, c5 = _chg(prices, "BRENT", 5)
-    sig.append({
-        "key": "BRENT", "label": "布蘭特原油", "sub": "5 日變動",
-        "value": _r(last, 2), "metric": _r(c5, 2), "unit": "%",
-        "state": _grade(c5, t["BRENT"]["watch"], t["BRENT"]["alert"], "up"),
-        "rule": "5 日漲逾 2.5% 留意、逾 5% 警戒。油價是通膨預期的源頭。",
-    })
-
-    # 1b 布蘭特 − WTI 價差：分辨「中東供給溢價」還是「全球需求」
-    sp_now = sp_5d = None
-    if "BRENT" in prices.columns and "WTI" in prices.columns:
-        pair = prices[["BRENT", "WTI"]].dropna()
-        if len(pair) > 5:
-            diff = pair["BRENT"] - pair["WTI"]
-            sp_now = float(diff.iloc[-1])
-            sp_5d = sp_now - float(diff.iloc[-6])
-    if sp_now is not None:
-        sig[-1]["aux"] = {
-            "label": "布蘭特−WTI",
-            "value": _r(sp_now, 2),
-            "metric": _r(sp_5d, 2),
-            "unit": "美元",
-            "state": _grade(sp_now, t["SPREAD"]["watch"], t["SPREAD"]["alert"], "up"),
-            "rule": "常態 3～5 美元。價差擴大＝市場在為海運中斷加碼溢價，才是真的中東事件；"
-                    "布蘭特與 WTI 齊漲而價差不變，多半是全球需求或美元因素。",
-        }
-
-    # 2 美10年殖利率：目前比美元水位更關鍵
-    last, cbp = _chg(prices, "US10Y", 1, as_bp=True)
-    sig.append({
-        "key": "US10Y", "label": "美10年殖利率", "sub": "單日變動",
-        "value": _r(last, 2), "metric": _r(cbp, 1), "unit": "bp",
-        "state": _grade(cbp, t["US10Y"]["watch"], t["US10Y"]["alert"], "up"),
-        "rule": "單日彈逾 5bp 留意、逾 8bp 警戒。高殖利率殺的正是高本益比 AI 權值。",
-    })
-
-    # 3 美元指數：100 是分水嶺
-    last, c1 = _chg(prices, "DXY", 1)
-    sig.append({
-        "key": "DXY", "label": "美元指數", "sub": "水位",
-        "value": _r(last, 2), "metric": _r(c1, 2), "unit": "%",
-        "state": _grade(last, t["DXY"]["watch"], t["DXY"]["alert"], "up"),
-        "rule": "站上 99.5 留意、100.5 警戒。強美元壓抑外資匯入台股。",
-    })
-
-    # 4 日圓：看速度不看方向
-    last, c5 = _chg(prices, "USDJPY", 5)
-    state = _grade(c5, t["USDJPY"]["watch"], t["USDJPY"]["alert"], "down")
-    if state == "calm" and c5 is not None and c5 >= 3.0:
-        state = "watch"   # 反向：貶太快會招來干預
-    sig.append({
-        "key": "USDJPY", "label": "美元/日圓", "sub": "5 日變動",
-        "value": _r(last, 2), "metric": _r(c5, 2), "unit": "%",
-        "state": state,
-        "rule": "日圓 5 日急升逾 1.5% 留意、逾 3% 警戒（套利平倉）；急貶逾 3% 則留意干預風險。緩貶為常態。",
-    })
-
-    # 5 費半：看它，不要看道瓊
-    last, c1 = _chg(prices, "SOX", 1)
-    sig.append({
-        "key": "SOX", "label": "費城半導體", "sub": "單日漲跌",
-        "value": _r(last, 2), "metric": _r(c1, 2), "unit": "%",
-        "state": _grade(c1, t["SOX"]["watch"], t["SOX"]["alert"], "down"),
-        "rule": "跌逾 0.8% 留意、逾 2% 警戒。台股跟的是費半，不是道瓊。",
-    })
-
-    # 6 台股：與台幣同向才算數
-    tw_last, tw_c1 = _chg(prices, "TAIEX", 1)
-    _twd_last, twd_c1 = _chg(prices, "USDTWD", 1)
-    twd_appreciation = None if twd_c1 is None else -twd_c1   # 台幣升值為正
-    if tw_c1 is None or twd_appreciation is None:
-        state, note = "unknown", "缺台幣資料，無法確認"
-    elif abs(tw_c1) < 0.15:
-        state, note = "calm", "指數持平，不做判讀"
-    elif (tw_c1 > 0) == (twd_appreciation > 0):
-        state, note = "calm", "股匯同向，外資動能確認"
-    else:
-        state, note = "watch", "股匯背離，反彈可能沒有外資的錢"
-    sig.append({
-        "key": "TAIEX", "label": "台股加權", "sub": "與台幣同向",
-        "value": _r(tw_last, 2), "metric": _r(tw_c1, 2), "unit": "%",
-        "extra": {"twd_appreciation_pct": _r(twd_appreciation, 3)},
-        "state": state, "note": note,
-        "rule": "台股漲、台幣同步升＝有效訊號；台股漲但台幣不升＝錢不是外資的，反彈通常撐不久。",
-    })
-    return sig
-
-
-def overall_state(signals: list[dict]) -> str:
-    known = [s["state"] for s in signals if s["state"] in STATE_ORDER]
-    if not known:
-        return "unknown"
-    alerts = sum(1 for s in known if s == "alert")
-    watches = sum(1 for s in known if s == "watch")
-    if alerts >= 2:
-        return "alert"
-    if alerts == 1 or watches >= 3:
-        return "watch"
-    return "calm"
+def fetch_foreign_flow(cache: Path, tw_dates: list[pd.Timestamp], verbose: bool) -> pd.Series:
+    """證交所 BFI82U：外資及陸資（不含外資自營商）買賣差額，單位：億元。"""
+    old = pd.Series(dtype=float)
+    if cache.exists():
+        df = pd.read_csv(cache, parse_dates=["date"])
+        old = df.set_index("date")["net_100m"]
+    want = [d for d in tw_dates[-30:] if d not in old.index]
+    got = {}
+    fails = 0
+    for i, d in enumerate(want):
+        if fails >= 3:
+            if verbose:
+                print("[twse] 外資連續失敗 3 次，這次先跳過")
+            break
+        url = ("https://www.twse.com.tw/rwd/zh/fund/BFI82U?type=day&response=json&dayDate="
+               + d.strftime("%Y%m%d"))
+        fails += 1
+        try:
+            j = json.loads(_get(url).decode("utf-8"))
+            fails = 0
+            if j.get("stat") == "OK":
+                for row in j.get("data", []):
+                    if row[0].startswith("外資及陸資"):
+                        v = _num(row[3])
+                        if v is not None:
+                            got[d] = v / 1e8
+        except Exception as exc:  # noqa: BLE001
+            if verbose:
+                print(f"[twse] 外資 {d:%Y-%m-%d} 失敗：{exc}")
+        if i < len(want) - 1:
+            time.sleep(1.2)
+    parts = [x for x in (old, pd.Series(got, dtype=float)) if len(x)]
+    s = pd.concat(parts) if parts else pd.Series(dtype=float)
+    s = s[~s.index.duplicated(keep="last")].sort_index()
+    if len(s):
+        pd.DataFrame({"date": s.index.strftime("%Y-%m-%d"), "net_100m": s.round(2).values}).to_csv(cache, index=False)
+    if verbose:
+        print(f"[twse] 外資買賣超 {len(s)} 筆" + (f"，最新 {s.index[-1]:%Y-%m-%d} {s.iloc[-1]:+.1f} 億" if len(s) else ""))
+    return s
 
 
 # --------------------------------------------------------------------------
-# 組裝
+# 抓資料：期交所夜盤
 # --------------------------------------------------------------------------
 
-def build_payload(prices: pd.DataFrame) -> dict:
-    rets = to_returns(prices)
-    keys = [a[0] for a in ASSETS if a[0] in rets.columns]
-    names  = {k: n  for k, n, _sh, _y, _s, _kind in ASSETS + AUX}
-    shorts = {k: sh for k, _n, sh, _y, _s, _kind in ASSETS + AUX}
-    signals = build_signals(prices)
+def fetch_tx_night(verbose: bool) -> dict | None:
+    """期交所 OpenAPI 每日行情。取台指期（TX）近月，比較盤後時段 vs 一般時段。
+    欄位名稱以關鍵字比對，抓不到就回 None，不影響其他訊號。"""
+    try:
+        raw = _get("https://openapi.taifex.com.tw/v1/DailyMarketReportFut", timeout=40)
+        if raw[:2] == b"\x1f\x8b":
+            import gzip
+            raw = gzip.decompress(raw)
+        rows = json.loads(raw.decode("utf-8-sig"))
+    except Exception as exc:  # noqa: BLE001
+        if verbose:
+            print(f"[taifex] 夜盤抓不到：{exc}")
+        return None
 
-    payload = {
-        "schema": 1,
-        "generated_at": datetime.now(TPE).isoformat(timespec="seconds"),
-        "as_of": prices.index[-1].strftime("%Y-%m-%d"),
-        "overall": overall_state(signals),
-        "assets": [{"key": k, "name": names[k], "short": shorts[k]} for k in keys],
-        "signals": signals,
-        "chain": chain_links(rets, 60),
-        "correlations": {
-            str(w): {"keys": keys, "matrix": corr_matrix(rets, keys, w)}
-            for w in WINDOWS
-        },
-        "lead_lag": {"window": 60, "target": "TAIEX", "rows": lead_lag(rets, keys, 60)},
-        "history": {"window": 60, "series": rolling_history(rets, 60, HISTORY_DAYS)},
-        "missing": [a[0] for a in ASSETS + AUX if a[0] not in prices.columns],
+    def key(rec, *words):
+        for k in rec:
+            if all(w.lower() in k.lower() for w in words):
+                return k
+        return None
+
+    if not rows:
+        return None
+    r0 = rows[0]
+    k_con, k_mon = key(r0, "contract"), key(r0, "month")
+    k_last, k_ses = key(r0, "last"), key(r0, "session")
+    k_date, k_set = key(r0, "date"), key(r0, "settlement")
+    k_spread = key(r0, "spread")
+    if not all([k_con, k_mon, k_last, k_ses, k_date]):
+        if verbose:
+            print(f"[taifex] 欄位對不上，實際欄位：{list(r0.keys())}")
+        return None
+
+    tx = [r for r in rows if str(r.get(k_con, "")).strip() == "TX"
+          and "/" not in str(r.get(k_mon, ""))
+          and not (k_spread and str(r.get(k_spread, "")).strip() not in ("", "-", "否", "N"))]
+    if not tx:
+        return None
+    near = min(str(r[k_mon]).strip() for r in tx)
+    tx = [r for r in tx if str(r[k_mon]).strip() == near]
+
+    def is_night(r):
+        s = str(r.get(k_ses, ""))
+        return ("盤後" in s) or ("after" in s.lower())
+
+    night = [r for r in tx if is_night(r)]
+    day = [r for r in tx if not is_night(r)]
+    if not night or not day:
+        if verbose:
+            print(f"[taifex] 找不到夜盤或日盤（時段值：{sorted({str(r.get(k_ses)) for r in tx})}）")
+        return None
+    n, d = night[0], day[0]
+    n_last = _num(n.get(k_last))
+    d_ref = _num(d.get(k_set)) if k_set else None
+    d_ref = d_ref or _num(d.get(k_last))
+    if not n_last or not d_ref:
+        return None
+    out = {
+        "date": str(n.get(k_date)), "day_date": str(d.get(k_date)), "month": near,
+        "last": n_last, "ref": d_ref, "pct": (n_last / d_ref - 1) * 100,
     }
-    return payload
+    if verbose:
+        print(f"[taifex] 夜盤 {near} {n_last:,.0f}（日盤結算 {d_ref:,.0f}）{out['pct']:+.2f}%")
+    return out
 
 
-def synthetic_prices(n: int = 400) -> pd.DataFrame:
-    """離線測試用：造一組有已知結構的假資料。"""
-    rng = np.random.default_rng(20260822)
-    idx = pd.bdate_range(end=pd.Timestamp("2026-08-21"), periods=n)
+# --------------------------------------------------------------------------
+# 抓資料：yfinance / Stooq
+# --------------------------------------------------------------------------
+
+def _fetch_stooq(symbol: str) -> pd.Series:
+    url = "https://stooq.com/q/d/l/?s=" + urllib.parse.quote(symbol, safe="") + "&i=d"
+    body = _get(url).decode("utf-8", errors="replace")
+    if "Close" not in body:
+        raise RuntimeError(f"{symbol} → {' '.join(body.split())[:90] or '(空白回應)'}")
+    df = pd.read_csv(io.StringIO(body))
+    df["Date"] = pd.to_datetime(df["Date"])
+    return df.set_index("Date")["Close"].sort_index()
+
+
+def load_market(verbose: bool) -> pd.DataFrame:
+    frames: dict[str, pd.Series] = {}
+    try:
+        import yfinance as yf
+        tickers = [m[2] for m in MARKET]
+        raw = yf.download(tickers, period=LOOKBACK_PERIOD, interval="1d",
+                          auto_adjust=False, progress=False, group_by="column", threads=True)
+        close = raw["Close"] if isinstance(raw.columns, pd.MultiIndex) else raw[["Close"]]
+        for key, _n, ysym, _s, _k in MARKET:
+            if ysym in close.columns:
+                s = pd.to_numeric(close[ysym], errors="coerce").dropna()
+                if len(s) > 100:
+                    frames[key] = s
+        if verbose:
+            print(f"[yfinance] 取得 {len(frames)}/{len(MARKET)} 檔")
+    except Exception as exc:  # noqa: BLE001
+        if verbose:
+            print(f"[yfinance] 失敗，改用 Stooq：{exc}")
+    for key, name, _y, ssym, _k in MARKET:
+        if key in frames:
+            continue
+        try:
+            frames[key] = _fetch_stooq(ssym)
+            if verbose:
+                print(f"[stooq] 補上 {key}（{name}）")
+        except Exception as exc:  # noqa: BLE001
+            if verbose:
+                print(f"[warn] {key}（{name}）兩個來源都抓不到：{exc}")
+    if "SOX" not in frames:
+        raise RuntimeError("費半抓不到，核心訊號無法計算")
+    df = pd.DataFrame(frames).sort_index()
+    df.index = pd.to_datetime(df.index).tz_localize(None).normalize()
+    return df
+
+
+# --------------------------------------------------------------------------
+# 計算
+# --------------------------------------------------------------------------
+
+def next_tw_session(us_date: pd.Timestamp, tw_index: pd.DatetimeIndex) -> pd.Timestamp | None:
+    later = tw_index[tw_index > us_date]
+    return later[0] if len(later) else None
+
+
+def classify(z: float | None) -> str:
+    if z is None:
+        return "unknown"
+    if z <= CORE_Z["alert"]:
+        return "alert"
+    if z <= CORE_Z["watch"]:
+        return "watch"
+    if z >= CORE_Z["up"]:
+        return "up"
+    return "calm"
+
+
+def bg_state(z: float | None) -> str:
+    if z is None:
+        return "unknown"
+    a = abs(z)
+    return "alert" if a >= BG_Z["alert"] else "watch" if a >= BG_Z["watch"] else "calm"
+
+
+def backtest(sox_ret: pd.Series, taiex: pd.Series) -> dict:
+    """同一套費半 z 規則套在過去每一天，看下一個台股交易日的報酬。"""
+    z = rolling_z(sox_ret)
+    tw_ret = taiex.pct_change() * 100
+    rows = []
+    for d, zv in z.dropna().items():
+        t = next_tw_session(d, tw_ret.index)
+        if t is None or pd.isna(tw_ret.get(t)):
+            continue
+        rows.append((classify(float(zv)), float(tw_ret[t])))
+    if not rows:
+        return {"n": 0, "buckets": []}
+    df = pd.DataFrame(rows, columns=["state", "ret"])
+    out = []
+    for st in ["alert", "watch", "calm", "up"]:
+        g = df[df.state == st]["ret"]
+        out.append({
+            "state": st, "label": STATE_TEXT[st], "n": int(len(g)),
+            "avg": _r(g.mean(), 2) if len(g) else None,
+            "median": _r(g.median(), 2) if len(g) else None,
+            "down_pct": _r((g < 0).mean() * 100, 0) if len(g) else None,
+            "worse_than_1pct": _r((g <= -1).mean() * 100, 0) if len(g) else None,
+        })
+    allr = df["ret"]
+    return {
+        "n": int(len(df)),
+        "start": z.dropna().index[0].strftime("%Y-%m-%d"),
+        "base": {"avg": _r(allr.mean(), 2), "down_pct": _r((allr < 0).mean() * 100, 0)},
+        "buckets": out,
+    }
+
+
+LOG_FIELDS = ["us_date", "made_at", "state", "sox_pct", "sox_z", "night_pct", "night_z",
+              "target_tw_date", "taiex_ret"]
+
+
+def update_log(path: Path, entry: dict, taiex: pd.Series) -> list[dict]:
+    rows: list[dict] = []
+    if path.exists():
+        with path.open(encoding="utf-8-sig", newline="") as f:
+            rows = list(csv.DictReader(f))
+    if entry:
+        new = {k: entry.get(k, "") for k in LOG_FIELDS}
+        hit = [i for i, r in enumerate(rows) if r["us_date"] == entry["us_date"]]
+        if not hit:
+            rows.append(new)
+        elif not rows[hit[0]].get("taiex_ret"):
+            rows[hit[0]] = new   # 結果還沒出來前，以最新一次判讀為準
+    tw_ret = taiex.pct_change() * 100
+    for r in rows:
+        if r.get("taiex_ret"):
+            continue
+        t = next_tw_session(pd.Timestamp(r["us_date"]), tw_ret.index)
+        if t is not None and not pd.isna(tw_ret.get(t)):
+            r["target_tw_date"] = t.strftime("%Y-%m-%d")
+            r["taiex_ret"] = f"{tw_ret[t]:.3f}"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=LOG_FIELDS)
+        w.writeheader()
+        w.writerows(rows)
+    return rows
+
+
+def live_score(rows: list[dict]) -> dict:
+    done = [r for r in rows if r.get("taiex_ret")]
+    out = []
+    for st in ["alert", "watch", "calm", "up"]:
+        g = [float(r["taiex_ret"]) for r in done if r["state"] == st]
+        out.append({"state": st, "label": STATE_TEXT[st], "n": len(g),
+                    "avg": _r(np.mean(g), 2) if g else None,
+                    "down_pct": _r(np.mean([x < 0 for x in g]) * 100, 0) if g else None})
+    recent = [{"us_date": r["us_date"], "state": r["state"],
+               "target": r.get("target_tw_date") or None,
+               "ret": _r(_num(r.get("taiex_ret")), 2)} for r in rows[-10:]]
+    return {"n": len(done), "pending": len(rows) - len(done), "buckets": out, "recent": recent[::-1]}
+
+
+def data_signature(mk, taiex, flow, night, taiex_src) -> str:
+    return "|".join([
+        mk["SOX"].dropna().index[-1].strftime("%Y-%m-%d"),
+        taiex.index[-1].strftime("%Y-%m-%d"), taiex_src,
+        flow.index[-1].strftime("%Y-%m-%d") if len(flow) else "-",
+        str((night or {}).get("date", "-")),
+    ])
+
+
+def build_payload(mk: pd.DataFrame, taiex: pd.Series, flow: pd.Series,
+                  night: dict | None, log_path: Path, sig: str = "") -> dict:
+    sox = mk["SOX"].dropna()
+    sox_ret = sox.pct_change() * 100
+    us_date = sox.index[-1]
+    sox_pct = float(sox_ret.iloc[-1])
+    sox_z = zscore_last(sox_ret)
+
+    tw_ret = taiex.pct_change() * 100
+    tw_last = taiex.index[-1]
+    tw_sd = float(tw_ret.tail(Z_WINDOW).std())
+
+    # 期交所把「前一晚」的夜盤算在隔天的交易日。報表日期若不晚於台股最新收盤日，
+    # 代表這場夜盤在台股收盤前就結束了，已經反映過，不能拿來判斷下一個交易日。
+    night_z = None
+    night_stale = False
+    if night:
+        try:
+            night_stale = pd.Timestamp(str(night["date"])) <= tw_last
+        except Exception:  # noqa: BLE001
+            night_stale = True
+        if not night_stale and tw_sd:
+            night_z = night["pct"] / tw_sd
+
+    # 決策：夜盤優先（它已含美股收盤後的資訊），抓不到才用費半
+    driver = "night" if night_z is not None else "sox"
+    z_used = night_z if driver == "night" else sox_z
+    state = classify(z_used)
+
+    # 外資確認
+    flow_info = None
+    notes = []
+    if len(flow):
+        f1 = float(flow.iloc[-1])
+        f5 = float(flow.tail(5).sum())
+        fz = zscore_last(flow) if len(flow) >= 20 else None
+        flow_info = {"date": flow.index[-1].strftime("%Y-%m-%d"), "net": _r(f1, 1),
+                     "sum5": _r(f5, 1), "z": _r(fz, 2)}
+        last_tw = float(tw_ret.iloc[-1])
+        if last_tw > 0.3 and f1 < -100:
+            notes.append(f"前一日台股上漲但外資賣超 {abs(f1):.0f} 億，漲勢不是外資推的。")
+        if f5 < -500:
+            notes.append(f"外資近 5 日累計賣超 {abs(f5):.0f} 億，籌碼面偏弱。")
+        if state in ("calm", "up") and f5 < -500:
+            notes.append("美股訊號雖不差，但外資持續撤出，不宜追高。")
+
+    core = [{
+        "key": "SOX", "label": "費城半導體", "sub": f"美股 {us_date:%m/%d} 收盤",
+        "value": _r(sox.iloc[-1], 2), "pct": _r(sox_pct, 2), "z": _r(sox_z, 2),
+        "state": classify(sox_z), "used": driver == "sox",
+        "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。",
+    }, {
+        "key": "NIGHT", "label": "台指期夜盤",
+        "sub": f"近月 {night['month']}" if night else "期交所",
+        "value": _r(night["last"], 0) if night else None,
+        "pct": _r(night["pct"], 2) if night and not night_stale else None, "z": _r(night_z, 2),
+        "state": classify(night_z) if night_z is not None else "unknown", "used": driver == "night",
+        "date": night["date"] if night else None, "stale": night_stale,
+        "rule": ("期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
+                 if night_stale else
+                 "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"),
+    }]
+
+    # 背景
+    bg = []
+
+    def add_bg(key, label, series, n, unit, as_bp=False, level=False):
+        s = series.dropna()
+        if len(s) <= n + Z_WINDOW // 2:
+            return
+        chg = s.diff(n) * 100 if as_bp else (s if level else s.pct_change(n) * 100)
+        z = zscore_last(chg.iloc[::1])
+        bg.append({"key": key, "label": label, "value": _r(s.iloc[-1], 2),
+                   "metric": _r(chg.iloc[-1], 2 if not as_bp else 1), "unit": unit,
+                   "z": _r(z, 2), "state": bg_state(z)})
+
+    if "BRENT" in mk:
+        add_bg("BRENT", "布蘭特 5 日", mk["BRENT"], 5, "%")
+    if "US10Y" in mk:
+        add_bg("US10Y", "美10Y 單日", mk["US10Y"], 1, "bp", as_bp=True)
+    if "DXY" in mk:
+        add_bg("DXY", "美元指數 5 日", mk["DXY"], 5, "%")
+    if "USDJPY" in mk:
+        add_bg("USDJPY", "美元/日圓 5 日", mk["USDJPY"], 5, "%")
+    if "BRENT" in mk and "WTI" in mk:
+        pair = mk[["BRENT", "WTI"]].dropna()
+        add_bg("SPREAD", "布蘭特−WTI", pair["BRENT"] - pair["WTI"], 0, "美元", level=True)
+    for b in bg:
+        if b["state"] == "alert":
+            notes.append(f"{b['label']} 波動異常（z={b['z']:+.1f}），留意是否擴散到股市。")
+
+    # 規則是否還成立：費半→台股（隔夜）60 日滾動相關
+    pair = []
+    for d, r in sox_ret.dropna().items():
+        t = next_tw_session(d, tw_ret.index)
+        if t is not None and not pd.isna(tw_ret.get(t)):
+            pair.append((t, r, tw_ret[t]))
+    roll = []
+    if pair:
+        p = pd.DataFrame(pair, columns=["t", "sox", "tw"]).drop_duplicates("t").set_index("t")
+        c = p["sox"].rolling(60, min_periods=30).corr(p["tw"]).dropna().tail(250)
+        roll = [{"d": d.strftime("%Y-%m-%d"), "v": _r(v)} for d, v in c.items()]
+
+    target = next_tw_session(us_date, tw_ret.index)
+    log_rows = update_log(log_path, {
+        "us_date": us_date.strftime("%Y-%m-%d"),
+        "made_at": datetime.now(TPE).isoformat(timespec="minutes"),
+        "state": state,
+        "sox_pct": f"{sox_pct:.3f}", "sox_z": "" if sox_z is None else f"{sox_z:.3f}",
+        "night_pct": "" if not night else f"{night['pct']:.3f}",
+        "night_z": "" if night_z is None else f"{night_z:.3f}",
+    } if target is None else None, taiex)
+    # target 不是 None 代表下一個台股交易日已經開過了（資料是舊的），不寫新紀錄
+
+    return {
+        "schema": 2,
+        "sig": sig,
+        "generated_at": datetime.now(TPE).isoformat(timespec="seconds"),
+        "us_date": us_date.strftime("%Y-%m-%d"),
+        "tw_last_date": tw_last.strftime("%Y-%m-%d"),
+        "tw_last_close": _r(taiex.iloc[-1], 2),
+        "tw_last_pct": _r(tw_ret.iloc[-1], 2),
+        "fresh": target is None,
+        "overall": state, "overall_text": STATE_TEXT[state], "action": ACTION_TEXT[state],
+        "driver": driver, "z_used": _r(z_used, 2),
+        "thresholds": CORE_Z,
+        "core": core, "flow": flow_info, "background": bg, "notes": notes,
+        "backtest": backtest(sox_ret, taiex),
+        "live": live_score(log_rows),
+        "rolling_corr": roll,
+    }
+
+
+# --------------------------------------------------------------------------
+# 離線測試
+# --------------------------------------------------------------------------
+
+def synthetic(n: int = 480):
+    rng = np.random.default_rng(20261017)
+    us = pd.bdate_range(end=pd.Timestamp("2026-10-16"), periods=n)
+    sox_r = rng.normal(0, 1.8, n)
     oil = rng.normal(0, 1.6, n)
-    wti = oil * 0.95 + rng.normal(0, 0.4, n)   # 與布蘭特高度連動但略有偏離
-    y10 = 0.35 * oil + rng.normal(0, 1.0, n)
-    dxy = 0.30 * y10 + rng.normal(0, 0.35, n)
-    jpy = 0.45 * y10 + rng.normal(0, 0.5, n)
-    sox = -0.55 * y10 - 0.40 * dxy + rng.normal(0, 1.5, n)
-    tw = 0.60 * np.roll(sox, 1) + rng.normal(0, 0.8, n)
-    twd = -0.25 * np.roll(sox, 1) + rng.normal(0, 0.2, n)
-    eur = -0.85 * dxy + rng.normal(0, 0.2, n)
+    y10 = 0.3 * oil + rng.normal(0, 4, n)
+    walk = lambda r, s: s * np.exp(np.cumsum(r / 100))  # noqa: E731
+    mk = pd.DataFrame({
+        "SOX": walk(sox_r, 9000), "BRENT": walk(oil, 80), "WTI": walk(oil * .95 + rng.normal(0, .4, n), 75),
+        "US10Y": 4.2 + np.cumsum(y10) / 1000, "DXY": walk(rng.normal(0, .35, n), 99),
+        "USDJPY": walk(rng.normal(0, .5, n), 150), "USDTWD": walk(rng.normal(0, .25, n), 31),
+    }, index=us)
+    # 台股：下一個交易日跟著費半走（0.45 倍）
+    tw_idx = us[1:]
+    tw_r = 0.45 * sox_r[:-1] + rng.normal(0, 0.8, n - 1)
+    taiex = pd.Series(walk(tw_r, 30000), index=tw_idx)
+    flow = pd.Series(rng.normal(0, 150, 30), index=tw_idx[-30:])
+    night = {"date": "20261017", "day_date": "20261016", "month": "202611",
+             "last": float(taiex.iloc[-1]) * 0.99, "ref": float(taiex.iloc[-1]), "pct": -1.0}
+    # 模擬「美股新收盤、台股尚未開」：台股少最後一天
+    return mk, taiex.iloc[:-1], flow.iloc[:-1], night
 
-    def walk(r, start):
-        return start * np.exp(np.cumsum(r / 100.0))
 
-    return pd.DataFrame({
-        "BRENT": walk(oil, 68), "WTI": walk(wti, 63), "DXY": walk(dxy, 96), "USDJPY": walk(jpy, 150),
-        "SOX": walk(sox, 5200), "TAIEX": walk(tw, 40000), "USDTWD": walk(twd, 32.5),
-        "EURUSD": walk(eur, 1.10), "US10Y": 4.2 + np.cumsum(y10) / 100.0,
-    }, index=idx)
-
+# --------------------------------------------------------------------------
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="data/correlations.json")
     ap.add_argument("--offline-test", action="store_true")
+    ap.add_argument("--force", action="store_true")
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args()
+    verbose = not args.quiet
+    out = Path(args.out)
+    data_dir = out.parent
 
     try:
-        prices = synthetic_prices() if args.offline_test else load_prices(not args.quiet)
-        payload = build_payload(prices)
+        if args.offline_test:
+            mk, taiex, flow, night = synthetic()
+            taiex_src = "test"
+            log_path = data_dir / "signal_log.test.csv"
+            if log_path.exists():
+                log_path.unlink()
+        else:
+            taiex = fetch_taiex_twse(data_dir / "taiex_twse.csv", verbose)
+            taiex_src = "twse"
+            mk = load_market(verbose)
+            if len(taiex) < 200:
+                if "TWII" not in mk:
+                    raise RuntimeError("台股資料兩個來源都抓不到")
+                print("[warn] 證交所資料不足，台股改用 Yahoo（可能晚一天）")
+                taiex = mk["TWII"].dropna()
+                taiex_src = "yahoo"
+            flow = fetch_foreign_flow(data_dir / "foreign_flow.csv", list(taiex.index), verbose)
+            night = fetch_tx_night(verbose)
+            log_path = data_dir / "signal_log.csv"
+
+        # 沒有新資料就不重寫（週末／假日）
+        if out.exists() and not args.force and not args.offline_test:
+            try:
+                prev = json.loads(out.read_text(encoding="utf-8"))
+                same = prev.get("sig") == data_signature(mk, taiex, flow, night, taiex_src)
+                if same:
+                    if verbose:
+                        print("[info] 沒有新資料（週末或假日），不更新")
+                    return 0
+            except Exception:  # noqa: BLE001
+                pass
+
+        payload = build_payload(mk, taiex, flow, night, log_path,
+                                data_signature(mk, taiex, flow, night, taiex_src))
     except Exception as exc:  # noqa: BLE001
         print(f"[error] 產生失敗：{exc}", file=sys.stderr)
         return 1
 
-    out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_suffix(".tmp")
     tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
-    tmp.replace(out)   # 原子寫入，避免網頁讀到寫到一半的檔
+    tmp.replace(out)
 
-    if not args.quiet:
-        print(f"[ok] {out}  資料日期 {payload['as_of']}  總體狀態 {payload['overall']}")
-        for s in payload["signals"]:
-            print(f"     {s['state']:<7} {s['label']}  {s['metric']}{s['unit']}")
-        if payload["missing"]:
-            print(f"[warn] 缺少資料：{', '.join(payload['missing'])}")
+    if verbose:
+        print(f"[ok] {out}")
+        print(f"     美股 {payload['us_date']} → 台股 {payload['tw_last_date']} 之後的下一個交易日"
+              + ("" if payload["fresh"] else "（注意：台股已開過，資料不是最新）"))
+        print(f"     總燈號：{payload['overall_text']}（依據 {payload['driver']}，z={payload['z_used']}）"
+              f" → {payload['action']}")
+        for c in payload["core"]:
+            print(f"     {c['label']:<6} {c['pct']}%  z={c['z']}")
+        bt = payload["backtest"]
+        print(f"     回測 {bt.get('n')} 天（基準：隔日平均 {bt.get('base', {}).get('avg')}%）")
+        for b in bt.get("buckets", []):
+            print(f"       {b['label']:<4} n={b['n']:<4} 隔日平均 {b['avg']}%  下跌機率 {b['down_pct']}%")
+        for n in payload["notes"]:
+            print(f"     ※ {n}")
     return 0
 
 
