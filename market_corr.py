@@ -332,19 +332,26 @@ def fetch_tx_night(verbose: bool) -> dict | None:
     return out
 
 
-def _oi_from_csv(verbose: bool) -> pd.DataFrame | None:
-    """期交所「三大法人-區分各期貨契約」CSV 下載，可一次抓一段日期，算得出每日增減。"""
-    end = datetime.now(TPE).date()
-    start = end - timedelta(days=45)
-    body = urllib.parse.urlencode({
-        "queryStartDate": start.strftime("%Y/%m/%d"), "queryEndDate": end.strftime("%Y/%m/%d"),
-        "commodityId": "TXF",
-    }).encode()
-    req = urllib.request.Request("https://www.taifex.com.tw/cht/3/futContractsDateDown",
-                                 data=body, headers=UA)
+def _oi_from_csv(verbose: bool, end_candidates: list[date]) -> pd.DataFrame | None:
+    """期交所「三大法人-區分各期貨契約」CSV 下載，可一次抓一段日期，算得出每日增減。
+    結束日期不能晚於期交所最新資料日，否則回錯誤頁；所以從台股最近交易日開始往前試。"""
+    text = None
     try:
-        with urllib.request.urlopen(req, timeout=40, context=_SSL) as resp:
-            text = resp.read().decode("cp950", errors="replace")
+        for end in end_candidates[:4]:
+            body = urllib.parse.urlencode({
+                "queryStartDate": (end - timedelta(days=40)).strftime("%Y/%m/%d"),
+                "queryEndDate": end.strftime("%Y/%m/%d"), "commodityId": "TXF",
+            }).encode()
+            req = urllib.request.Request("https://www.taifex.com.tw/cht/3/futContractsDateDown",
+                                         data=body, headers=UA)
+            with urllib.request.urlopen(req, timeout=40, context=_SSL) as resp:
+                t = resp.read().decode("cp950", errors="replace")
+            if t.lstrip("\ufeff").startswith("日期,"):
+                text = t
+                break
+            time.sleep(1)
+        if text is None:
+            raise RuntimeError("期交所回傳的不是 CSV（日期可能還沒有資料）")
         df = pd.read_csv(io.StringIO(text))
         df = df[df["身份別"].astype(str).str.startswith("外資")]
         out = pd.DataFrame({
@@ -377,9 +384,12 @@ def _oi_from_openapi() -> pd.DataFrame:
     }])
 
 
-def fetch_foreign_futures_oi(cache: Path, verbose: bool) -> dict | None:
+def fetch_foreign_futures_oi(cache: Path, verbose: bool,
+                             tw_dates: list[pd.Timestamp] | None = None) -> dict | None:
     """外資及陸資在臺股期貨的未平倉口數（淨額＝多單−空單）。CSV 為主、OpenAPI 備援，結果存快取。"""
-    new = _oi_from_csv(verbose)
+    today = datetime.now(TPE).date()
+    ends = [d.date() for d in reversed(tw_dates or [])][:4] or [today - timedelta(days=i) for i in range(4)]
+    new = _oi_from_csv(verbose, ends)
     if new is None:
         try:
             new = _oi_from_openapi()
@@ -777,7 +787,7 @@ def main() -> int:
                 taiex_src = "yahoo"
             flow = fetch_foreign_flow(data_dir / "foreign_flow.csv", list(taiex.index), verbose)
             night = fetch_tx_night(verbose)
-            fut_oi = fetch_foreign_futures_oi(data_dir / "foreign_fut_oi.csv", verbose)
+            fut_oi = fetch_foreign_futures_oi(data_dir / "foreign_fut_oi.csv", verbose, list(taiex.index))
             log_path = data_dir / "signal_log.csv"
 
         # 沒有新資料就不重寫（週末／假日）
@@ -785,7 +795,7 @@ def main() -> int:
             try:
                 prev = json.loads(out.read_text(encoding="utf-8"))
                 same = (prev.get("sig") == data_signature(mk, taiex, flow, night, taiex_src)
-                        and ((prev.get("flow") or {}).get("fut") or {}).get("date") == (fut_oi or {}).get("date"))
+                        and ((prev.get("flow") or {}).get("fut") or None) == (fut_oi or None))
                 if same:
                     if verbose:
                         print("[info] 沒有新資料（週末或假日），不更新")
