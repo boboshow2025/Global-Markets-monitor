@@ -122,6 +122,30 @@
   .modal-chart .tradingview-widget-container__widget{height:100%;width:100%}
 
   @media(prefers-reduced-motion:reduce){.zone.live .dot{animation:none}}
+
+  /* ===== 區塊配色：三大區各自一個底色與主色，方便一眼分辨 ===== */
+  .zone-sec{--accent:var(--gold);border-radius:18px;padding:16px clamp(12px,2vw,20px) 18px;margin-top:22px;
+    background:var(--sec-bg);border:1px solid var(--sec-line);position:relative}
+  .zone-sec::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:0 4px 4px 0;background:var(--accent)}
+  .zone-sec .sec-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+  .zone-sec .sec-title .no{font:700 13px/1 var(--mono);color:var(--sec-bg);background:var(--accent);border-radius:6px;padding:4px 7px}
+  .zone-sec .sec-title .zh{font:700 clamp(17px,2vw,20px)/1.2 var(--disp);color:var(--accent);letter-spacing:.03em}
+  .zone-sec .sec-title .en{font:600 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .zone-sec .sec-title .hint{font-size:12px;color:var(--muted);flex-basis:100%}
+  @media(min-width:700px){.zone-sec .sec-title .hint{flex-basis:auto;margin-left:auto}}
+  /* 01 局勢總覽：琥珀金 */
+  .sec-ov{--sec-bg:#17140D;--sec-line:#3B3220;--panel:#211C12;--line:#3E3420;--accent:#E0B45C}
+  /* 02 開盤前訊號：湖水藍 */
+  .sec-tx{--sec-bg:#0B1820;--sec-line:#1E3B4A;--panel:#10232E;--line:#24485A;--accent:#4FB8DE}
+  /* 03 全球行情：紫 */
+  .sec-mk{--sec-bg:#130F22;--sec-line:#2E2650;--panel:#1A1530;--line:#332B57;--accent:#A08CFF}
+  .zone-sec .ov-eyebrow,.zone-sec .tx-eyebrow{display:none}
+  .zone-sec.tx{margin:22px 0 0;padding-top:16px;border-top:1px solid var(--sec-line)}
+  .zone-sec .grid{margin-top:0}
+  .nav-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .nav-links .screener-link{margin-top:0}
+  .screener-link.l-sc{border-color:#E5534B;color:#FF8A84} .screener-link.l-sc:hover{background:rgba(229,83,75,.12)}
+  .screener-link.l-etf{border-color:#3FB68B;color:#5FD3A6} .screener-link.l-etf:hover{background:rgba(63,182,139,.12)}
 </style>
 </head>
 <body>
@@ -130,13 +154,15 @@
     <div class="brand">
       <h1>全球盤勢監控</h1>
       <div class="sub">Global Markets Monitor · <b id="tpe">--:--:--</b> 台北</div>
-      <a class="screener-link" href="./screener.html">台股市場寬度＋每日選股 →</a>
-      <a class="screener-link" href="./etf.html">主動ETF持股報告 →</a>
+      <div class="nav-links">
+        <a class="screener-link l-sc" href="./screener.html">台股市場寬度＋每日選股 →</a>
+        <a class="screener-link l-etf" href="./etf.html">主動ETF選股名單 →</a>
+      </div>
     </div>
     <div class="zones" id="zones"></div>
   </header>
 
-<section class="ov" id="ov-panel">
+<section class="ov zone-sec sec-ov" id="ov-panel">
   <style>
   /* 局勢總覽：所有選擇器掛在 .ov 底下，不影響既有樣式 */
   .ov{--ov-red:#FF4D4F; --ov-orange:#E5654B; --ov-amber:#D9A441; --ov-calm:var(--muted); --ov-off:var(--closed);
@@ -184,6 +210,7 @@
   </style>
 
   <p class="ov-eyebrow">Market regime · 局勢總覽</p>
+  <div class="sec-title"><span class="no">01</span><span class="zh">局勢總覽</span><span class="en">Market regime</span><span class="hint">開盤前 → 資金輪動 → 恐慌儀表</span></div>
   <div class="ov-verdict" id="ov-verdict" data-c="off"><span class="t">載入中…</span></div>
   <div class="ov-grid">
     <div class="ov-card" id="ov-pre" data-c="off"></div>
@@ -333,7 +360,7 @@
 </section>
 
 
-<section class="tx" id="tx-panel" data-src="./data/correlations.json">
+<section class="tx zone-sec sec-tx" id="tx-panel" data-src="./data/correlations.json">
   <style>
   /* 全部選擇器掛在 .tx 底下，不污染既有樣式 */
   .tx{
@@ -398,6 +425,7 @@
   </style>
 
   <p class="tx-eyebrow">Pre-open signal · 開盤前訊號</p>
+  <div class="sec-title"><span class="no">02</span><span class="zh">開盤前訊號</span><span class="en">Pre-open signal</span><span class="hint">費半隔夜／台指期夜盤＋外資籌碼</span></div>
   <div id="tx-body" hidden>
     <div class="tx-verdict" id="tx-verdict"></div>
     <ul class="tx-notes" id="tx-notes"></ul>
@@ -485,7 +513,10 @@
   </script>
 </section>
 
+  <section class="zone-sec sec-mk" id="mk-panel">
+  <div class="sec-title"><span class="no">03</span><span class="zh">全球行情</span><span class="en">Live charts</span><span class="hint">點右上角 ⤢ 放大</span></div>
   <main class="grid" id="grid"></main>
+  </section>
 
   <footer>
     <div><b>標的：</b>道瓊/那斯達克/日經為券商 CFD（近 24 小時，反映電子盤走勢）；美元含美元指數（DXY）、美元/台幣、美元/日圓；原油為布蘭特（海運定價，反映中東供給風險）；債券以 7–10 年債反向 ETF（PST）替代，與 10 年期殖利率「同向」（殖利率上升→上漲）。</div>
