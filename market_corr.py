@@ -295,15 +295,13 @@ def fetch_tx_night(verbose: bool) -> dict | None:
     k_con, k_mon = key(r0, "contract"), key(r0, "month")
     k_last, k_ses = key(r0, "last"), key(r0, "session")
     k_date, k_set = key(r0, "date"), key(r0, "settlement")
-    k_spread = key(r0, "spread")
     if not all([k_con, k_mon, k_last, k_ses, k_date]):
         if verbose:
             print(f"[taifex] 欄位對不上，實際欄位：{list(r0.keys())}")
         return None
 
     tx = [r for r in rows if str(r.get(k_con, "")).strip() == "TX"
-          and "/" not in str(r.get(k_mon, ""))
-          and not (k_spread and str(r.get(k_spread, "")).strip() not in ("", "-", "否", "N"))]
+          and "/" not in str(r.get(k_mon, ""))]
     if not tx:
         return None
     near = min(str(r[k_mon]).strip() for r in tx)
@@ -332,6 +330,85 @@ def fetch_tx_night(verbose: bool) -> dict | None:
     if verbose:
         print(f"[taifex] 夜盤 {near} {n_last:,.0f}（日盤結算 {d_ref:,.0f}）{out['pct']:+.2f}%")
     return out
+
+
+def _oi_from_csv(verbose: bool) -> pd.DataFrame | None:
+    """期交所「三大法人-區分各期貨契約」CSV 下載，可一次抓一段日期，算得出每日增減。"""
+    end = datetime.now(TPE).date()
+    start = end - timedelta(days=45)
+    body = urllib.parse.urlencode({
+        "queryStartDate": start.strftime("%Y/%m/%d"), "queryEndDate": end.strftime("%Y/%m/%d"),
+        "commodityId": "TXF",
+    }).encode()
+    req = urllib.request.Request("https://www.taifex.com.tw/cht/3/futContractsDateDown",
+                                 data=body, headers=UA)
+    try:
+        with urllib.request.urlopen(req, timeout=40, context=_SSL) as resp:
+            text = resp.read().decode("cp950", errors="replace")
+        df = pd.read_csv(io.StringIO(text))
+        df = df[df["身份別"].astype(str).str.startswith("外資")]
+        out = pd.DataFrame({
+            "date": pd.to_datetime(df["日期"]),
+            "net": df["多空未平倉口數淨額"].astype(int),
+            "long": df["多方未平倉口數"].astype(int),
+            "short": df["空方未平倉口數"].astype(int),
+        })
+        return out if len(out) else None
+    except Exception as exc:  # noqa: BLE001
+        if verbose:
+            print(f"[taifex] 未平倉 CSV 失敗，改用 OpenAPI：{exc}")
+        return None
+
+
+def _oi_from_openapi() -> pd.DataFrame:
+    raw = _get("https://openapi.taifex.com.tw/v1/"
+               "MarketDataOfMajorInstitutionalTradersDetailsOfFuturesContractsBytheDate", timeout=40)
+    if raw[:2] == b"\x1f\x8b":
+        import gzip
+        raw = gzip.decompress(raw)
+    rows = json.loads(raw.decode("utf-8-sig"))
+    rec = next(r for r in rows if str(r.get("ContractCode", "")).strip() == "臺股期貨"
+               and str(r.get("Item", "")).startswith("外資"))
+    return pd.DataFrame([{
+        "date": pd.Timestamp(str(rec["Date"])),
+        "net": int(_num(rec["OpenInterest(Net)"])),
+        "long": int(_num(rec["OpenInterest(Long)"])),
+        "short": int(_num(rec["OpenInterest(Short)"])),
+    }])
+
+
+def fetch_foreign_futures_oi(cache: Path, verbose: bool) -> dict | None:
+    """外資及陸資在臺股期貨的未平倉口數（淨額＝多單−空單）。CSV 為主、OpenAPI 備援，結果存快取。"""
+    new = _oi_from_csv(verbose)
+    if new is None:
+        try:
+            new = _oi_from_openapi()
+        except Exception as exc:  # noqa: BLE001
+            if verbose:
+                print(f"[taifex] 外資期貨未平倉抓不到：{exc}")
+            new = None
+
+    hist = pd.DataFrame(columns=["date", "net", "long", "short"])
+    if cache.exists():
+        hist = pd.read_csv(cache, parse_dates=["date"])
+    if new is not None:
+        hist = hist[~hist["date"].isin(new["date"])]
+        hist = pd.concat([x for x in (hist, new) if len(x)])
+    if not len(hist):
+        return None
+    hist = hist.sort_values("date").drop_duplicates("date", keep="last").tail(250)
+    hist.assign(date=hist["date"].dt.strftime("%Y-%m-%d")).to_csv(cache, index=False)
+
+    last = hist.iloc[-1]
+    prev = hist.iloc[-2] if len(hist) > 1 else None
+    chg = int(last["net"] - prev["net"]) if prev is not None else None
+    net = int(last["net"])
+    if verbose:
+        print(f"[taifex] 外資台指期淨未平倉 {net:+,} 口"
+              + (f"（較前日 {chg:+,}）" if chg is not None else "（首日，明天起有增減）"))
+    return {"date": last["date"].strftime("%Y-%m-%d"), "net": net,
+            "long": int(last["long"]), "short": int(last["short"]), "chg": chg,
+            "prev_date": prev["date"].strftime("%Y-%m-%d") if prev is not None else None}
 
 
 # --------------------------------------------------------------------------
@@ -499,7 +576,8 @@ def data_signature(mk, taiex, flow, night, taiex_src) -> str:
 
 
 def build_payload(mk: pd.DataFrame, taiex: pd.Series, flow: pd.Series,
-                  night: dict | None, log_path: Path, sig: str = "") -> dict:
+                  night: dict | None, log_path: Path, sig: str = "",
+                  fut_oi: dict | None = None) -> dict:
     sox = mk["SOX"].dropna()
     sox_ret = sox.pct_change() * 100
     us_date = sox.index[-1]
@@ -543,6 +621,13 @@ def build_payload(mk: pd.DataFrame, taiex: pd.Series, flow: pd.Series,
             notes.append(f"外資近 5 日累計賣超 {abs(f5):.0f} 億，籌碼面偏弱。")
         if state in ("calm", "up") and f5 < -500:
             notes.append("美股訊號雖不差，但外資持續撤出，不宜追高。")
+    if fut_oi:
+        flow_info = flow_info or {}
+        flow_info["fut"] = fut_oi
+        if fut_oi.get("chg") is not None and fut_oi["chg"] <= -3000:
+            notes.append(f"外資台指期淨空單增加 {abs(fut_oi['chg']):,} 口，期貨端也在加碼避險。")
+        elif fut_oi.get("chg") is not None and fut_oi["chg"] >= 3000:
+            notes.append(f"外資台指期淨空單減少 {fut_oi['chg']:,} 口，空方在回補。")
 
     core = [{
         "key": "SOX", "label": "費城半導體", "sub": f"美股 {us_date:%m/%d} 收盤",
@@ -674,6 +759,8 @@ def main() -> int:
     try:
         if args.offline_test:
             mk, taiex, flow, night = synthetic()
+            fut_oi = {"date": "2026-10-16", "net": -93675, "long": 9812, "short": 103487,
+                      "chg": -4210, "prev_date": "2026-10-15"}
             taiex_src = "test"
             log_path = data_dir / "signal_log.test.csv"
             if log_path.exists():
@@ -690,13 +777,15 @@ def main() -> int:
                 taiex_src = "yahoo"
             flow = fetch_foreign_flow(data_dir / "foreign_flow.csv", list(taiex.index), verbose)
             night = fetch_tx_night(verbose)
+            fut_oi = fetch_foreign_futures_oi(data_dir / "foreign_fut_oi.csv", verbose)
             log_path = data_dir / "signal_log.csv"
 
         # 沒有新資料就不重寫（週末／假日）
         if out.exists() and not args.force and not args.offline_test:
             try:
                 prev = json.loads(out.read_text(encoding="utf-8"))
-                same = prev.get("sig") == data_signature(mk, taiex, flow, night, taiex_src)
+                same = (prev.get("sig") == data_signature(mk, taiex, flow, night, taiex_src)
+                        and ((prev.get("flow") or {}).get("fut") or {}).get("date") == (fut_oi or {}).get("date"))
                 if same:
                     if verbose:
                         print("[info] 沒有新資料（週末或假日），不更新")
@@ -705,7 +794,7 @@ def main() -> int:
                 pass
 
         payload = build_payload(mk, taiex, flow, night, log_path,
-                                data_signature(mk, taiex, flow, night, taiex_src))
+                                data_signature(mk, taiex, flow, night, taiex_src), fut_oi)
     except Exception as exc:  # noqa: BLE001
         print(f"[error] 產生失敗：{exc}", file=sys.stderr)
         return 1

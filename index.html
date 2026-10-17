@@ -139,7 +139,7 @@
   <style>
   /* 全部選擇器掛在 .tx 底下，不污染既有樣式 */
   .tx{
-    --st-alert:#E5654B; --st-watch:var(--gold); --st-calm:var(--muted); --st-up:var(--open); --st-unknown:var(--closed);
+    --st-alert:#FF4D4F; --st-watch:#E5654B; --st-calm:var(--muted); --st-up:var(--gold); --st-unknown:var(--closed);
     margin:22px 0 26px; padding-top:20px; border-top:1px solid var(--line); position:relative;
   }
   .tx *{box-sizing:border-box}
@@ -174,31 +174,27 @@
   .tx-sub{font:400 11px/1.4 var(--mono); color:var(--muted)}
   .tx-rule{font-size:11px; line-height:1.5; color:var(--muted); margin-top:8px}
 
-  /* 背景 */
-  .tx-bg{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; align-items:center}
-  .tx-bg-h{font:600 10px/1 var(--mono); letter-spacing:.16em; color:var(--muted); margin-right:4px}
-  .tx-chip{display:flex; gap:6px; align-items:baseline; border:1px solid var(--line); border-radius:999px; padding:5px 10px; font-size:11.5px}
-  .tx-chip[data-st=watch],.tx-chip[data-st=alert]{border-color:var(--st)}
-  .tx-chip span{font-family:var(--mono); color:var(--muted)}
-  .tx-chip[data-st=watch] span,.tx-chip[data-st=alert] span{color:var(--st)}
+  /* 背景區塊 */
+  .tx-sec{font:600 10px/1 var(--mono); letter-spacing:.16em; color:var(--muted); margin:16px 0 8px}
+  .tx-bg{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px}
+  .tx-bgc{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px; min-width:0}
+  .tx-bgc[data-st=watch],.tx-bgc[data-st=alert]{border-color:var(--st)}
+  .tx-bgc .tx-card-h{font-size:11.5px}
+  .tx-bgc .tx-big{font-size:19px; margin:6px 0 2px}
+  .tx-bgc[data-st=watch] .tx-flag,.tx-bgc[data-st=alert] .tx-flag{color:var(--st)}
 
-  /* 命中率 */
-  .tx-two{display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:10px; margin-top:12px}
-  .tx-box{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; min-width:0}
-  .tx-box h3{font-size:13px; margin:0 0 2px}
-  .tx-box .tx-sub{margin-bottom:8px}
-  .tx-tbl{width:100%; border-collapse:collapse; font-size:12px; font-variant-numeric:tabular-nums}
-  .tx-tbl th{font:500 10px/1.4 var(--mono); color:var(--muted); text-align:right; padding:4px 6px; border-bottom:1px solid var(--line)}
-  .tx-tbl td{text-align:right; padding:6px; border-bottom:1px solid var(--line); font-family:var(--mono)}
-  .tx-tbl th:first-child,.tx-tbl td:first-child{text-align:left; font-family:var(--sans)}
-  .tx-tbl td:first-child i{width:7px; height:7px; border-radius:50%; background:var(--st); display:inline-block; margin-right:6px}
-  .tx-tbl tr.now td{background:rgba(201,169,106,.08)}
-  .tx-spark{width:100%; height:90px; display:block; margin-top:4px}
+  /* 外資籌碼 */
+  .tx-row{display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-top:8px}
+  .tx-row + .tx-row{padding-top:8px; border-top:1px dashed var(--line)}
+  .tx-row .k{font-size:11.5px; color:var(--muted)}
+  .tx-row .v{font:600 20px/1.1 var(--mono); font-variant-numeric:tabular-nums; text-align:right}
+  .tx-row .v small{font-size:11px; font-weight:400; color:var(--muted); margin-left:4px}
+  .tx-row .d{display:block; font:400 10.5px/1.4 var(--mono); color:var(--muted); margin-top:2px; text-align:right}
   .tx-foot{font-size:11px; color:var(--muted); margin-top:10px; line-height:1.6}
 
   @media (max-width:760px){
     .tx-core{grid-template-columns:1fr}
-    .tx-two{grid-template-columns:1fr}
+    .tx-bg{grid-template-columns:repeat(2,minmax(0,1fr))}
     .tx-verdict{grid-template-columns:1fr}
   }
   </style>
@@ -208,22 +204,9 @@
     <div class="tx-verdict" id="tx-verdict"></div>
     <ul class="tx-notes" id="tx-notes"></ul>
     <div class="tx-core" id="tx-core"></div>
+    <p class="tx-sec">背景指標 · 不參與燈號</p>
     <div class="tx-bg" id="tx-bg"></div>
-    <div class="tx-two">
-      <div class="tx-box">
-        <h3>這套規則過去準不準</h3>
-        <div class="tx-sub" id="tx-bt-sub"></div>
-        <table class="tx-tbl" id="tx-bt"></table>
-        <div class="tx-sub" id="tx-live" style="margin-top:8px"></div>
-      </div>
-      <div class="tx-box">
-        <h3>費半→台股 連動還在嗎</h3>
-        <div class="tx-sub">60 日滾動相關（費半隔夜 vs 台股隔日）。掉到 0.3 以下，這套規則就不可靠。</div>
-        <svg class="tx-spark" id="tx-spark" preserveAspectRatio="none"></svg>
-        <div class="tx-sub" id="tx-spark-sub"></div>
-      </div>
-    </div>
-    <p class="tx-foot">燈號只由費半隔夜（或台指期夜盤，抓得到時優先）決定，門檻是「跟自己近 60 個交易日比」的 z 分數：≤ −2 強烈偏空、≤ −1 偏空、≥ +1 偏多。油價、殖利率、美元、日圓只作背景，波動異常才會在上方提醒。</p>
+    <p class="tx-foot">燈號只由費半隔夜（或台指期夜盤，抓得到時優先）決定，門檻是「跟自己近 60 個交易日比」的 z 分數：≤ −2 強烈偏空、≤ −1 偏空、≥ +1 偏多。背景指標只供參考，|z| ≥ 1.5 標示偏離、≥ 2.5 標示異常並在上方提醒。</p>
   </div>
   <div class="tx-state" id="tx-state">載入資料中…</div>
 
@@ -276,53 +259,25 @@
           '<div class="tx-sub">' + esc(c.sub) + (c.value ? ' · ' + Number(c.value).toLocaleString() : '') + '</div>' +
           '<div class="tx-rule">' + esc(c.rule) + '</div></div>';
       });
-      const f = d.flow;
-      cards.push('<div class="tx-card" data-st="' + (f ? (f.sum5 < -500 ? 'watch' : f.sum5 > 500 ? 'up' : 'calm') : 'unknown') + '">' +
-        '<div class="tx-card-h"><span><i></i>外資現貨買賣超</span><span class="tx-tag" style="--st:var(--muted)">確認用</span></div>' +
-        (f ? '<div class="tx-big"><span class="' + cls(f.net) + '">' + sgn(f.net, 0) + '</span><small>億</small></div>' +
-             '<div class="tx-sub">' + md(f.date) + ' · 近 5 日 ' + sgn(f.sum5, 0) + ' 億</div>'
-           : '<div class="tx-big">—<small>未取得</small></div><div class="tx-sub">證交所</div>') +
-        '<div class="tx-rule">不單獨決定燈號。台股漲但外資賣，或外資連續大賣，會在上方提醒。</div></div>');
+      const f = d.flow || {}, fu = f.fut;
+      const fst = (f.sum5 !== undefined && f.sum5 < -500) || (fu && fu.chg !== null && fu.chg <= -3000) ? 'watch'
+                : (f.sum5 > 500 || (fu && fu.chg >= 3000)) ? 'up' : (f.date || fu) ? 'calm' : 'unknown';
+      const n0 = (v) => v === null || v === undefined ? '—' : (v > 0 ? '+' : '') + Math.round(v).toLocaleString();
+      cards.push('<div class="tx-card" data-st="' + fst + '">' +
+        '<div class="tx-card-h"><span><i></i>外資籌碼</span><span class="tx-tag" style="--st:var(--muted)">確認用</span></div>' +
+        '<div class="tx-row"><span class="k">現貨買賣超<br>' + md(f.date) + '</span><span><span class="v">' + n0(f.net) + '<small>億</small></span>' +
+          '<span class="d">近 5 日 ' + n0(f.sum5) + ' 億</span></span></div>' +
+        '<div class="tx-row"><span class="k">台指期淨未平倉<br>' + (fu ? md(fu.date) : '期交所') + '</span><span><span class="v">' + (fu ? n0(fu.net) : '—') + '<small>口</small></span>' +
+          '<span class="d">' + (fu ? (fu.chg === null ? '明天起顯示增減' : '較前日 ' + n0(fu.chg) + ' 口') + ' · 多 ' + fu.long.toLocaleString() + ' / 空 ' + fu.short.toLocaleString() : '未取得') + '</span></span></div>' +
+        '<div class="tx-rule">淨未平倉為負＝外資淨空單。空單擴大代表期貨端在避險，縮小代表回補。不單獨決定燈號。</div></div>');
       $('tx-core').innerHTML = cards.join('');
 
       // 背景
-      $('tx-bg').innerHTML = '<span class="tx-bg-h">背景</span>' + (d.background || []).map((b) =>
-        '<span class="tx-chip" data-st="' + b.state + '" title="z = ' + sgn(b.z, 2) + '（相對近 60 日）">' + esc(b.label) +
-        ' <span>' + sgn(b.metric, b.unit === 'bp' ? 1 : 2) + esc(b.unit === '%' ? '%' : ' ' + b.unit) + '</span></span>').join('');
-
-      // 回測
-      const bt = d.backtest || {};
-      $('tx-bt-sub').textContent = bt.n
-        ? '回測 ' + md(bt.start) + ' 起 ' + bt.n + ' 個交易日；全部日子平均 ' + sgn(bt.base.avg) + '%、下跌機率 ' + bt.base.down_pct + '%'
-        : '資料不足，無法回測';
-      $('tx-bt').innerHTML = '<tr><th>訊號</th><th>次數</th><th>隔日平均</th><th>下跌機率</th><th>跌逾1%</th></tr>' +
-        (bt.buckets || []).map((b) => '<tr class="' + (b.state === d.overall ? 'now' : '') + '"><td data-st="' + b.state + '"><i></i>' + esc(b.label) + '</td><td>' + b.n +
-          '</td><td class="' + cls(b.avg) + '">' + (b.avg === null ? '—' : sgn(b.avg) + '%') + '</td><td>' + (b.down_pct ?? '—') + (b.down_pct === null ? '' : '%') +
-          '</td><td>' + (b.worse_than_1pct ?? '—') + (b.worse_than_1pct === null ? '' : '%') + '</td></tr>').join('');
-      const lv = d.live || {};
-      const lvDone = (lv.buckets || []).filter((b) => b.n).map((b) => b.label + ' ' + b.n + ' 次、隔日平均 ' + sgn(b.avg) + '%');
-      $('tx-live').textContent = '實戰紀錄：已驗證 ' + (lv.n || 0) + ' 天' + (lv.pending ? '（' + lv.pending + ' 天等台股收盤）' : '') +
-        (lvDone.length ? '。' + lvDone.join('；') : '。累積一兩個月後再看。');
-
-      // 滾動相關
-      spark(d.rolling_corr || []);
-    }
-
-    function spark(pts) {
-      const svg = $('tx-spark');
-      if (!pts.length) { svg.innerHTML = ''; $('tx-spark-sub').textContent = '資料不足'; return; }
-      const W = 300, H = 90, lo = -0.2, hi = 1;
-      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-      const x = (i) => i / (pts.length - 1) * W;
-      const y = (v) => H - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * H;
-      const line = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1)).join('');
-      const g = (v, label) => '<line x1="0" x2="' + W + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--line)" stroke-dasharray="' + (v === 0.3 ? '4 3' : '0') + '" vector-effect="non-scaling-stroke"/>' +
-        '<text x="2" y="' + (y(v) - 3) + '" font-size="8" fill="var(--muted)" font-family="var(--mono)">' + label + '</text>';
-      svg.innerHTML = g(0, '0') + g(0.3, '0.3') + g(0.6, '0.6') +
-        '<path d="' + line + '" fill="none" stroke="var(--gold)" stroke-width="1.6" vector-effect="non-scaling-stroke"/>';
-      const last = pts[pts.length - 1].v;
-      $('tx-spark-sub').innerHTML = '最新 <b style="color:var(--text)">' + last.toFixed(2) + '</b>（' + md(pts[0].d) + ' – ' + md(pts[pts.length - 1].d) + '）' +
-        (last < 0.3 ? ' · <span style="color:var(--st-alert)">連動偏弱，燈號僅供參考</span>' : '');
+      const BGTXT = { calm: '正常', watch: '偏離', alert: '異常', unknown: '—' };
+      $('tx-bg').innerHTML = (d.background || []).map((b) =>
+        '<div class="tx-bgc" data-st="' + b.state + '"><div class="tx-card-h"><span><i></i>' + esc(b.label) + '</span></div>' +
+        '<div class="tx-big">' + sgn(b.metric, b.unit === 'bp' ? 1 : 2) + '<small>' + esc(b.unit) + '</small></div>' +
+        '<div class="tx-sub">現值 ' + (b.value ?? '—') + ' · <span class="tx-flag">z ' + sgn(b.z, 1) + ' ' + BGTXT[b.state] + '</span></div></div>').join('');
     }
 
     load();
