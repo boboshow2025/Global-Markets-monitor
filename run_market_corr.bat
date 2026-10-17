@@ -8,11 +8,16 @@ set "AUTO_PUSH=1"
 cd /d "%REPO%" || exit /b 1
 
 echo [%date% %time%] start
+
+REM 1) pre-open signal
 "%PYEXE%" market_corr.py --out "data\correlations.json"
-if errorlevel 1 (
-    echo [error] data generation failed, keeping previous json
-    exit /b 1
-)
+if errorlevel 1 echo [warn] market_corr failed, keeping previous correlations.json
+
+REM 2) panic gauge (VIX / foreign futures short / margin)
+"%PYEXE%" panic_gauge.py --out "data\panic.json"
+if errorlevel 1 echo [warn] panic_gauge failed, keeping previous panic.json
+
+REM 3) data\rotation.json is written every evening by ETF-Tracker2 (Etf_tracker_v2.py)
 
 if "%AUTO_PUSH%"=="1" (
     git add -A
