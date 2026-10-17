@@ -1,7 +1,7 @@
 {
  "schema": 2,
- "sig": "2026-10-16|2026-10-16|twse|2026-10-16|20261016",
- "generated_at": "2026-10-17T12:55:15+08:00",
+ "sig": "2026-10-16|2026-10-16|twse|2026-10-16|20261019",
+ "generated_at": "2026-10-17T18:21:05+08:00",
  "us_date": "2026-10-16",
  "tw_last_date": "2026-10-16",
  "tw_last_close": 47111.26,
@@ -10,8 +10,8 @@
  "overall": "watch",
  "overall_text": "偏空",
  "action": "保守操作，新倉等盤中確認",
- "driver": "sox",
- "z_used": -1.4,
+ "driver": "night",
+ "z_used": -1.39,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -26,21 +26,21 @@
    "pct": -3.83,
    "z": -1.4,
    "state": "watch",
-   "used": true,
+   "used": false,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
    "key": "NIGHT",
    "label": "台指期夜盤",
    "sub": "近月 202610",
-   "value": 47366.0,
-   "pct": null,
-   "z": null,
-   "state": "unknown",
-   "used": false,
-   "date": "20261016",
-   "stale": true,
-   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
+   "value": 46140.0,
+   "pct": -2.42,
+   "z": -1.39,
+   "state": "watch",
+   "used": true,
+   "date": "20261019",
+   "stale": false,
+   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
   }
  ],
  "flow": {
@@ -48,6 +48,15 @@
   "net": -461.5,
   "sum5": -5862.3,
   "z": null,
+  "night": {
+   "date": "2026-10-19",
+   "tx_net": 2143,
+   "tx_long": 23937,
+   "tx_short": 21794,
+   "mtx_net": 878,
+   "net_equiv": 2362,
+   "fresh": true
+  },
   "fut": {
    "date": "2026-10-16",
    "net": -93675,

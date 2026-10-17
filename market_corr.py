@@ -332,6 +332,107 @@ def fetch_tx_night(verbose: bool) -> dict | None:
     return out
 
 
+def fetch_tx_night_csv(verbose: bool) -> dict | None:
+    """期交所「期貨每日交易行情下載」CSV（futDataDown），夜盤收盤（05:00）後就有『盤後』那一列，
+    比 OpenAPI（下午才更新）早得多。日期是『交易歸屬日』：標 D 的盤後＝D 開盤前那一晚。"""
+    today = datetime.now(TPE).date()
+    body = urllib.parse.urlencode({
+        "down_type": "1", "commodity_id": "TX",
+        "queryStartDate": (today - timedelta(days=10)).strftime("%Y/%m/%d"),
+        "queryEndDate": (today + timedelta(days=4)).strftime("%Y/%m/%d"),
+    }).encode()
+    try:
+        req = urllib.request.Request("https://www.taifex.com.tw/cht/3/futDataDown", data=body, headers=UA)
+        with urllib.request.urlopen(req, timeout=40, context=_SSL) as resp:
+            text = resp.read().decode("cp950", errors="replace")
+        rows = list(csv.reader(io.StringIO(text)))
+        head = [h.strip() for h in rows[0]]
+        ix = {k: head.index(k) for k in ("交易日期", "到期月份(週別)", "收盤價", "漲跌價", "交易時段")}
+    except Exception as exc:  # noqa: BLE001
+        if verbose:
+            print(f"[taifex] 夜盤 CSV 抓不到：{exc}")
+        return None
+
+    recs = []
+    for r in rows[1:]:
+        if len(r) <= max(ix.values()):
+            continue
+        month = r[ix["到期月份(週別)"]].strip()
+        if not (month.isdigit() and len(month) == 6):        # 排除價差、週契約
+            continue
+        recs.append({"date": r[ix["交易日期"]].strip(), "month": month, "session": r[ix["交易時段"]].strip(),
+                     "last": _num(r[ix["收盤價"]]), "chg": _num(r[ix["漲跌價"]])})
+    night = [x for x in recs if x["session"] == "盤後" and x["last"] and x["chg"] is not None]
+    if not night:
+        return None
+    d = max(x["date"] for x in night)
+    cand = sorted([x for x in night if x["date"] == d], key=lambda x: x["month"])
+    n = cand[0]                                            # 近月
+    ref = n["last"] - n["chg"]                             # 漲跌的參考價＝前一個日盤的結算價
+    out = {"date": d.replace("/", ""), "day_date": "", "month": n["month"],
+           "last": n["last"], "ref": ref, "pct": (n["last"] / ref - 1) * 100, "src": "csv"}
+    if verbose:
+        print(f"[taifex] 夜盤（CSV，歸屬日 {d}）{n['month']} {n['last']:,.0f}（參考 {ref:,.0f}）{out['pct']:+.2f}%")
+    return out
+
+
+def _night_foreign_one(day: date, commodity: str) -> dict | None:
+    """期交所三大法人-區分各期貨契約（夜盤）查詢頁，回傳外資的多/空/淨交易口數；當天沒資料回 None"""
+    body = urllib.parse.urlencode({"queryType": "1", "goDay": "", "doQuery": "1", "dateaddcnt": "",
+                                   "queryDate": day.strftime("%Y/%m/%d"), "commodityId": commodity}).encode()
+    req = urllib.request.Request("https://www.taifex.com.tw/cht/3/futContractsDateAh", data=body, headers=UA)
+    with urllib.request.urlopen(req, timeout=40, context=_SSL) as resp:
+        text = resp.read().decode("utf-8", errors="replace")
+    if "<table" not in text.lower():
+        return None
+    try:
+        tabs = pd.read_html(io.StringIO(text))
+    except Exception:  # noqa: BLE001  沒有表格＝當天沒有夜盤資料
+        return None
+    for t in tabs:
+        for _, row in t.iterrows():
+            cells = [str(x).strip() for x in row.values]
+            if "外資" in cells and any(("臺股期貨" in c) or ("小型臺指" in c) for c in cells):
+                k = cells.index("外資")
+                nums = [_num(c) for c in cells[k + 1:]]
+                nums = [x for x in nums if x is not None]
+                if len(nums) >= 6:     # 多方口數、多方金額、空方口數、空方金額、淨額口數、淨額金額
+                    return {"long": int(nums[0]), "short": int(nums[2]), "net": int(nums[4])}
+    return None
+
+
+def fetch_night_foreign(verbose: bool) -> dict | None:
+    """外資在最近一場夜盤的台指期交易口數（期交所約 06:00 公布；夜盤不公布未平倉）。
+    淨口數＝大台＋小台÷4（折算大台）。"""
+    today = datetime.now(TPE).date()
+    for k in range(4, -4, -1):                     # 週五夜盤歸屬到下週一，所以從未來幾天往回找
+        d = today + timedelta(days=k)
+        if d.weekday() >= 5:
+            continue
+        try:
+            tx = _night_foreign_one(d, "TXF")
+        except Exception as exc:  # noqa: BLE001
+            if verbose:
+                print(f"[taifex] 夜盤外資 {d} 失敗：{exc}")
+            tx = None
+        if tx:
+            try:
+                mtx = _night_foreign_one(d, "MXF")
+            except Exception:  # noqa: BLE001
+                mtx = None
+            equiv = tx["net"] + (mtx["net"] / 4 if mtx else 0)
+            out = {"date": d.strftime("%Y-%m-%d"), "tx_net": tx["net"], "tx_long": tx["long"], "tx_short": tx["short"],
+                   "mtx_net": mtx["net"] if mtx else None, "net_equiv": int(round(equiv))}
+            if verbose:
+                print(f"[taifex] 夜盤外資（歸屬日 {out['date']}）大台淨 {tx['net']:+,} 口"
+                      + (f"、小台淨 {mtx['net']:+,} 口" if mtx else "") + f"，折算大台 {out['net_equiv']:+,} 口")
+            return out
+        time.sleep(0.6)
+    if verbose:
+        print("[taifex] 夜盤外資口數抓不到")
+    return None
+
+
 def _oi_from_csv(verbose: bool, end_candidates: list[date]) -> pd.DataFrame | None:
     """期交所「三大法人-區分各期貨契約」CSV 下載，可一次抓一段日期，算得出每日增減。
     結束日期不能晚於期交所最新資料日，否則回錯誤頁；所以從台股最近交易日開始往前試。"""
@@ -587,7 +688,7 @@ def data_signature(mk, taiex, flow, night, taiex_src) -> str:
 
 def build_payload(mk: pd.DataFrame, taiex: pd.Series, flow: pd.Series,
                   night: dict | None, log_path: Path, sig: str = "",
-                  fut_oi: dict | None = None) -> dict:
+                  fut_oi: dict | None = None, night_fx: dict | None = None) -> dict:
     sox = mk["SOX"].dropna()
     sox_ret = sox.pct_change() * 100
     us_date = sox.index[-1]
@@ -631,6 +732,15 @@ def build_payload(mk: pd.DataFrame, taiex: pd.Series, flow: pd.Series,
             notes.append(f"外資近 5 日累計賣超 {abs(f5):.0f} 億，籌碼面偏弱。")
         if state in ("calm", "up") and f5 < -500:
             notes.append("美股訊號雖不差，但外資持續撤出，不宜追高。")
+    if night_fx:
+        flow_info = flow_info or {}
+        nf = dict(night_fx)
+        nf["fresh"] = pd.Timestamp(nf["date"]) > tw_last      # 歸屬日晚於台股最新收盤日＝收盤後那一晚
+        flow_info["night"] = nf
+        if nf["fresh"] and nf["net_equiv"] <= -3000:
+            notes.append(f"外資昨晚夜盤台指期淨賣 {abs(nf['net_equiv']):,} 口（折算大台），開盤偏空。")
+        elif nf["fresh"] and nf["net_equiv"] >= 3000:
+            notes.append(f"外資昨晚夜盤台指期淨買 {nf['net_equiv']:,} 口（折算大台），開盤偏多。")
     if fut_oi:
         flow_info = flow_info or {}
         flow_info["fut"] = fut_oi
@@ -769,6 +879,8 @@ def main() -> int:
     try:
         if args.offline_test:
             mk, taiex, flow, night = synthetic()
+            night_fx = {"date": "2026-10-19", "tx_net": 2143, "tx_long": 23937, "tx_short": 21794,
+                        "mtx_net": -1200, "net_equiv": 1843}
             fut_oi = {"date": "2026-10-16", "net": -93675, "long": 9812, "short": 103487,
                       "chg": -4210, "prev_date": "2026-10-15"}
             taiex_src = "test"
@@ -786,7 +898,8 @@ def main() -> int:
                 taiex = mk["TWII"].dropna()
                 taiex_src = "yahoo"
             flow = fetch_foreign_flow(data_dir / "foreign_flow.csv", list(taiex.index), verbose)
-            night = fetch_tx_night(verbose)
+            night = fetch_tx_night_csv(verbose) or fetch_tx_night(verbose)   # CSV 早上就有；抓不到才用 OpenAPI
+            night_fx = fetch_night_foreign(verbose)
             fut_oi = fetch_foreign_futures_oi(data_dir / "foreign_fut_oi.csv", verbose, list(taiex.index))
             log_path = data_dir / "signal_log.csv"
 
@@ -795,7 +908,8 @@ def main() -> int:
             try:
                 prev = json.loads(out.read_text(encoding="utf-8"))
                 same = (prev.get("sig") == data_signature(mk, taiex, flow, night, taiex_src)
-                        and ((prev.get("flow") or {}).get("fut") or None) == (fut_oi or None))
+                        and ((prev.get("flow") or {}).get("fut") or None) == (fut_oi or None)
+                        and ((prev.get("flow") or {}).get("night") or {}).get("date") == (night_fx or {}).get("date"))
                 if same:
                     if verbose:
                         print("[info] 沒有新資料（週末或假日），不更新")
@@ -804,7 +918,7 @@ def main() -> int:
                 pass
 
         payload = build_payload(mk, taiex, flow, night, log_path,
-                                data_signature(mk, taiex, flow, night, taiex_src), fut_oi)
+                                data_signature(mk, taiex, flow, night, taiex_src), fut_oi, night_fx)
     except Exception as exc:  # noqa: BLE001
         print(f"[error] 產生失敗：{exc}", file=sys.stderr)
         return 1
