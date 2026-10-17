@@ -13,6 +13,8 @@ panic_gauge.py  --  恐慌儀表（Global-Markets-monitor）
   平靜      三項都正常
   警戒      一項進入恐慌區
   恐慌升溫  兩項以上進入恐慌區
+  融資斷頭  上市融資 10 日減少 15% 以上（斷頭潮），觸發後 5 個交易日內顯示
+            → 回測兩次都出現在最低點前 1 天：恐慌可能見底，可小量試單（約 1/5）
   恐慌退燒  近 15 日曾恐慌升溫，且「波動回落」或「空單回補」出現，融資也已大減過
             → 可能接近底部，可先布局約 1/3（第四階段「底部確認」看資金輪動儀表轉攻）
 
@@ -55,6 +57,8 @@ VOL_EASE_DROP = 0.20        # 波動度從近 10 日高點回落 20% 以上
 SHORT_EASE_DROP = 0.25      # 淨空單從近 10 日高點減少 25% 以上
 HEAT_LOOKBACK = 15          # 「近期曾恐慌」的回看天數
 MARGIN_WASH_LOOKBACK = 15   # 「融資已大減過」的回看天數
+MARGIN_CAPIT_CHG = -0.15    # 融資 10 日減少 15% 以上 → 斷頭潮（可能的恐慌底）
+CAPIT_SHOW_DAYS = 5         # 斷頭警示觸發後維持顯示幾個交易日
 VIX_MIN_DAYS = 120          # 台指VIX 累積滿這麼多天才取代實現波動率
 BACKFILL_DAYS = 500         # 第一次補歷史的交易日數（約兩年）
 HORIZONS = [5, 10, 20]
@@ -62,11 +66,12 @@ HORIZONS = [5, 10, 20]
 DATA_DIR = Path("data")
 CACHE_DIR = DATA_DIR / "panic"
 
-STATE_TEXT = {"calm": "平靜", "watch": "警戒", "heat": "恐慌升溫", "ease": "恐慌退燒", "unknown": "無資料"}
+STATE_TEXT = {"calm": "平靜", "watch": "警戒", "heat": "恐慌升溫", "capit": "融資斷頭", "ease": "恐慌退燒", "unknown": "無資料"}
 ACTION_TEXT = {
     "calm": "沒有恐慌跡象，依資金輪動儀表操作",
     "watch": "單一指標轉差，留意是否擴散",
     "heat": "恐慌擴散中，不急著接刀",
+    "capit": "融資斷頭潮，恐慌可能見底：可小量試單約 1/5，停損設在觸發日低點下方（觸發後仍可能再跌約 5%）",
     "ease": "恐慌開始退燒，可能接近底部：可先布局約 1/3，等資金輪動轉攻再加碼",
     "unknown": "資料不足，不做判讀",
 }
@@ -216,38 +221,130 @@ def _margin_one_day(d: pd.Timestamp) -> float | None:
     return None
 
 
-def fetch_margin(tw_dates: list[pd.Timestamp], verbose: bool) -> pd.Series:
-    """上市融資餘額（億元）。逐日抓，第一次補 BACKFILL_DAYS 天（約 10 分鐘），之後只補缺的日子。"""
-    cache = CACHE_DIR / "margin.csv"
+def _fetch_daily(cache_name: str, label: str, one_day, tw_dates: list[pd.Timestamp], verbose: bool) -> pd.Series:
+    """逐日抓、存快取：第一次補 BACKFILL_DAYS 天，之後只補缺的日子；中斷也不會白抓"""
+    cache = CACHE_DIR / cache_name
     old = _load_cache(cache, "margin_100m")
     want = [d for d in tw_dates[-BACKFILL_DAYS:] if d not in old.index]
     if verbose and len(want) > 20:
-        print(f"[margin] 需要補 {len(want)} 天融資資料（證交所限制查詢頻率，約 {len(want) * 1.3 / 60:.0f} 分鐘）...")
+        print(f"[{label}] 需要補 {len(want)} 天融資資料（限制查詢頻率，約 {len(want) * 1.3 / 60:.0f} 分鐘）...")
     got, fails = {}, 0
     for i, d in enumerate(want):
         try:
-            v = _margin_one_day(d)
+            v = one_day(d)
             fails = 0
             if v:
                 got[d] = v
         except Exception as exc:  # noqa: BLE001
             fails += 1
             if verbose:
-                print(f"[margin] {d:%Y-%m-%d} 失敗：{exc}")
+                print(f"[{label}] {d:%Y-%m-%d} 失敗：{exc}")
             if fails >= 5:
-                print("[margin] 連續失敗 5 次，先用已有資料（下次執行會接著補）")
+                print(f"[{label}] 連續失敗 5 次，先用已有資料（下次執行會接著補）")
                 break
         if verbose and len(want) > 20 and i % 50 == 0:
-            print(f"[margin] {i}/{len(want)} ...")
-        if len(got) and len(got) % 40 == 0:      # 補歷史途中定期存檔，中斷也不會白抓
+            print(f"[{label}] {i}/{len(want)} ...")
+        if len(got) and len(got) % 40 == 0:
             _save_cache(cache, pd.concat([x for x in (old, pd.Series(got, dtype=float)) if len(x)]), "margin_100m")
         time.sleep(1.2)
     s = pd.concat([x for x in (old, pd.Series(got, dtype=float)) if len(x)]) if (len(old) or got) else old
     if len(s):
         s = _save_cache(cache, s, "margin_100m")
     if verbose:
-        print(f"[margin] 上市融資餘額 {len(s)} 天" + (f"，最新 {s.index[-1]:%Y-%m-%d} {s.iloc[-1]:,.0f} 億" if len(s) else ""))
+        print(f"[{label}] 融資餘額 {len(s)} 天" + (f"，最新 {s.index[-1]:%Y-%m-%d} {s.iloc[-1]:,.0f} 億" if len(s) else ""))
     return s
+
+
+def fetch_margin(tw_dates: list[pd.Timestamp], verbose: bool) -> pd.Series:
+    """上市融資餘額（億元）"""
+    return _fetch_daily("margin.csv", "margin上市", _margin_one_day, tw_dates, verbose)
+
+
+# ---- 上櫃（櫃買中心）----
+TPEX_URLS = [
+    # 新版網站
+    "https://www.tpex.org.tw/www/zh-tw/margin/balance?date={ad}&response=json",
+    # 舊版
+    "https://www.tpex.org.tw/web/stock/margin_trading/margin_balance/margin_bal_result.php?l=zh-tw&o=json&d={roc}",
+]
+
+
+def _is_amount_row(r) -> bool:
+    # 櫃買中心實際格式：['', '融資金(仟元)', 前資餘額, 資買, 資賣, 現償, 資餘額, '', ...]，標籤在第二欄
+    return (isinstance(r, list) and len(r) > 2 and not any(isinstance(x, (list, dict)) for x in r[:3])
+            and any("融資金" in str(x) for x in r[:2]))
+
+
+def _find_amount_row(obj):
+    """在任意結構的 JSON 裡找『融資金額』那一列，回傳 (列, 欄位名稱或 None)"""
+    if isinstance(obj, dict):
+        fields = obj.get("fields") or obj.get("columns")
+        for key in ("summary", "data", "tfootData_one", "tfootData_two", "tfootData"):
+            rows = obj.get(key)
+            if isinstance(rows, list):
+                if _is_amount_row(rows):
+                    return rows, fields
+                for r in rows:
+                    if _is_amount_row(r):
+                        return r, fields
+        for v in obj.values():
+            hit = _find_amount_row(v)
+            if hit:
+                return hit
+    elif isinstance(obj, list):
+        if _is_amount_row(obj):
+            return obj, None
+        for v in obj:
+            hit = _find_amount_row(v)
+            if hit:
+                return hit
+    return None
+
+
+def _parse_tpex_amount(j) -> float | None:
+    hit = _find_amount_row(j)
+    if not hit:
+        return None
+    row, fields = hit
+    lab_i = next(k for k, x in enumerate(row[:2]) if "融資金" in str(x))
+    label = str(row[lab_i])
+    idx = None
+    if fields:
+        for k, f in enumerate(fields):
+            if str(f).strip() in ("資餘額", "今日餘額", "本日餘額") or "今日餘額" in str(f):
+                idx = k
+                break
+    nums = [_num(x) for x in row[lab_i + 1:]]
+    nums = [x for x in nums if x is not None]
+    if idx is not None and idx < len(row) and _num(row[idx]) is not None:
+        v = _num(row[idx])
+    elif nums:
+        v = nums[-1]                              # 欄位順序：前日餘額、買進、賣出、現償、今日餘額
+    else:
+        return None
+    v = v / 1e8 if ("元" in label and "仟" not in label and "千" not in label) else v / 1e5   # → 億元
+    return v if 50 <= v <= 20000 else None       # 合理範圍外視為解析錯誤
+
+
+def _margin_otc_one_day(d: pd.Timestamp) -> float | None:
+    roc = f"{d.year - 1911}/{d.month:02d}/{d.day:02d}"
+    last_err = None
+    for u in TPEX_URLS:
+        try:
+            j = json.loads(_get(u.format(ad=d.strftime("%Y/%m/%d"), roc=roc), timeout=30).decode("utf-8-sig"))
+            v = _parse_tpex_amount(j)
+            if v:
+                return v
+        except Exception as exc:  # noqa: BLE001
+            last_err = exc
+    if last_err:
+        raise last_err
+    return None
+
+
+def fetch_margin_otc(tw_dates: list[pd.Timestamp], verbose: bool) -> pd.Series:
+    """上櫃融資餘額（億元）"""
+    return _fetch_daily("margin_otc.csv", "margin上櫃", _margin_otc_one_day, tw_dates, verbose)
 
 
 # --------------------------------------------------------------------------
@@ -264,7 +361,9 @@ def realized_vol(close: pd.Series, n: int = 10) -> pd.Series:
     return r.rolling(n, min_periods=n).std() * math.sqrt(252) * 100
 
 
-def compute(close: pd.Series, vol: pd.Series, net_oi: pd.Series, margin: pd.Series) -> pd.DataFrame:
+def compute(close: pd.Series, vol: pd.Series, net_oi: pd.Series, margin: pd.Series,
+            parts: dict | None = None) -> pd.DataFrame:
+    """margin＝判斷用的融資餘額（上市＋上櫃，或只有上市）；parts＝{'twse':..., 'otc':...} 另外算各自的10日變化"""
     idx = close.index
     df = pd.DataFrame(index=idx)
     df["close"] = close
@@ -296,9 +395,17 @@ def compute(close: pd.Series, vol: pd.Series, net_oi: pd.Series, margin: pd.Seri
     df["ease"] = recent_heat & (df["vol_ease"] | df["short_ease"]) & df["margin_washed"] & \
                  ((df["n_panic"] <= 1) | (df["vol_ease"] & df["short_ease"]))
 
+    df["capit"] = df["margin_chg10"] <= MARGIN_CAPIT_CHG
+    for k, ser in (parts or {}).items():          # 上市、上櫃各自的斷頭（比較誰先觸發）
+        m = ser.reindex(idx)
+        df[f"{k}_margin"] = m
+        df[f"{k}_chg10"] = m / m.shift(10) - 1
+        df[f"capit_{k}"] = df[f"{k}_chg10"] <= MARGIN_CAPIT_CHG
+    df["capit_recent"] = df["capit"].astype(float).rolling(CAPIT_SHOW_DAYS, min_periods=1).max() == 1
+
     ready = df["vol_pct"].notna() & df["short_pct"].notna()
-    df["state"] = np.select([~ready, df["ease"], df["heat"], df["n_panic"] == 1],
-                            ["unknown", "ease", "heat", "watch"], default="calm")
+    df["state"] = np.select([~ready, df["ease"], df["capit_recent"], df["heat"], df["n_panic"] == 1],
+                            ["unknown", "ease", "capit", "heat", "watch"], default="calm")
     return df
 
 
@@ -311,7 +418,7 @@ def backtest(df: pd.DataFrame) -> dict:
            "start": d.index[0].strftime("%Y-%m-%d") if len(d) else None,
            "end": d.index[-1].strftime("%Y-%m-%d") if len(d) else None,
            "buckets": []}
-    for key in ["all", "calm", "watch", "heat", "ease"]:
+    for key in ["all", "calm", "watch", "heat", "capit", "ease"]:
         g = d if key == "all" else d[d["state"] == key]
         row = {"key": key, "label": "全部日子" if key == "all" else STATE_TEXT[key], "n": int(len(g))}
         for h in HORIZONS:
@@ -320,8 +427,19 @@ def backtest(df: pd.DataFrame) -> dict:
             row[f"win{h}"] = _r((x > 0).mean() * 100, 1) if len(x) else None
         out["buckets"].append(row)
 
-    # 恐慌退燒的每一段（首日）
-    starts = d.index[(d["state"] == "ease") & (d["state"].shift(1) != "ease")]
+    out["events"] = _events(df, d, "ease")[-12:]
+    out["capit_events"] = _events(df, d, "capit")[-12:]
+    for k in ("twse", "otc"):                     # 上市、上櫃各自單獨觸發的時間（只供比較）
+        if f"capit_{k}" in df:
+            tmp = d.copy()
+            tmp["state"] = np.where(df[f"capit_{k}"].reindex(d.index).fillna(False), f"capit_{k}", "x")
+            out[f"capit_{k}_events"] = _events(df, tmp, f"capit_{k}")[-12:]
+    return out
+
+
+def _events(df: pd.DataFrame, d: pd.DataFrame, state: str) -> list:
+    """某狀態每一段的首日：離前後 20 日內的波段低點幾天、之後再跌多少、之後 N 日報酬"""
+    starts = d.index[(d["state"] == state) & (d["state"].shift(1) != state)]
     events = []
     for t in starts:
         i = df.index.get_loc(t)
@@ -337,15 +455,16 @@ def backtest(df: pd.DataFrame) -> dict:
             ev[f"r{h}"] = _r((df["close"].shift(-h).iloc[i] / df["close"].iloc[i] - 1) * 100, 2) \
                 if i + h < len(df) else None
         events.append(ev)
-    out["events"] = events[-12:]
-    return out
+    return events
 
 
 # --------------------------------------------------------------------------
 # 輸出
 # --------------------------------------------------------------------------
 
-def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict) -> dict:
+def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
+                  margin_src: str = "twse", otc_days: int = 0) -> dict:
+    margin_src_label = "上市＋上櫃（億元）" if margin_src == "all" else "上市（億元）"
     last = df.iloc[-1]
     t = df.index[-1]
 
@@ -368,11 +487,14 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict) -
          "flag": flag(last["short_panic"], last["short_ease"]),
          "rule": f"≥ 近{PCT_WINDOW}日第{int(SHORT_PANIC_PCT * 100)}百分位＝恐慌；從10日高點減少{int(SHORT_EASE_DROP * 100)}%以上＝回補",
          "spark": spark("short")},
-        {"key": "margin", "label": "融資餘額", "sub": "上市（億元）", "value": _r(last["margin"], 0), "unit": "億",
+        {"key": "margin", "label": "融資餘額", "sub": margin_src_label, "value": _r(last["margin"], 0), "unit": "億",
+         "parts": {k: {"value": _r(last.get(f"{k}_margin"), 0),
+                       "chg10": _r(last.get(f"{k}_chg10", np.nan) * 100, 2) if pd.notna(last.get(f"{k}_chg10", np.nan)) else None}
+                   for k in ("twse", "otc") if f"{k}_margin" in df},
          "chg10": _r(last["margin_chg10"] * 100, 2) if pd.notna(last["margin_chg10"]) else None,
-         "flag": "panic" if last["margin_panic"] else ("washed" if (last["margin_washed"] and pd.notna(last["margin_chg10"])) else "normal"),
+         "flag": "capit" if last["capit_recent"] else "panic" if last["margin_panic"] else ("washed" if (last["margin_washed"] and pd.notna(last["margin_chg10"])) else "normal"),
          "stable": bool(last["margin_stable"]) if pd.notna(last["margin"]) else None,
-         "rule": f"10日減少{abs(int(MARGIN_PANIC_CHG * 100))}%以上＝去槓桿（恐慌）；近{MARGIN_WASH_LOOKBACK}日內發生過＝籌碼已洗",
+         "rule": f"10日減少{abs(int(MARGIN_PANIC_CHG * 100))}%以上＝去槓桿（恐慌）；{abs(int(MARGIN_CAPIT_CHG * 100))}%以上＝斷頭潮；近{MARGIN_WASH_LOOKBACK}日內發生過＝籌碼已洗",
          "spark": spark("margin")},
     ]
     hist = [[d.strftime("%Y-%m-%d"), s] for d, s in df["state"].tail(60).items()]
@@ -384,6 +506,13 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict) -
         "close": _r(last["close"], 2),
         "state": last["state"], "state_text": STATE_TEXT[last["state"]], "action": ACTION_TEXT[last["state"]],
         "n_panic": int(last["n_panic"]),
+        "capit": ({"date": df.index[df["capit"]][-1].strftime("%Y-%m-%d"),
+                   "close": _r(df.loc[df["capit"], "close"].iloc[-1], 2)} if bool(last["capit_recent"]) else None),
+        # 最近一次斷頭（給網頁判斷「斷頭後恐慌又升溫」時，試單部位該續抱）
+        "last_capit": ({"date": df.index[df["capit"]][-1].strftime("%Y-%m-%d"),
+                        "close": _r(df.loc[df["capit"], "close"].iloc[-1], 2),
+                        "days_ago": int(len(df) - 1 - df.index.get_loc(df.index[df["capit"]][-1]))}
+                       if bool(df["capit"].any()) else None),
         "since": _since(df),
         "vol_source": vol_source,
         "vix": {"value": _r(vix.iloc[-1], 2), "date": vix.index[-1].strftime("%Y-%m-%d"), "days": int(len(vix))} if len(vix) else None,
@@ -394,9 +523,11 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict) -
         "backtest": bt,
         "notes": [],
     }
+    if margin_src != "all":
+        payload["notes"].append(f"上櫃融資已累積 {otc_days} 天，補齊後自動改用上市＋上櫃合計判斷；目前只用上市。")
     if vol_source != "vix":
         payload["notes"].append(f"台指VIX 已累積 {len(vix)} 天，滿 {VIX_MIN_DAYS} 天後自動改用VIX判斷；目前用加權指數實現波動率代替。")
-    payload["sig"] = f"{payload['date']}|{payload['close']}|{comps[1]['value']}|{comps[2]['value']}|{payload['vix']}"
+    payload["sig"] = f"v3|{margin_src}|{payload['date']}|{payload['close']}|{comps[1]['value']}|{comps[2]['value']}|{payload['vix']}"
     return payload
 
 
@@ -428,7 +559,8 @@ def synthetic(n: int = 520):
         short.iloc[c + 14:c + 22] += np.linspace(40000, 5000, 8)
         margin.iloc[c + 6:c + 14] -= np.linspace(20, 220, 8)
         margin.iloc[c + 14:] -= 220
-    return close, -short, margin
+    otc = margin * 0.35 + pd.Series(rng.normal(0, 3, n), idx)
+    return close, -short, margin, otc
 
 
 # --------------------------------------------------------------------------
@@ -466,6 +598,43 @@ def probe():
         time.sleep(1.2)
 
 
+def probe_tpex():
+    print("=== 測試上櫃融資（櫃買中心）===")
+    today = datetime.now(TPE).date()
+    for k in range(1, 8):
+        d = pd.Timestamp(today - timedelta(days=k))
+        if d.weekday() >= 5:
+            continue
+        roc = f"{d.year - 1911}/{d.month:02d}/{d.day:02d}"
+        for u in TPEX_URLS:
+            url = u.format(ad=d.strftime("%Y/%m/%d"), roc=roc)
+            print(f"\n[otc] {d:%Y-%m-%d} {url}")
+            try:
+                raw = _get(url, timeout=30).decode("utf-8-sig")
+                j = json.loads(raw)
+                print("   最上層欄位：", list(j.keys()) if isinstance(j, dict) else type(j).__name__)
+                if isinstance(j, dict):
+                    for key, v in j.items():
+                        if isinstance(v, list):
+                            print(f"   {key}: list({len(v)})", str(v[:2])[:300])
+                        elif isinstance(v, dict):
+                            print(f"   {key}: dict keys={list(v.keys())[:10]}")
+                        else:
+                            print(f"   {key}: {str(v)[:120]}")
+                    for t in (j.get("tables") or [])[:4]:
+                        print("   table:", t.get("title"), "| fields:", t.get("fields"))
+                        for key in ("summary", "data"):
+                            rows = t.get(key) or []
+                            print(f"     {key}({len(rows)}) 前2列:", str(rows[:2])[:300], " 末2列:", str(rows[-2:])[:300])
+                hit = _find_amount_row(j)
+                print("   找到的融資金額列：", hit[0] if hit else None)
+                print("   解析結果（億元）：", _parse_tpex_amount(j))
+            except Exception as exc:  # noqa: BLE001
+                print(f"   失敗：{exc}")
+            time.sleep(1.2)
+        return
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="data/panic.json")
@@ -477,12 +646,13 @@ def main() -> int:
     verbose = not args.quiet
     if args.probe:
         probe()
+        probe_tpex()
         return 0
     out = Path(args.out)
 
     try:
         if args.offline_test:
-            close, net_oi, margin = synthetic()
+            close, net_oi, m_twse, m_otc = synthetic()
             vix = pd.Series(dtype=float)
         else:
             close = fetch_taiex_twse(DATA_DIR / "taiex_twse.csv", verbose)
@@ -491,19 +661,28 @@ def main() -> int:
             dates = list(close.index)
             vix = fetch_vix(verbose)
             net_oi = fetch_foreign_short(dates, verbose)
-            margin = fetch_margin(dates, verbose)
+            m_twse = fetch_margin(dates, verbose)
+            m_otc = fetch_margin_otc(dates, verbose)
             if len(net_oi) < 60:
                 raise RuntimeError("外資期貨未平倉資料不足")
 
+        # 上櫃補齊（覆蓋上市 95% 以上的日子）才用合計，否則先只用上市
+        both = m_twse.index.intersection(m_otc.index)
+        if len(m_otc) and len(both) >= 0.95 * len(m_twse):
+            margin, margin_src = (m_twse.reindex(both) + m_otc.reindex(both)), "all"
+        else:
+            margin, margin_src = m_twse, "twse"
+        parts = {"twse": m_twse, "otc": m_otc} if len(m_otc) else {"twse": m_twse}
+
         use_vix = len(vix) >= VIX_MIN_DAYS
         vol = vix if use_vix else realized_vol(close)
-        df = compute(close, vol, net_oi, margin)
+        df = compute(close, vol, net_oi, margin, parts)
         # 最後一天三項資料都要有（避免期交所/證交所還沒公布時誤判）
         df = df[df["short"].notna() & df["vol"].notna()]
         if not len(df):
             raise RuntimeError("沒有可計算的日子")
-        bt = backtest(compute(close, realized_vol(close), net_oi, margin))   # 回測一律用實現波動率（歷史較長）
-        payload = build_payload(df, "vix" if use_vix else "rv", vix, bt)
+        bt = backtest(compute(close, realized_vol(close), net_oi, margin, parts))   # 回測一律用實現波動率（歷史較長）
+        payload = build_payload(df, "vix" if use_vix else "rv", vix, bt, margin_src, len(m_otc))
     except Exception as exc:  # noqa: BLE001
         print(f"[error] 恐慌儀表產生失敗：{exc}", file=sys.stderr)
         return 1
@@ -534,6 +713,11 @@ def main() -> int:
         for r in b["buckets"]:
             print(f"       {r['label']:<6} n={r['n']:<4} 5日 {r['avg5']}% (勝率 {r['win5']}%)  "
                   f"10日 {r['avg10']}%  20日 {r['avg20']}% (勝率 {r['win20']}%)")
+        for k, nm in (("twse", "上市"), ("otc", "上櫃")):
+            for e in b.get(f"capit_{k}_events", []):
+                print(f"       {nm}單獨斷頭 {e['date']}：距低點 {e['days_from_low']:+d} 天、之後再跌 {e['further_drop']}%、20日 {e['r20']}%")
+        for e in b.get("capit_events", []):
+            print(f"       斷頭 {e['date']}：距低點 {e['days_from_low']:+d} 天、之後再跌 {e['further_drop']}%、20日 {e['r20']}%")
         for e in b["events"]:
             print(f"       退燒 {e['date']}：距低點 {e['days_from_low']:+d} 天、高於低點 {e['pct_above_low']}%、"
                   f"之後再跌 {e['further_drop']}%、20日 {e['r20']}%")

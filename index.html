@@ -189,7 +189,7 @@
     <div class="ov-card" id="ov-rot" data-c="off"></div>
     <div class="ov-card" id="ov-pan" data-c="off"></div>
   </div>
-  <details id="ov-bt"><summary>恐慌儀表回測：各狀態之後加權指數表現、每次「恐慌退燒」離真正低點多遠</summary><div id="ov-bt-body"></div></details>
+  <details id="ov-bt"><summary>恐慌儀表回測：各狀態之後加權指數表現、每次「融資斷頭」與「恐慌退燒」離真正低點多遠</summary><div id="ov-bt-body"></div></details>
   <p class="ov-foot">三張卡由短到長：開盤前（今天）→ 資金輪動（數週，資金在成長股還是防禦股）→ 恐慌儀表（底部轉折）。
     資金輪動與恐慌儀表都是「確認」工具，不是預測：轉守通常比大盤早幾天；轉攻通常在低點反彈約一成後才確認，恐慌退燒用來補這段空窗。
     本區顏色為台股慣例以外的狀態色（紅＝危險、金＝有利），與下方行情圖的「綠漲紅跌」無關。</p>
@@ -217,7 +217,7 @@
 
     const PRE_C = {alert: 'red', watch: 'orange', calm: 'calm', up: 'gold', unknown: 'off'};
     const ROT_C = {'進攻': 'gold', '進攻（留意）': 'amber', '防守': 'orange', '強烈防守': 'red'};
-    const PAN_C = {calm: 'calm', watch: 'orange', heat: 'red', ease: 'gold', unknown: 'off'};
+    const PAN_C = {calm: 'calm', watch: 'orange', heat: 'red', capit: 'amber', ease: 'gold', unknown: 'off'};
 
     function renderPre(d) {
       const el = $('ov-pre');
@@ -265,16 +265,19 @@
       const el = $('ov-pan');
       if (!d) { el.innerHTML = head('恐慌儀表', '底部轉折') + '<div class="ov-missing">讀不到 data/panic.json<br>（執行 panic_gauge.py 產生）</div>'; return; }
       el.dataset.c = PAN_C[d.state] || 'off';
-      const FL = {panic: ['恐慌', 'red'], ease: ['退燒', 'gold'], washed: ['已洗', 'amber'], normal: ['正常', 'calm']};
+      const FL = {panic: ['恐慌', 'red'], capit: ['斷頭', 'amber'], ease: ['退燒', 'gold'], washed: ['已洗', 'amber'], normal: ['正常', 'calm']};
       el.innerHTML = head('恐慌儀表', '底部轉折') +
         '<div class="ov-state">' + esc(d.state_text) + '</div>' +
         '<div class="ov-act">' + esc(d.action) + '</div>' +
         '<div class="ov-meta">' + md(d.date) + ' · 自 ' + md(d.since) + ' 起 · ' + d.n_panic + '/3 項在恐慌區</div>' +
+        (d.capit ? '<div class="ov-flip" data-c="amber">🔔 ' + md(d.capit.date) + ' 融資斷頭（10日減少15%以上）· 當日收盤 ' + num(d.capit.close, 0) + '，試單停損設在這附近下方</div>' : '') +
         '<div class="ov-rows">' + d.components.map((c) => {
           const f = FL[c.flag] || FL.normal;
           let v = num(c.value, c.key === 'vol' ? 1 : 0) + '<small>' + esc(c.unit) + '</small>';
           if (c.pct !== undefined && c.pct !== null) v += '<small>第' + c.pct + '百分位</small>';
           if (c.chg10 !== undefined && c.chg10 !== null) v += '<small>10日 ' + sgn(c.chg10) + '%</small>';
+          if (c.parts && c.parts.otc) v += '<br><small style="margin-left:0">上市 ' + num(c.parts.twse && c.parts.twse.value) + '（' + sgn(c.parts.twse && c.parts.twse.chg10) + '%）· 上櫃 ' + num(c.parts.otc.value) + '（' + sgn(c.parts.otc.chg10) + '%）</small>';
+          if (c.sub) v = '<small style="margin-left:0">' + esc(c.sub) + '</small><br>' + v;
           return row(esc(c.label) + '<span class="ov-chip" data-c="' + f[1] + '">' + f[0] + '</span><br><span class="v">' + v + '</span>',
                      spark(c.spark), PAN_C[d.state]);
         }).join('') + '</div>' +
@@ -289,11 +292,11 @@
         '<div class="ov-tblwrap"><table class="ov-tbl"><tr><th>狀態</th><th>天數</th><th>5日平均</th><th>5日上漲機率</th><th>10日平均</th><th>20日平均</th><th>20日上漲機率</th></tr>' +
         b.buckets.map((r) => '<tr><td>' + esc(r.label) + '</td><td>' + r.n + '</td><td>' + c(r.avg5) + '</td><td>' + (r.win5 ?? '—') + '%</td><td>' + c(r.avg10) + '</td><td>' + c(r.avg20) + '</td><td>' + (r.win20 ?? '—') + '%</td></tr>').join('') +
         '</table></div>';
-      if ((b.events || []).length) {
-        h += '<div class="ov-tblwrap"><table class="ov-tbl"><tr><th>恐慌退燒首日</th><th>波段低點</th><th>距低點</th><th>高於低點</th><th>之後再跌</th><th>5日</th><th>20日</th></tr>' +
-          b.events.slice().reverse().map((e) => '<tr><td>' + e.date + '</td><td>' + e.low_date + '</td><td>' + (e.days_from_low > 0 ? '低點在後 ' + e.days_from_low : '低點後 ' + (-e.days_from_low)) + ' 天</td><td>' + sgn(e.pct_above_low) + '%</td><td>' + c(e.further_drop) + '</td><td>' + c(e.r5) + '</td><td>' + c(e.r20) + '</td></tr>').join('') +
+      const evTbl = (list, title) => '<div class="ov-tblwrap"><table class="ov-tbl"><tr><th>' + title + '</th><th>波段低點</th><th>距低點</th><th>相對低點</th><th>之後再跌</th><th>5日</th><th>20日</th></tr>' +
+          list.slice().reverse().map((e) => '<tr><td>' + e.date + '</td><td>' + e.low_date + '</td><td>' + (e.days_from_low > 0 ? '低點在後 ' + e.days_from_low : e.days_from_low < 0 ? '低點後 ' + (-e.days_from_low) : '當天') + ' 天</td><td>' + sgn(e.pct_above_low) + '%</td><td>' + c(e.further_drop) + '</td><td>' + c(e.r5) + '</td><td>' + c(e.r20) + '</td></tr>').join('') +
           '</table></div>';
-      }
+      if ((b.capit_events || []).length) h += evTbl(b.capit_events, '融資斷頭首日');
+      if ((b.events || []).length) h += evTbl(b.events, '恐慌退燒首日');
       $('ov-bt-body').innerHTML = h;
     }
 
@@ -305,6 +308,8 @@
       const R = rot ? rot.state : null, RL = rot ? rot.label : null, P = pan ? pan.state : null;
       let t, s, c;
       if (!rot && !pan) { t = '資料不足'; s = '資金輪動與恐慌儀表都還沒有資料。'; c = 'off'; }
+      else if (P === 'capit') { t = '可小量試單 1/5'; s = '<b>融資斷頭潮</b>，恐慌可能見底（回測兩次都在最低點前 1 天）：小量試單，停損設在 ' + md(pan.capit && pan.capit.date) + ' 低點下方；之後等恐慌退燒加到 1/3、資金輪動轉攻再加滿。'; c = 'amber'; }
+      else if (P === 'heat' && pan.last_capit && pan.last_capit.days_ago <= 15) { t = '試單續抱'; s = md(pan.last_capit.date) + ' 已出現<b>融資斷頭</b>，恐慌仍在<b>升溫</b>：試單部位守停損續抱，等恐慌退燒再加碼。'; c = 'orange'; }
       else if (R === '防守' && P === 'heat') { t = '暫不進場'; s = '資金<b>' + RL + '</b>，恐慌<b>升溫中</b>：等恐慌退燒再說。'; c = 'red'; }
       else if (R === '防守' && P === 'ease') { t = '可先布局 1/3'; s = '資金仍在<b>防守</b>，但恐慌<b>開始退燒</b>：可能接近底部，先小量布局，等資金輪動轉攻再加碼。'; c = 'amber'; }
       else if (R === '防守') { t = RL === '強烈防守' ? '以防守為主' : '降低進攻部位'; s = '資金<b>' + RL + '</b>' + (P === 'watch' ? '，恐慌指標開始轉差' : '，恐慌儀表尚未出現底部訊號') + '：以高息低波或現金為主，主動ETF重押股先觀望。'; c = RL === '強烈防守' ? 'red' : 'orange'; }
