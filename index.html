@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#0B0E14" />
+<meta name="theme-color" content="#2F4245" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -14,14 +14,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --ink:#0B0E14;          /* page background */
-    --panel:#141B29;        /* tile background */
-    --line:#2A3448;         /* hairline borders */
-    --text:#EDF0F6;         /* primary text */
-    --muted:#8390A6;        /* secondary text */
-    --gold:#C9A96A;         /* single accent */
-    --open:#3FB68B;         /* market open */
-    --closed:#525A6B;       /* market closed */
+    --ink:#2F4245;          /* page background */
+    --panel:#283A3D;        /* tile background */
+    --line:#476064;         /* hairline borders */
+    --text:#F2EFEA;         /* primary text */
+    --muted:#C6D0CF;        /* secondary text */
+    --gold:#F0D9C6;         /* single accent */
+    --open:#8DB5A0;         /* market open */
+    --closed:#6E7473;       /* market closed */
     --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
     --disp:"Space Grotesk","PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
     --sans:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -42,16 +42,16 @@
   .brand .sub b{color:var(--gold);font-weight:600}
   .screener-link{display:inline-block;margin-top:10px;padding:7px 12px;border:1px solid var(--gold);
     border-radius:8px;color:var(--gold);font-size:13px;text-decoration:none}
-  .screener-link:hover{background:rgba(201,169,106,.12)}
+  .screener-link:hover{background:rgba(207,179,159,.10)}
 
   /* ---------- timezone / session strip (signature) ---------- */
   .zones{display:flex;flex-wrap:wrap;gap:10px}
   .zone{display:flex;align-items:center;gap:9px;background:var(--panel);
     border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:132px}
   .zone .dot{width:8px;height:8px;border-radius:50%;background:var(--closed);flex:0 0 auto}
-  .zone.live .dot{background:var(--open);box-shadow:0 0 0 0 rgba(63,182,139,.55);
+  .zone.live .dot{background:var(--open);box-shadow:0 0 0 0 rgba(141,181,160,.55);
     animation:pulse 2.4s ease-out infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(63,182,139,.5)}70%{box-shadow:0 0 0 7px rgba(63,182,139,0)}100%{box-shadow:0 0 0 0 rgba(63,182,139,0)}}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(141,181,160,.5)}70%{box-shadow:0 0 0 7px rgba(141,181,160,0)}100%{box-shadow:0 0 0 0 rgba(141,181,160,0)}}
   .zone .meta{display:flex;flex-direction:column;line-height:1.25}
   .zone .city{font-size:12px;color:var(--text)}
   .zone .clock{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.02em}
@@ -104,11 +104,11 @@
 
   /* ---------- modal (full chart) ---------- */
   .modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
-    background:rgba(6,9,14,.82);backdrop-filter:blur(3px);padding:clamp(12px,3vw,40px)}
+    background:rgba(15,17,19,.72);backdrop-filter:blur(3px);padding:clamp(12px,3vw,40px)}
   .modal.show{display:flex}
   .modal-box{width:min(1120px,96vw);height:min(78vh,760px);background:var(--panel);
     border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;
-    box-shadow:0 24px 60px rgba(0,0,0,.55)}
+    box-shadow:0 24px 60px rgba(0,0,0,.5)}
   .modal-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;
     padding:12px 16px;border-bottom:1px solid var(--line)}
   .modal-bar .t{font-size:15px;font-weight:600}
@@ -134,18 +134,29 @@
   .zone-sec .sec-title .hint{font-size:12px;color:var(--muted);flex-basis:100%}
   @media(min-width:700px){.zone-sec .sec-title .hint{flex-basis:auto;margin-left:auto}}
   /* 01 局勢總覽：琥珀金 */
-  .sec-ov{--sec-bg:#17140D;--sec-line:#3B3220;--panel:#211C12;--line:#3E3420;--accent:#E0B45C}
+  .sec-ov{--sec-bg:#34342D;--sec-line:#5A5A4C;--panel:#3E3E35;--line:#5C5C4F;--accent:#C1C0AF}
   /* 02 開盤前訊號：湖水藍 */
-  .sec-tx{--sec-bg:#0B1820;--sec-line:#1E3B4A;--panel:#10232E;--line:#24485A;--accent:#4FB8DE}
+  .sec-tx{--sec-bg:#3A322D;--sec-line:#5C4B41;--panel:#463C36;--line:#61504A;--accent:#CFB39F}
   /* 03 全球行情：紫 */
-  .sec-mk{--sec-bg:#130F22;--sec-line:#2E2650;--panel:#1A1530;--line:#332B57;--accent:#A08CFF}
+  .sec-mk{--sec-bg:#2B3639;--sec-line:#4A5F64;--panel:#33434A;--line:#4E666C;--accent:#839DA4}
   .zone-sec .ov-eyebrow,.zone-sec .tx-eyebrow{display:none}
   .zone-sec.tx{margin:22px 0 0;padding-top:16px;border-top:1px solid var(--sec-line)}
   .zone-sec .grid{margin-top:0}
   .nav-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
   .nav-links .screener-link{margin-top:0}
-  .screener-link.l-sc{border-color:#E5534B;color:#FF8A84} .screener-link.l-sc:hover{background:rgba(229,83,75,.12)}
-  .screener-link.l-etf{border-color:#3FB68B;color:#5FD3A6} .screener-link.l-etf:hover{background:rgba(63,182,139,.12)}
+  .screener-link.l-sc{border-color:#F0CDBE;color:#F7DDD1;background:rgba(0,0,0,.08)} .screener-link.l-sc:hover{background:rgba(217,174,152,.12)}
+  .screener-link.l-etf{border-color:#C5E0D3;color:#DCEFE6;background:rgba(0,0,0,.08)} .screener-link.l-etf:hover{background:rgba(141,181,160,.14)}
+</style>
+<style>.tile:hover{box-shadow:0 10px 24px -14px rgba(0,0,0,.6)}.zone{background:#283A3D}</style>
+
+<style>/* 區塊底色＝莫蘭迪主色、文字與標題改深色 */
+.zone-sec.sec-ov.ov{--sec-bg:#C1C0AF;--sec-line:#A2A190;--panel:#D5D4C7;--line:#A2A190;--accent:#34342D;--text:#24292C;--muted:#55574D;--gold:#6B4E37;--closed:#7C807C;color:var(--text);--ov-red:#963B36;--ov-orange:#93512F;--ov-amber:#6F5719;}
+.zone-sec.sec-tx.tx{--sec-bg:#CFB39F;--sec-line:#B09581;--panel:#DEC8B8;--line:#B09581;--accent:#3A322D;--text:#24292C;--muted:#5C4C41;--gold:#6B4E37;--closed:#7C807C;color:var(--text);--st-alert:#963B36;--st-watch:#93512F;--st-up:#6B4E37}
+.zone-sec.sec-mk{--sec-bg:#D8CAC8;--sec-line:#B5A3A1;--panel:#E6DCDA;--line:#B5A3A1;--accent:#3A2E2E;--text:#24292C;--muted:#5E4F4F;--gold:#6B4E37;--closed:#7C807C;color:var(--text)}
+.zone-sec .sec-title .no{color:var(--sec-bg)}
+.zone-sec.sec-ov .pos{color:#3F6B58} .zone-sec.sec-ov .neg{color:#963B36}
+.zone-sec.sec-tx .tx-bgblock{--panel:#D5E1DF;--line:#9DB4B1;--muted:#3E5451;--text:#22302E;background:#BFD0CD;border:1px solid #9DB4B1;border-radius:14px;padding:12px 14px 14px;margin-top:16px;color:var(--text)}.zone-sec.sec-tx .tx-bgblock .tx-sec{margin:0 0 10px;color:#22302E;font:700 13px/1.2 var(--disp);letter-spacing:.04em;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}.zone-sec.sec-tx .tx-bgblock .tx-sec span{font:400 11px/1.4 var(--sans);color:#3E5451;letter-spacing:0}
+.zone-sec .tile:hover{box-shadow:0 10px 24px -14px rgba(0,0,0,.45)}
 </style>
 </head>
 <body>
@@ -165,7 +176,7 @@
 <section class="ov zone-sec sec-ov" id="ov-panel">
   <style>
   /* 局勢總覽：所有選擇器掛在 .ov 底下，不影響既有樣式 */
-  .ov{--ov-red:#FF4D4F; --ov-orange:#E5654B; --ov-amber:#D9A441; --ov-calm:var(--muted); --ov-off:var(--closed);
+  .ov{--ov-red:#D58079; --ov-orange:#D49A7C; --ov-amber:#CDAE72; --ov-calm:var(--muted); --ov-off:var(--closed);
       margin:22px 0 0; position:relative}
   .ov *{box-sizing:border-box}
   .ov [data-c=red]{--c:var(--ov-red)} .ov [data-c=orange]{--c:var(--ov-orange)} .ov [data-c=amber]{--c:var(--ov-amber)}
@@ -205,7 +216,7 @@
   .ov-tbl td{text-align:right; padding:4px 6px; border-bottom:1px dashed var(--line); white-space:nowrap}
   .ov-tbl th:first-child,.ov-tbl td:first-child{text-align:left}
   .ov-tblwrap{overflow-x:auto}
-  .ov .pos{color:#3FB68B} .ov .neg{color:#FF4D4F}
+  .ov .pos{color:#8DB5A0} .ov .neg{color:#D58079}
   @media (max-width:900px){ .ov-grid{grid-template-columns:1fr} .ov-act{min-height:0} }
   </style>
 
@@ -364,7 +375,7 @@
   <style>
   /* 全部選擇器掛在 .tx 底下，不污染既有樣式 */
   .tx{
-    --st-alert:#FF4D4F; --st-watch:#E5654B; --st-calm:var(--muted); --st-up:var(--gold); --st-unknown:var(--closed);
+    --st-alert:#D58079; --st-watch:#D49A7C; --st-calm:var(--muted); --st-up:var(--gold); --st-unknown:var(--closed);
     margin:22px 0 26px; padding-top:20px; border-top:1px solid var(--line); position:relative;
   }
   .tx *{box-sizing:border-box}
@@ -430,8 +441,10 @@
     <div class="tx-verdict" id="tx-verdict"></div>
     <ul class="tx-notes" id="tx-notes"></ul>
     <div class="tx-core" id="tx-core"></div>
-    <p class="tx-sec">背景指標 · 不參與燈號</p>
-    <div class="tx-bg" id="tx-bg"></div>
+    <div class="tx-bgblock">
+      <p class="tx-sec">背景指標<span>不參與燈號・跟自己近 60 日比的 z 分數</span></p>
+      <div class="tx-bg" id="tx-bg"></div>
+    </div>
     <p class="tx-foot">燈號只由費半隔夜（或台指期夜盤，抓得到時優先）決定，門檻是「跟自己近 60 個交易日比」的 z 分數：≤ −2 強烈偏空、≤ −1 偏空、≥ +1 偏多。背景指標只供參考，|z| ≥ 1.5 標示偏離、≥ 2.5 標示異常並在上方提醒。</p>
   </div>
   <div class="tx-state" id="tx-state">載入資料中…</div>
@@ -537,15 +550,15 @@
 <script>
 /* ---------------- 標的設定（可自行增刪 / 換代碼） ---------------- */
 const SYMBOLS = [
-  { name:"道瓊 電子盤",    code:"OANDA:US30USD",   color:"#4C8DFF" }, // 美股：藍
-  { name:"那斯達克 電子盤", code:"OANDA:NAS100USD", color:"#4C8DFF" }, // 美股：藍
-  { name:"日經 225",      code:"OANDA:JP225USD",  color:"#9B7BFF" }, // 亞股：紫
-  { name:"美元指數 DXY",  code:"CAPITALCOM:DXY",  color:"#E6B450" }, // 美元：金（若空白改 PEPPERSTONE:USDX 或 AMEX:UUP）
-  { name:"美元/台幣",     code:"FX_IDC:USDTWD",   color:"#E6B450" }, // 美元：金
-  { name:"美元/日圓",     code:"FX_IDC:USDJPY",   color:"#E6B450" }, // 日圓匯率(全球基準)；想看日圓/台幣改 FX_IDC:JPYTWD
-  { name:"比特幣",        code:"BINANCE:BTCUSDT", color:"#F7931A" }, // 加密：橘
-  { name:"布蘭特原油",    code:"TVC:UKOIL",       color:"#E5654B" }, // 原油：紅橘。中東地緣風險看布蘭特，不看 WTI
-  { name:"美10年債·PST", code:"AMEX:PST", range:"3M", color:"#2DD4BF" }, // 債券：青綠。與10Y殖利率同向；多日趨勢平滑曲線。想賭24h連續可改 CBOT:ZN1!（期貨，可能被擋）
+  { name:"道瓊 電子盤",    code:"OANDA:US30USD",   color:"#2F4A63" }, // 美股：藍
+  { name:"那斯達克 電子盤", code:"OANDA:NAS100USD", color:"#2F4A63" }, // 美股：藍
+  { name:"日經 225",      code:"OANDA:JP225USD",  color:"#6B3F4C" }, // 亞股：紫
+  { name:"美元指數 DXY",  code:"CAPITALCOM:DXY",  color:"#6E5520" }, // 美元：金（若空白改 PEPPERSTONE:USDX 或 AMEX:UUP）
+  { name:"美元/台幣",     code:"FX_IDC:USDTWD",   color:"#6E5520" }, // 美元：金
+  { name:"美元/日圓",     code:"FX_IDC:USDJPY",   color:"#6E5520" }, // 日圓匯率(全球基準)；想看日圓/台幣改 FX_IDC:JPYTWD
+  { name:"比特幣",        code:"BINANCE:BTCUSDT", color:"#8A4A2C" }, // 加密：橘
+  { name:"布蘭特原油",    code:"TVC:UKOIL",       color:"#8A4A2C" }, // 原油：紅橘。中東地緣風險看布蘭特，不看 WTI
+  { name:"美10年債·PST", code:"AMEX:PST", range:"3M", color:"#2F5E58" }, // 債券：青綠。與10Y殖利率同向；多日趨勢平滑曲線。想賭24h連續可改 CBOT:ZN1!（期貨，可能被擋）
 ];
 
 /* ---------------- 建立每個 mini chart tile ---------------- */
@@ -577,14 +590,14 @@ SYMBOLS.forEach(s=>{
   w.className = "tradingview-widget-container__widget";
   box.appendChild(w);
 
-  const line = s.color || "#6BA5E7";
+  const line = s.color || "#93AEC4";
   const script = document.createElement("script");
   script.type = "text/javascript";
   script.async = true;
   script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
   script.text = JSON.stringify({
     symbol: s.code, width:"100%", height:"100%", locale:"zh_TW",
-    dateRange:(s.range||"1D"), colorTheme:"dark", isTransparent:true, autosize:true,
+    dateRange:(s.range||"1D"), colorTheme:"light", isTransparent:true, autosize:true,
     chartOnly:false, noTimeScale:false,
     trendLineColor:line, underLineColor:rgba(line,0.20), underLineBottomColor:rgba(line,0)
   });
