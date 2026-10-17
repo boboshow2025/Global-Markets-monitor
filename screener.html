@@ -1,67 +1,148 @@
-<!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>市場寬度 2026-10-16</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0B0E14" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>市場寬度＋每日選股 · Global Markets Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
-:root{--bg:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;
-      --s1:#2a78d6;--s2:#eb6834;--border:#e1e0d9;--pos:#2a78d6;--neg:#eb6834;--hl:#eef4fc}
-@media (prefers-color-scheme: dark){:root{--bg:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;
-      --muted:#898781;--grid:#2c2c2a;--s1:#3987e5;--s2:#d95926;--border:#2c2c2a;--pos:#3987e5;--neg:#d95926;--hl:#16212e}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
-main{max-width:1100px;margin:0 auto;padding:24px 16px 48px}
-h1{font-size:22px;margin:0 0 4px} .sub{color:var(--ink2);font-size:14px;margin:0 0 20px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
-.tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
-.tile .k{color:var(--ink2);font-size:13px}.tile .v{font-size:24px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
-.tile .d{color:var(--muted);font-size:12px;margin-top:2px}
-.pos{color:var(--pos)} .neg{color:var(--neg)}
-.box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px}
-.box h2{font-size:15px;margin:0 0 6px}.box li{margin:4px 0;color:var(--ink2);font-size:14px}
-.box .meta{color:var(--muted);font-size:12px;margin:0 0 8px}
-.tbl{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
-th,td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:right}
-th{color:var(--ink2);font-weight:600;font-size:12px}
-td.l,th.l{text-align:left}
-tr.top td{background:var(--hl)}
-.legend{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.7}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 14px 8px;margin-bottom:14px}
-.card h2{font-size:15px;margin:0 0 2px}.card p{color:var(--muted);font-size:12px;margin:0 0 8px}
-.chart{position:relative;height:240px}
-.note{color:var(--muted);font-size:12px;margin-top:16px;line-height:1.6}
-</style></head><body><main>
-<h1>市場寬度＋每日選股</h1>
-<p class="sub">資料日 2026-10-16 ・ 統計 1945 檔普通股（上市＋上櫃）</p>
-<div class="tiles"><div class="tile"><div class="k">上漲／下跌</div><div class="v">1227／536</div><div class="d">平盤 182</div></div><div class="tile"><div class="k">漲跌比</div><div class="v">69.6%</div><div class="d">10 日均 46.9%</div></div><div class="tile"><div class="k">漲停／跌停</div><div class="v">40／2</div><div class="d">前一日 9／41</div></div><div class="tile"><div class="k">多方健康度</div><div class="v">37.4%</div><div class="d">前一日 35.3%</div></div><div class="tile"><div class="k">空方擴散度</div><div class="v">32.2%</div><div class="d">前一日 34.4%</div></div><div class="tile"><div class="k">多空差</div><div class="v"><span class="pos">+5.2</span></div><div class="d">前一日 +0.9・偏多</div></div></div>
-<div class="box"><h2>今日提醒</h2><ul><li>無特別訊號</li></ul></div>
-<div class="box"><h2>每日選股</h2><p class="meta">來源 best3_20261016.csv・共 5 檔</p><div class="tbl"><table><thead><tr><th class="l">代號</th><th class="l">策略</th><th class="l">進場訊號</th><th class="">收盤</th><th class="">建議停損</th><th class="">停損幅度%</th><th class="l">出場規則</th><th class="">強度排名%</th><th class="">RS(①②)</th><th class="">距歷史高%</th><th class="">量比</th><th class="">K</th><th class="">均量張</th></tr></thead><tbody><tr class="top"><td class="l">6108</td><td class="l">① / ② / ③</td><td class="l">主訊號</td><td class="">30.85</td><td class="">27.15</td><td class="">-12</td><td class="l">跌破停損或DIF跌破0軸</td><td class="">99</td><td class="">97</td><td class="">-2.4</td><td class="">3.35</td><td class="">82.1</td><td class="">3340</td></tr><tr class=""><td class="l">6668</td><td class="l">② / ③</td><td class="l">主訊號</td><td class="">68.3</td><td class="">60.1</td><td class="">-12</td><td class="l">跌破停損或DIF跌破0軸</td><td class="">99</td><td class="">98</td><td class="">-14.3</td><td class="">1.54</td><td class="">86.4</td><td class="">8202</td></tr><tr class=""><td class="l">3354</td><td class="l">③</td><td class="l">主訊號</td><td class="">41.8</td><td class="">36.78</td><td class="">-12</td><td class="l">跌破停損或DIF跌破0軸</td><td class="">99</td><td class="">96</td><td class="">-0</td><td class="">0.96</td><td class="">81</td><td class="">2886</td></tr><tr class=""><td class="l">3701</td><td class="l">③</td><td class="l">主訊號</td><td class="">66.1</td><td class="">58.17</td><td class="">-12</td><td class="l">跌破停損或DIF跌破0軸</td><td class="">98</td><td class="">91</td><td class="">-32.6</td><td class="">1.58</td><td class="">86.1</td><td class="">4342</td></tr><tr class=""><td class="l">4903</td><td class="l">③</td><td class="l">主訊號</td><td class="">58</td><td class="">51.04</td><td class="">-12</td><td class="l">跌破停損或DIF跌破0軸</td><td class="">98</td><td class="">94</td><td class="">-0</td><td class="">1.65</td><td class="">84.8</td><td class="">10005</td></tr></tbody></table></div><p class="legend">① 雙重強勢（首選）／② 主訊號強勢／③ 主訊號C型／④ 大低背（短線，持有 5 天後跌破 20MA 出場）／⑤ 穩健型。符合越多個越優先；收盤確認，隔天開盤進場。</p></div>
-<div class="card"><h2>多空差</h2><p>多方健康度 − 空方擴散度；藍色 > 0 偏多，橘色 < 0 偏空</p><div class="chart"><canvas id="c5"></canvas></div></div>
-<p class="note">提醒內容只描述目前讀數，門檻尚未經回測驗證；選股結果為程式依規則篩選，皆不構成買賣建議。</p>
-</main>
+  :root{
+    --ink:#0B0E14; --panel:#141B29; --panel2:#101624; --line:#2A3448; --text:#EDF0F6; --muted:#8390A6;
+    --gold:#C9A96A; --up:#E5534B; --down:#3FB68B; --warn:#E3A33B;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:"Space Grotesk","PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+    --sans:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ink);color:var(--text);font-family:var(--sans)}
+  body{min-height:100vh;padding:calc(18px + env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));max-width:1180px;margin:0 auto}
+  @media (min-width:700px){ body{padding-left:clamp(14px,3vw,34px);padding-right:clamp(14px,3vw,34px)} }
+  a{color:var(--gold)}
+  .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line);position:relative}
+  .top::after{content:"";position:absolute;left:0;bottom:-1px;width:120px;height:2px;background:linear-gradient(90deg,var(--gold),transparent)}
+  h1{font-family:var(--disp);font-size:clamp(20px,2.6vw,28px);font-weight:700;letter-spacing:.02em}
+  .sub{margin-top:6px;color:var(--muted);font-family:var(--mono);font-size:12px;letter-spacing:.08em}
+  .links{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{display:inline-block;padding:7px 12px;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-size:13px;text-decoration:none}
+  .btn:hover{background:rgba(201,169,106,.12)}
+  h2{font-family:var(--disp);font-size:16px;font-weight:600;letter-spacing:.02em;margin:22px 0 10px}
+  h2 small{font-family:var(--sans);font-weight:400;font-size:12px;color:var(--muted);margin-left:8px;letter-spacing:0}
+
+  .ctx{margin:16px 0 0;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:12px;padding:14px 16px}
+  .ctx .tag{font-family:var(--disp);font-weight:700;font-size:22px;white-space:nowrap}
+  .ctx .txt{font-size:14px;line-height:1.65}
+  .ctx.go{border-left-color:var(--up)} .ctx.go .tag{color:var(--up)}
+  .ctx.hot{border-left-color:var(--down)} .ctx.hot .tag{color:var(--down)}
+  .ctx.mid{border-left-color:var(--warn)} .ctx.mid .tag{color:var(--warn)}
+  .ctx.flat .tag{color:var(--muted)}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px;margin-top:12px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:5px;align-content:start;min-width:0}
+  .tile .k{color:var(--muted);font-size:12px}
+  .tile .v{font-family:var(--mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+  .tile .d{color:var(--muted);font-size:11.5px;line-height:1.5}
+  .chip{justify-self:start;font-size:11.5px;padding:1px 8px;border-radius:999px;border:1px solid currentColor}
+  .lv-超賣{color:var(--up)} .lv-過熱{color:var(--down)} .lv-留意{color:var(--warn)} .lv-中性{color:var(--muted)}
+  .key{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:11.5px;color:var(--muted);margin-top:10px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:9px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+  th{font-size:12px;font-weight:500;color:var(--muted);background:var(--panel2)}
+  th.l,td.l{text-align:left}
+  tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono)}
+  tr.first td{background:rgba(201,169,106,.07)}
+  .st{display:inline-block;font-family:var(--mono);font-size:12px;padding:0 6px;margin-right:3px;border:1px solid var(--line);border-radius:4px}
+  .st.s1{color:var(--gold);border-color:rgba(201,169,106,.5)}
+  .meta{font-size:12px;color:var(--muted);margin:-4px 0 8px}
+  .empty{padding:28px 16px;text-align:center;color:var(--muted)}
+  .legend{font-size:12px;color:var(--muted);line-height:1.7;margin-top:8px}
+
+  .chartbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 12px 6px;position:relative}
+  .chartbox svg{display:block;width:100%;height:auto}
+  .tip{position:absolute;pointer-events:none;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12px;white-space:nowrap;font-family:var(--mono);display:none}
+  .tip .t{color:var(--muted)}
+  .note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:16px}
+  @media (max-width:640px){ .ctx{grid-template-columns:1fr} th,td{padding:8px 7px;font-size:13px} .hide-s{display:none} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>市場寬度＋每日選股</h1>
+    <div class="sub">資料日 2026-10-16 ・ 上市＋上櫃 1945 檔普通股</div>
+  </div>
+  <nav class="links"><a class="btn" href="./index.html">← 回盤勢監控</a></nav>
+</header>
+
+<section class="ctx flat"><div class="tag">中性</div><div class="txt">各指標都在中間區間，沒有明確方向，照選股名單正常操作。</div></section>
+
+<div class="tiles"><div class="tile"><div class="k">多空差</div><div class="v">+5.2</div><span class="chip lv-中性">中性</span><div class="d">前一日 +0.9・&lt; −40 超賣、&gt; +20 過熱</div></div><div class="tile"><div class="k">空方擴散度</div><div class="v">32.2%</div><span class="chip lv-中性">中性</span><div class="d">前一日 34.4%・&gt; 60% 超賣</div></div><div class="tile"><div class="k">多方健康度</div><div class="v">37.4%</div><span class="chip lv-中性">中性</span><div class="d">前一日 35.3%・&lt; 20% 超賣</div></div><div class="tile"><div class="k">跌停／漲停</div><div class="v">2／40</div><span class="chip lv-中性">中性</span><div class="d">跌停前 60 日平均 11.4 家</div></div><div class="tile"><div class="k">上漲／下跌</div><div class="v">1227／536</div><span class="chip lv-中性">中性</span><div class="d">漲跌比 69.6%・10 日均 46.9%</div></div></div>
+<div class="key">
+  <span class="lv-超賣">● 超賣：歷史上之後 20 天偏多，可分批布局</span>
+  <span class="lv-留意">● 留意：接近警戒或單日劇烈波動</span>
+  <span class="lv-過熱">● 過熱：新訊號表現最差，新進場減半</span>
+  <span class="lv-中性">● 中性</span>
+</div>
+
+<h2>每日選股<small>2026-10-16 收盤・共 5 檔</small></h2>
+<div class="card"><div class="scroll"><table><thead><tr><th class="l">代號</th><th class="l">策略</th><th class="l hide-s">進場訊號</th><th class="num">收盤</th><th class="num">建議停損</th><th class="num hide-s">停損幅度</th><th class="l">出場規則</th><th class="num">強度排名</th><th class="num hide-s">RS(①②)</th><th class="num">距歷史高</th><th class="num hide-s">量比</th><th class="num hide-s">K</th><th class="num hide-s">均量張</th></tr></thead><tbody><tr class="first"><td class="l">6108</td><td class="l"><span class="st s1">①</span><span class="st">②</span><span class="st">③</span></td><td class="l hide-s">主訊號</td><td class="num">30.85</td><td class="num">27.15</td><td class="num hide-s">-12%</td><td class="l">跌破停損或DIF跌破0軸</td><td class="num">99</td><td class="num hide-s">97</td><td class="num">-2.4%</td><td class="num hide-s">3.35</td><td class="num hide-s">82.1</td><td class="num hide-s">3340</td></tr><tr class=""><td class="l">6668</td><td class="l"><span class="st">②</span><span class="st">③</span></td><td class="l hide-s">主訊號</td><td class="num">68.3</td><td class="num">60.1</td><td class="num hide-s">-12%</td><td class="l">跌破停損或DIF跌破0軸</td><td class="num">99</td><td class="num hide-s">98</td><td class="num">-14.3%</td><td class="num hide-s">1.54</td><td class="num hide-s">86.4</td><td class="num hide-s">8202</td></tr><tr class=""><td class="l">3354</td><td class="l"><span class="st">③</span></td><td class="l hide-s">主訊號</td><td class="num">41.8</td><td class="num">36.78</td><td class="num hide-s">-12%</td><td class="l">跌破停損或DIF跌破0軸</td><td class="num">99</td><td class="num hide-s">96</td><td class="num">-0%</td><td class="num hide-s">0.96</td><td class="num hide-s">81</td><td class="num hide-s">2886</td></tr><tr class=""><td class="l">3701</td><td class="l"><span class="st">③</span></td><td class="l hide-s">主訊號</td><td class="num">66.1</td><td class="num">58.17</td><td class="num hide-s">-12%</td><td class="l">跌破停損或DIF跌破0軸</td><td class="num">98</td><td class="num hide-s">91</td><td class="num">-32.6%</td><td class="num hide-s">1.58</td><td class="num hide-s">86.1</td><td class="num hide-s">4342</td></tr><tr class=""><td class="l">4903</td><td class="l"><span class="st">③</span></td><td class="l hide-s">主訊號</td><td class="num">58</td><td class="num">51.04</td><td class="num hide-s">-12%</td><td class="l">跌破停損或DIF跌破0軸</td><td class="num">98</td><td class="num hide-s">94</td><td class="num">-0%</td><td class="num hide-s">1.65</td><td class="num hide-s">84.8</td><td class="num hide-s">10005</td></tr></tbody></table></div></div><p class="legend">① 雙重強勢（首選）／② 主訊號強勢／③ 主訊號C型／④ 大低背（短線，持有 5 天後跌破 20MA 出場）／⑤ 穩健型。符合越多個越優先；收盤確認，隔天開盤進場。</p>
+
+<h2>多空差<small>多方健康度 − 空方擴散度・近 120 個交易日・虛線 −40 超賣／+20 過熱</small></h2>
+<div class="chartbox"><svg id="ch" role="img" aria-label="多空差趨勢圖"></svg><div class="tip" id="tip"></div></div>
+
+<p class="note">燈號門檻來自 2022/9–2026/10 回測（多空差 &lt; −40、空方擴散度 &gt; 60%、多方健康度 &lt; 20%、跌停暴增之後 20 天偏多；多空差 &gt; +20 時新訊號表現最差）。選股為程式依規則篩選，皆不構成買賣建議。更新時間 2026-10-17 19:33</p>
+
 <script>
-const D = {"date": ["2025-10-03", "2025-10-07", "2025-10-08", "2025-10-09", "2025-10-13", "2025-10-14", "2025-10-15", "2025-10-16", "2025-10-17", "2025-10-20", "2025-10-21", "2025-10-22", "2025-10-23", "2025-10-27", "2025-10-28", "2025-10-29", "2025-10-30", "2025-10-31", "2025-11-03", "2025-11-04", "2025-11-05", "2025-11-06", "2025-11-07", "2025-11-10", "2025-11-11", "2025-11-12", "2025-11-13", "2025-11-14", "2025-11-17", "2025-11-18", "2025-11-19", "2025-11-20", "2025-11-21", "2025-11-24", "2025-11-25", "2025-11-26", "2025-11-27", "2025-11-28", "2025-12-01", "2025-12-02", "2025-12-03", "2025-12-04", "2025-12-05", "2025-12-08", "2025-12-09", "2025-12-10", "2025-12-11", "2025-12-12", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-22", "2025-12-23", "2025-12-24", "2025-12-26", "2025-12-29", "2025-12-30", "2025-12-31", "2026-01-02", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-13", "2026-07-14", "2026-07-15", "2026-07-16", "2026-07-17", "2026-07-20", "2026-07-21", "2026-07-22", "2026-07-23", "2026-07-24", "2026-07-27", "2026-07-28", "2026-07-29", "2026-07-30", "2026-07-31", "2026-08-03", "2026-08-04", "2026-08-05", "2026-08-06", "2026-08-07", "2026-08-10", "2026-08-11", "2026-08-12", "2026-08-13", "2026-08-14", "2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21", "2026-08-24", "2026-08-25", "2026-08-26", "2026-08-27", "2026-08-28", "2026-08-31", "2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-07", "2026-09-08", "2026-09-09", "2026-09-10", "2026-09-11", "2026-09-14", "2026-09-15", "2026-09-16", "2026-09-17", "2026-09-18", "2026-09-21", "2026-09-22", "2026-09-23", "2026-09-24", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"], "diff": [-11.3, -6.6, -8.7, -10.4, -18.5, -27.2, -25.1, -20.1, -20.6, -20.4, -15.3, -9.6, -13.4, -12.7, -20.1, -19.9, -23.2, -24.2, -23.0, -31.9, -33.8, -28.1, -31.5, -33.1, -32.2, -26.1, -22.9, -27.0, -32.8, -42.0, -48.0, -46.5, -53.4, -49.4, -44.4, -28.6, -24.0, -14.4, -18.0, -13.1, -2.4, 2.4, -1.7, 0.1, -0.8, -3.9, -6.1, -3.2, -1.7, -10.7, -7.5, -7.7, -0.1, 6.0, 4.7, 1.2, 1.4, 1.8, -3.5, -6.4, -3.8, -11.9, -9.8, -3.2, -4.8, -1.6, 6.4, 5.2, 19.6, 22.9, 20.3, 23.0, 22.9, 16.6, 16.9, 18.7, 23.0, 23.2, 25.4, 21.2, 10.8, -2.1, -2.3, 1.4, -0.8, -11.0, -10.1, -9.2, -9.2, 4.5, 10.6, 12.6, 20.2, 15.9, 1.8, -27.1, -18.4, -12.9, -41.4, -35.1, -16.9, -20.0, -18.3, -12.8, -1.3, 2.2, -4.1, -2.7, -12.7, -15.8, -9.9, -13.6, -15.1, -23.3, -35.5, -24.1, -28.7, -26.0, -9.9, -8.0, -5.0, -0.3, 7.5, 9.9, 15.6, 16.4, 15.2, 18.7, 20.3, 6.8, 4.1, -1.2, -1.2, -2.3, -4.4, -1.8, 1.9, 2.9, 5.9, 5.5, 7.7, 4.6, 2.3, -0.8, -5.2, -7.0, -10.9, -13.1, -4.2, 2.6, 6.0, 5.0, 2.7, 2.1, 10.0, 20.4, 23.0, 33.4, 37.8, 37.4, 16.1, 21.7, 12.1, 9.1, 14.1, 21.0, 17.7, 21.0, 25.8, 28.0, 21.4, 19.1, 14.0, -3.7, -3.0, 3.7, 1.4, 5.7, 20.5, 22.6, 2.6, 0.5, -0.8, -5.6, -15.5, -11.2, -14.6, -36.2, -43.4, -38.6, -37.9, -40.5, -43.0, -41.4, -51.1, -56.2, -61.9, -57.3, -56.9, -52.8, -42.8, -36.5, -32.5, -15.7, -15.1, -7.3, -4.7, -10.6, -10.0, -19.0, -20.6, -10.9, -6.5, -12.0, -13.5, 0.3, -0.2, 0.6, -0.7, 0.6, -3.3, -13.4, -12.1, -14.3, -21.0, -22.2, -26.6, -34.2, -38.9, -44.2, -40.8, -35.2, -24.6, -18.0, -18.2, -18.3, -18.3, -19.9, -11.9, -12.2, -8.8, -11.4, -8.3, -2.8, 0.1, 5.5, -0.3, 7.7, 0.9, 5.2]};
-const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-Chart.defaults.font.family = '"Microsoft JhengHei","PingFang TC",system-ui,sans-serif';
-Chart.defaults.color = css('--muted');
-function make(id, sets, opt = {}) {
-  new Chart(document.getElementById(id), {
-    type: opt.type || 'line',
-    data: { labels: D.date, datasets: sets.map(s => Object.assign({
-      borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.15, borderRadius: 2 }, s)) },
-    options: { maintainAspectRatio: false, animation: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: sets.length > 1, labels: { color: css('--ink2'), boxWidth: 12 } },
-                 tooltip: { backgroundColor: css('--surface'), titleColor: css('--ink'), bodyColor: css('--ink2'),
-                            borderColor: css('--grid'), borderWidth: 1 } },
-      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
-                y: Object.assign({ grid: { color: css('--grid') }, border: { display: false } }, opt.y || {}) } }
-  });
-}
-make('c5', [{ label: '多空差', data: D.diff, borderWidth: 0,
-              backgroundColor: D.diff.map(v => v === null ? 'transparent' : (v >= 0 ? css('--pos') : css('--neg'))) }],
-     { type: 'bar' });
-</script></body></html>
+const D = {"date": ["2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-13", "2026-07-14", "2026-07-15", "2026-07-16", "2026-07-17", "2026-07-20", "2026-07-21", "2026-07-22", "2026-07-23", "2026-07-24", "2026-07-27", "2026-07-28", "2026-07-29", "2026-07-30", "2026-07-31", "2026-08-03", "2026-08-04", "2026-08-05", "2026-08-06", "2026-08-07", "2026-08-10", "2026-08-11", "2026-08-12", "2026-08-13", "2026-08-14", "2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21", "2026-08-24", "2026-08-25", "2026-08-26", "2026-08-27", "2026-08-28", "2026-08-31", "2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-07", "2026-09-08", "2026-09-09", "2026-09-10", "2026-09-11", "2026-09-14", "2026-09-15", "2026-09-16", "2026-09-17", "2026-09-18", "2026-09-21", "2026-09-22", "2026-09-23", "2026-09-24", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"], "diff": [4.1, -1.2, -1.2, -2.3, -4.4, -1.8, 1.9, 2.9, 5.9, 5.5, 7.7, 4.6, 2.3, -0.8, -5.2, -7.0, -10.9, -13.1, -4.2, 2.6, 6.0, 5.0, 2.7, 2.1, 10.0, 20.4, 23.0, 33.4, 37.8, 37.4, 16.1, 21.7, 12.1, 9.1, 14.1, 21.0, 17.7, 21.0, 25.8, 28.0, 21.4, 19.1, 14.0, -3.7, -3.0, 3.7, 1.4, 5.7, 20.5, 22.6, 2.6, 0.5, -0.8, -5.6, -15.5, -11.2, -14.6, -36.2, -43.4, -38.6, -37.9, -40.5, -43.0, -41.4, -51.1, -56.2, -61.9, -57.3, -56.9, -52.8, -42.8, -36.5, -32.5, -15.7, -15.1, -7.3, -4.7, -10.6, -10.0, -19.0, -20.6, -10.9, -6.5, -12.0, -13.5, 0.3, -0.2, 0.6, -0.7, 0.6, -3.3, -13.4, -12.1, -14.3, -21.0, -22.2, -26.6, -34.2, -38.9, -44.2, -40.8, -35.2, -24.6, -18.0, -18.2, -18.3, -18.3, -19.9, -11.9, -12.2, -8.8, -11.4, -8.3, -2.8, 0.1, 5.5, -0.3, 7.7, 0.9, 5.2]};
+(function () {
+  const svg = document.getElementById('ch'), tip = document.getElementById('tip'), box = svg.parentNode;
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function draw() {
+    const W = Math.max(300, box.clientWidth - 24), H = W < 500 ? 220 : 260, m = { l: 34, r: 8, t: 10, b: 22 };
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = '';
+    const v = D.diff, n = v.length;
+    const lo = Math.min(-45, ...v.filter(x => x !== null)), hi = Math.max(25, ...v.filter(x => x !== null));
+    const y = x => m.t + (hi - x) / (hi - lo) * (H - m.t - m.b);
+    const bw = (W - m.l - m.r) / n, x = i => m.l + i * bw;
+    const ns = 'http://www.w3.org/2000/svg';
+    const el = (tag, a) => { const e = document.createElementNS(ns, tag); for (const k in a) e.setAttribute(k, a[k]); svg.appendChild(e); return e; };
+    const step = (hi - lo) > 80 ? 20 : 10;
+    for (let g = Math.ceil(lo / step) * step; g <= hi; g += step) {
+      el('line', { x1: m.l, x2: W - m.r, y1: y(g), y2: y(g), stroke: g === 0 ? css('--muted') : css('--line'), 'stroke-width': 1 });
+      const t = el('text', { x: m.l - 6, y: y(g) + 4, 'text-anchor': 'end', 'font-size': 10, fill: css('--muted'), 'font-family': css('--mono') }); t.textContent = g;
+    }
+    [[-40, css('--up')], [20, css('--down')]].forEach(([r, c]) => el('line', { x1: m.l, x2: W - m.r, y1: y(r), y2: y(r), stroke: c, 'stroke-dasharray': '4 4', 'stroke-width': 1, opacity: .8 }));
+    v.forEach((d, i) => { if (d === null) return;
+      el('rect', { x: x(i) + bw * .12, width: Math.max(1, bw * .76), y: Math.min(y(0), y(d)), height: Math.max(1, Math.abs(y(d) - y(0))),
+                   fill: d < -40 ? css('--up') : d > 20 ? css('--down') : css('--gold'), opacity: (d < -40 || d > 20) ? 1 : .55, rx: 1 }); });
+    let lastM = '';
+    D.date.forEach((s, i) => { const mo = s.slice(0, 7); if (mo !== lastM && i > 2) {
+      const t = el('text', { x: x(i), y: H - 6, 'font-size': 10, fill: css('--muted'), 'font-family': css('--mono') }); t.textContent = (+s.slice(5, 7)) + '月'; }
+      lastM = mo; });
+    const hl = el('rect', { y: m.t, height: H - m.t - m.b, width: bw, fill: css('--text'), opacity: 0 });
+    svg.onpointermove = ev => {
+      const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * W;
+      const i = Math.max(0, Math.min(n - 1, Math.floor((px - m.l) / bw))); const d = v[i];
+      hl.setAttribute('x', x(i)); hl.setAttribute('opacity', .08);
+      tip.innerHTML = ''; const a = document.createElement('div'); a.className = 't'; a.textContent = D.date[i]; tip.appendChild(a);
+      const b = document.createElement('div'); b.textContent = '多空差 ' + (d === null ? '—' : (d > 0 ? '+' : '') + d.toFixed(1)); tip.appendChild(b);
+      tip.style.display = 'block';
+      const left = (x(i) / W) * r.width + 12, tw = tip.offsetWidth;
+      tip.style.left = Math.min(left, box.clientWidth - tw - 4) + 'px'; tip.style.top = '8px';
+    };
+    svg.onpointerleave = () => { tip.style.display = 'none'; hl.setAttribute('opacity', 0); };
+  }
+  draw(); let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(draw, 120); });
+})();
+</script>
+</body>
+</html>
