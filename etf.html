@@ -113,16 +113,16 @@
 
 
 <p class="note">
-  名單來源：portfolio_backtest.py，依所有主動ETF最新一天的持股合成。<b>高超配</b>＝主動經理人合計權重比 0050 多最多的股票（主動ETF真正押注的地方）；<b>共識持股</b>＝最多檔主動ETF同時持有；<b>合成權重</b>＝把所有主動ETF當成一檔基金的前十大。<br>
+  名單來源：portfolio_backtest.py，依所有主動ETF最新一天的持股合成。<b>高超配</b>＝主動經理人合計權重比 0050 多最多的股票（主動ETF真正押注的地方）；<b>共識持股</b>＝最多檔主動ETF同時持有；<b>合成權重</b>＝把所有主動ETF當成一檔基金的權重排名。三份名單都從<b>前 30 名</b>中，只列出符合進場條件的股票：<b>站上 MA60 且 MA60 往上、跌破 MA20、經理人最近 2 個交易日淨買進</b>（扣除申購贖回）。<br>
   均線欄位：收盤價相對 20 日／60 日均線的距離，兩條都在上方＝趨勢仍在。<br>
   使用方式：資金輪動在「進攻」時依名單布局；轉「防守」時名單只做觀察，等轉回進攻再進場。僅供參考，非投資建議。
 </p>
 
 <script>
 const STRAT_DESC = {
-  "高超配": "主動經理人比大盤多押的股票 —— 建議當主要進攻池。",
-  "共識持股": "被最多檔主動ETF同時持有的股票，偏大型、穩定。",
-  "合成權重": "把所有主動ETF合成一檔後的前十大持股（含台積電等大權值）。"
+  "高超配": "超配度前 30 名中，符合進場條件（多頭回檔＋經理人回補）的股票。",
+  "共識持股": "持有檔數前 30 名中，符合進場條件（多頭回檔＋經理人回補）的股票。",
+  "合成權重": "合成權重前 30 名中，符合進場條件（多頭回檔＋經理人回補）的股票。"
 };
 const ORDER = ["高超配", "共識持股", "合成權重"];
 const fmt = (v, d = 2, sign = false) => v == null || isNaN(v) ? "—" : (sign && v > 0 ? "+" : "") + Number(v).toFixed(d);
@@ -186,7 +186,7 @@ function renderPicks() {
     const key = CUR === "高超配" ? r.over : r.agg_w;
     const w = Math.max(4, Math.round(Math.abs(key || 0) / maxW * 46));
     return `<tr>
-      <td class="mut">${i + 1}</td>
+      <td class="mut">${r.rank ?? i + 1}</td>
       <td>${esc(r.name)}<span class="code">${short(r.code)}${r.market === "上櫃" ? " 櫃" : ""}</span>${newSet.has(r.code) ? '<span class="new">新</span>' : ""}</td>
       <td class="num">${r.holders} / ${DATA.n_etf}</td>
       <td class="num">${CUR !== "高超配" ? `<span class="bar" style="width:${w}px"></span>` : ""}${fmt(r.agg_w, 2)}</td>
@@ -198,7 +198,7 @@ function renderPicks() {
       <td class="num ${cls(r.vs_ma60)}">${fmt(r.vs_ma60, 1, true)}</td>
       <td>${trend(r)}</td></tr>`;
   }).join("");
-  document.getElementById("picks").innerHTML = head + (body || `<tr><td colspan="11" class="empty">沒有資料</td></tr>`);
+  document.getElementById("picks").innerHTML = head + (body || `<tr><td colspan="11" class="empty">今天沒有符合進場條件的股票（站上上揚的 MA60、跌破 MA20、經理人近 2 日淨買進）</td></tr>`);
 }
 
 (async () => {
