@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#2F4245" />
+<meta name="theme-color" content="#202629" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -158,6 +158,79 @@
 .zone-sec.sec-tx .tx-bgblock{--panel:#D5E1DF;--line:#9DB4B1;--muted:#3E5451;--text:#22302E;background:#BFD0CD;border:1px solid #9DB4B1;border-radius:14px;padding:12px 14px 14px;margin-top:16px;color:var(--text)}.zone-sec.sec-tx .tx-bgblock .tx-sec{margin:0 0 10px;color:#22302E;font:700 13px/1.2 var(--disp);letter-spacing:.04em;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}.zone-sec.sec-tx .tx-bgblock .tx-sec span{font:400 11px/1.4 var(--sans);color:#3E5451;letter-spacing:0}
 .zone-sec .tile:hover{box-shadow:0 10px 24px -14px rgba(0,0,0,.45)}
 </style>
+<style>/* ===== 深色莫蘭迪金融主題 v1.0 ＋ 語意配色（風險紅色分級／中性藍／有利綠／漲鮮紅跌亮綠／曲線橘／外資黃） ===== */
+/* Dark Morandi Financial Theme v1.0 */
+:root{--bg-main:#202629;--bg-section:#252E33;--bg-card:#303A40;--bg-card-hover:#39464D;
+--bg-preopen:#34434D;--bg-preopen-detail:#3C4C56;--bg-preopen-metric:#2C383F;--border-preopen:#718B9A;
+--border-section:#53636C;--border-card:#586A73;--border-subtle:#3E4B52;
+--text-primary:#F0F1ED;--text-secondary:#C1CBCB;--text-muted:#9BA9AD;--text-disabled:#748187;
+--accent-blue:#A0B9CB;--accent-sage:#8FB7A5;--accent-gold:#D0B783;--accent-purple:#B1A6BF;
+--market-up:#F08F89;--market-down:#70D0A5;--market-flat:#BBC5C8;
+--bg-positive:#293F38;--bg-negative:#493536;--bg-warning:#484131;--bg-neutral:#303D45;
+--chart-grid:#3A484F;--chart-axis:#9BA9AD;--chart-up:#F08F89;--chart-down:#70D0A5}
+.market-international{--market-up:#70D0A5;--market-down:#F08F89}
+.market-taiwan{--market-up:#F08F89;--market-down:#70D0A5}
+body{font-variant-numeric:tabular-nums}
+
+:root{--ink:var(--bg-main);--panel:var(--bg-card);--line:var(--border-card);--text:var(--text-primary);
+  --muted:var(--text-muted);--gold:var(--accent-gold);--open:var(--accent-sage);--closed:var(--text-disabled)}
+html,body{background:var(--bg-main)!important;color:var(--text-primary)}
+.zone{background:var(--bg-card);border-color:var(--border-card)}
+.screener-link.l-sc{border-color:var(--market-up);color:var(--market-up);background:transparent}
+.screener-link.l-etf{border-color:var(--accent-sage);color:var(--accent-sage);background:transparent}
+.screener-link:hover{background:var(--bg-card-hover)}
+.zone-sec.sec-ov.ov{--sec-bg:var(--bg-section);--sec-line:var(--border-section);--panel:var(--bg-card);--line:var(--border-card);--accent:var(--accent-gold);--text:var(--text-primary);--muted:var(--text-muted);--gold:var(--accent-gold);--closed:var(--text-disabled);color:var(--text);background:var(--bg-section)!important;border:1px solid var(--border-section)!important;--ov-red:var(--market-up);--ov-orange:#E3A27A;--ov-amber:var(--accent-gold)}
+.zone-sec.sec-tx.tx{--sec-bg:var(--bg-section);--sec-line:var(--border-preopen);--panel:var(--bg-preopen-metric);--line:var(--border-card);--accent:var(--accent-blue);--text:var(--text-primary);--muted:var(--text-muted);--gold:var(--accent-gold);--closed:var(--text-disabled);color:var(--text);background:var(--bg-section)!important;border:1px solid var(--border-preopen)!important;--st-alert:var(--market-up);--st-watch:#E3A27A;--st-up:var(--accent-gold)}
+.zone-sec.sec-mk{--sec-bg:var(--bg-section);--sec-line:var(--border-section);--panel:var(--bg-card);--line:var(--border-card);--accent:var(--accent-purple);--text:var(--text-primary);--muted:var(--text-muted);--gold:var(--accent-gold);--closed:var(--text-disabled);color:var(--text);background:var(--bg-section)!important;border:1px solid var(--border-section)!important}
+.zone-sec .sec-title{border-bottom:1px solid var(--border-subtle);padding-bottom:12px;margin-bottom:14px}
+.zone-sec .sec-title .zh{color:var(--text-primary)}
+.zone-sec .sec-title .no{color:var(--bg-main);background:var(--accent)}
+.zone-sec::before{background:var(--accent)!important}
+.ov-card,.tile{background:var(--bg-card);border-color:var(--border-card);transition:background .2s ease}
+.ov-card:hover,.tile:hover{background:var(--bg-card-hover)}
+.ov-verdict{background:var(--bg-card)!important;border-color:var(--border-card)!important}
+.zone-sec.sec-tx .tx-verdict{background:var(--bg-preopen)!important;border:1px solid var(--border-preopen)!important;border-left:4px solid var(--accent-blue)!important}
+.zone-sec.sec-tx .tx-card{background:var(--bg-preopen-metric);border-color:var(--border-card)}
+.zone-sec.sec-tx .tx-bgblock{--panel:var(--bg-preopen-metric);--line:var(--border-card);--muted:var(--text-secondary);--text:var(--text-primary);
+  background:var(--bg-preopen-detail);border:1px solid var(--border-preopen);border-radius:7px}
+.zone-sec.sec-tx .tx-bgblock .tx-sec{color:var(--accent-blue)} .zone-sec.sec-tx .tx-bgblock .tx-sec span{color:var(--text-secondary)}
+.zone-sec .pos{color:var(--market-up)} .zone-sec .neg{color:var(--market-down)}
+.modal-box{background:var(--bg-card);border-color:var(--border-section)}
+footer{border-top-color:var(--border-subtle)}
+@media(max-width:768px){.zone-sec{padding:12px!important;margin-bottom:14px}.zone-sec.sec-tx .tx-bgblock{padding:10px}}
+/* 語意配色層 */
+:root{
+ /* 訊號狀態（莫蘭迪） */
+ --sig-danger:#C97E78; --sig-danger-soft:#D9A19B; --sig-danger-bg:#46302F;
+ --sig-caution:#D0B26E; --sig-caution-soft:#DDC48F; --sig-caution-bg:#463F2C;
+ --sig-neutral:#8FA8BD; --sig-neutral-bg:#2E3B45;
+ --sig-favor:#8FB7A5;
+ /* 數字漲跌（鮮明） */
+ --num-up:#FF4D4F; --num-down:#2EE68A;
+ /* 曲線（莫蘭迪橘） */
+ --chart-1:#D99A6C; --chart-2:#E6B48C; --chart-3:#C2825A; --chart-4:#EDC7A6; --chart-5:#B8775A;
+}
+
+.ov{--ov-red:var(--sig-danger)!important;--ov-orange:var(--sig-caution)!important;--ov-amber:var(--sig-caution-soft)!important;--ov-calm:var(--sig-neutral)!important}
+.ov [data-c=gold]{--c:var(--sig-favor)!important}
+.tx{--st-alert:var(--sig-danger)!important;--st-watch:var(--sig-caution)!important;--st-calm:var(--sig-neutral)!important;--st-up:var(--sig-favor)!important}
+.pos,.zone-sec .pos,.ov .pos,.zone-sec.sec-ov .pos{color:var(--num-up)!important;font-weight:700}
+.neg,.zone-sec .neg,.ov .neg,.zone-sec.sec-ov .neg{color:var(--num-down)!important;font-weight:700}
+.ov-spark polyline:last-child{stroke:var(--chart-1)!important}
+.ov-spark polyline[stroke-dasharray]{stroke:var(--text-muted)!important}
+.screener-link.l-sc{border-color:var(--chart-1);color:var(--chart-1)}
+/* 風險一律紅色系，深淺分級 */
+:root{--risk-3:#D9665E;--risk-2:#D08A82;--risk-1:#DDB3AD;--risk-bg:#3E2F2F}
+
+.ov{--ov-red:var(--risk-3)!important;--ov-orange:var(--risk-2)!important;--ov-amber:var(--risk-1)!important}
+.tx{--st-alert:var(--risk-3)!important;--st-watch:var(--risk-2)!important}
+/* 黃色專用於外資籌碼；其他金色裝飾改沙色 */
+:root{--flow:#D9BC6A;--sand:#C9B8A6;--gold:var(--sand)!important;--accent-gold:var(--sand)}
+.zone-sec.sec-ov.ov{--accent:var(--sand)!important}
+.zone-sec,.ov,.tx{--gold:var(--sand)!important}
+.flow,.tx-row .v{color:var(--flow)!important;font-weight:700}
+.tx-row .v small{color:var(--muted)}
+</style>
 </head>
 <body>
 
@@ -231,7 +304,7 @@
   <details id="ov-bt"><summary>恐慌儀表回測：各狀態之後加權指數表現、每次「融資斷頭」與「恐慌退燒」離真正低點多遠</summary><div id="ov-bt-body"></div></details>
   <p class="ov-foot">三張卡由短到長：開盤前（今天）→ 資金輪動（數週，資金在成長股還是防禦股）→ 恐慌儀表（底部轉折）。
     資金輪動與恐慌儀表都是「確認」工具，不是預測：轉守通常比大盤早幾天；轉攻通常在低點反彈約一成後才確認，恐慌退燒用來補這段空窗。
-    本區顏色為台股慣例以外的狀態色（紅＝危險、金＝有利），與下方行情圖的「綠漲紅跌」無關。</p>
+    燈號顏色：紅色越深代表風險越高、持股水位越該下降；藍＝中性；綠＝有利。數字漲跌另用鮮紅（漲）／亮綠（跌）。</p>
 
   <script>
   (function () {
@@ -269,10 +342,10 @@
         '<div class="ov-act">' + esc(d.action) + '</div>' +
         '<div class="ov-meta">依美股 ' + md(d.us_date) + ' 收盤' + (d.fresh ? '' : ' · <span style="color:var(--ov-orange)">台股已開過，已過期</span>') + '</div>' +
         '<div class="ov-rows">' +
-          (used ? row(esc(used.label), '<span>' + sgn(used.pct) + '%</span><small>z ' + sgn(used.z, 1) + '</small>') : '') +
-          row('外資現貨 ' + md(f.date), num(f.net) + '<small>億</small>') +
-          (fu ? row('外資台指期淨口數', num(fu.net) + '<small>' + (fu.chg === null ? '' : '較前日 ' + sgn(fu.chg, 0)) + '</small>') : '') +
-          (f.night && f.night.fresh ? row('外資昨晚夜盤淨口數', sgn(f.night.net_equiv, 0) + '<small>口</small>') : '') +
+          (used ? row(esc(used.label), '<span class="' + (used.pct > 0 ? 'pos' : used.pct < 0 ? 'neg' : '') + '">' + sgn(used.pct) + '%</span><small>z ' + sgn(used.z, 1) + '</small>') : '') +
+          row('外資現貨 ' + md(f.date), '<span class="flow">' + num(f.net) + '</span><small>億</small>') +
+          (fu ? row('外資台指期淨口數', '<span class="flow">' + num(fu.net) + '</span><small>' + (fu.chg === null ? '' : '較前日 ' + sgn(fu.chg, 0)) + '</small>') : '') +
+          (f.night && f.night.fresh ? row('外資昨晚夜盤淨口數', '<span class="flow">' + sgn(f.night.net_equiv, 0) + '</span><small>口</small>') : '') +
         '</div>';
     }
 
@@ -517,7 +590,7 @@
       const BGTXT = { calm: '正常', watch: '偏離', alert: '異常', unknown: '—' };
       $('tx-bg').innerHTML = (d.background || []).map((b) =>
         '<div class="tx-bgc" data-st="' + b.state + '"><div class="tx-card-h"><span><i></i>' + esc(b.label) + '</span></div>' +
-        '<div class="tx-big">' + sgn(b.metric, b.unit === 'bp' ? 1 : 2) + '<small>' + esc(b.unit) + '</small></div>' +
+        '<div class="tx-big"><span class="' + cls(b.metric) + '">' + sgn(b.metric, b.unit === 'bp' ? 1 : 2) + '</span><small>' + esc(b.unit) + '</small></div>' +
         '<div class="tx-sub">現值 ' + (b.value ?? '—') + ' · <span class="tx-flag">z ' + sgn(b.z, 1) + ' ' + BGTXT[b.state] + '</span></div></div>').join('');
     }
 
@@ -550,15 +623,15 @@
 <script>
 /* ---------------- 標的設定（可自行增刪 / 換代碼） ---------------- */
 const SYMBOLS = [
-  { name:"道瓊 電子盤",    code:"OANDA:US30USD",   color:"#2F4A63" }, // 美股：藍
-  { name:"那斯達克 電子盤", code:"OANDA:NAS100USD", color:"#2F4A63" }, // 美股：藍
-  { name:"日經 225",      code:"OANDA:JP225USD",  color:"#6B3F4C" }, // 亞股：紫
-  { name:"美元指數 DXY",  code:"CAPITALCOM:DXY",  color:"#6E5520" }, // 美元：金（若空白改 PEPPERSTONE:USDX 或 AMEX:UUP）
-  { name:"美元/台幣",     code:"FX_IDC:USDTWD",   color:"#6E5520" }, // 美元：金
-  { name:"美元/日圓",     code:"FX_IDC:USDJPY",   color:"#6E5520" }, // 日圓匯率(全球基準)；想看日圓/台幣改 FX_IDC:JPYTWD
-  { name:"比特幣",        code:"BINANCE:BTCUSDT", color:"#8A4A2C" }, // 加密：橘
-  { name:"布蘭特原油",    code:"TVC:UKOIL",       color:"#8A4A2C" }, // 原油：紅橘。中東地緣風險看布蘭特，不看 WTI
-  { name:"美10年債·PST", code:"AMEX:PST", range:"3M", color:"#2F5E58" }, // 債券：青綠。與10Y殖利率同向；多日趨勢平滑曲線。想賭24h連續可改 CBOT:ZN1!（期貨，可能被擋）
+  { name:"道瓊 電子盤",    code:"OANDA:US30USD",   color:"#D99A6C" }, // 美股：藍
+  { name:"那斯達克 電子盤", code:"OANDA:NAS100USD", color:"#D99A6C" }, // 美股：藍
+  { name:"日經 225",      code:"OANDA:JP225USD",  color:"#E6B48C" }, // 亞股：紫
+  { name:"美元指數 DXY",  code:"CAPITALCOM:DXY",  color:"#C2825A" }, // 美元：金（若空白改 PEPPERSTONE:USDX 或 AMEX:UUP）
+  { name:"美元/台幣",     code:"FX_IDC:USDTWD",   color:"#C2825A" }, // 美元：金
+  { name:"美元/日圓",     code:"FX_IDC:USDJPY",   color:"#C2825A" }, // 日圓匯率(全球基準)；想看日圓/台幣改 FX_IDC:JPYTWD
+  { name:"比特幣",        code:"BINANCE:BTCUSDT", color:"#EDC7A6" }, // 加密：橘
+  { name:"布蘭特原油",    code:"TVC:UKOIL",       color:"#B8775A" }, // 原油：紅橘。中東地緣風險看布蘭特，不看 WTI
+  { name:"美10年債·PST", code:"AMEX:PST", range:"3M", color:"#E6B48C" }, // 債券：青綠。與10Y殖利率同向；多日趨勢平滑曲線。想賭24h連續可改 CBOT:ZN1!（期貨，可能被擋）
 ];
 
 /* ---------------- 建立每個 mini chart tile ---------------- */
@@ -597,7 +670,7 @@ SYMBOLS.forEach(s=>{
   script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
   script.text = JSON.stringify({
     symbol: s.code, width:"100%", height:"100%", locale:"zh_TW",
-    dateRange:(s.range||"1D"), colorTheme:"light", isTransparent:true, autosize:true,
+    dateRange:(s.range||"1D"), colorTheme:"dark", isTransparent:true, autosize:true,
     chartOnly:false, noTimeScale:false,
     trendLineColor:line, underLineColor:rgba(line,0.20), underLineBottomColor:rgba(line,0)
   });

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#2F4245" />
+<meta name="theme-color" content="#202629" />
 <title>主動ETF選股名單 · Global Markets Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -63,10 +63,33 @@
   .note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:14px}
   .empty{padding:40px 16px;text-align:center;color:var(--muted)}
   @media (max-width:640px){ .ctx{grid-template-columns:1fr} th,td{padding:8px 7px;font-size:13px} .hide-s{display:none} }
-  /* 預覽8配色：名單與狀態卡用灰卡其淺色區塊 */
-  .ctx,.card{--panel:#D5D4C7;--panel2:#C9C8BA;--line:#A2A190;--text:#24292C;--muted:#55574D;--gold:#6B4E37;--up:#963B36;--down:#3F6B58;--warn:#6F5719;color:var(--text)}
-  .tab{background:#283A3D}.tab.on{border-color:#F0D9C6;color:#F0D9C6;background:rgba(240,217,198,.10)}
-  .chg .in{color:#E9A39C}
+  /* ===== 深色莫蘭迪金融主題 v1.0 ＋ 語意配色（與首頁一致） ===== */
+  :root{
+    --bg-main:#202629; --bg-section:#252E33; --bg-card:#303A40; --bg-card-hover:#39464D;
+    --border-section:#53636C; --border-card:#586A73; --border-subtle:#3E4B52;
+    --text-primary:#F0F1ED; --text-secondary:#C1CBCB; --text-muted:#9BA9AD;
+    --risk-3:#D9665E; --risk-2:#D08A82; --risk-1:#DDB3AD; --sig-neutral:#8FA8BD; --sig-favor:#8FB7A5;
+    --num-up:#FF4D4F; --num-down:#2EE68A; --chart-1:#D99A6C; --sand:#C9B8A6;
+    --ink:var(--bg-main); --panel:var(--bg-card); --panel2:var(--bg-section); --line:var(--border-card);
+    --text:var(--text-primary); --muted:var(--text-muted); --gold:var(--sand); --up:var(--num-up); --down:var(--num-down); --warn:var(--risk-1);
+  }
+  body{font-variant-numeric:tabular-nums}
+  .btn:hover{background:var(--bg-card-hover)}
+  .ctx{background:var(--bg-section);border-color:var(--border-section);border-left-color:var(--sig-neutral)}
+  .ctx.go{border-left-color:var(--sig-favor)} .ctx.go .tag{color:var(--sig-favor)}
+  .ctx.def{border-left-color:var(--risk-2)} .ctx.def .tag{color:var(--risk-2)}
+  .card{background:var(--bg-card);border-color:var(--border-card)}
+  th{background:var(--bg-section)}
+  .tab{background:var(--bg-section);border-color:var(--border-card)}
+  .tab.on{border-color:var(--sand);color:var(--text-primary);background:var(--bg-card-hover)}
+  .tab em{color:var(--sig-favor)}
+  .chg .in{color:var(--sig-favor)}
+  .new{color:var(--bg-main);background:var(--sig-favor)}
+  .pos{color:var(--num-up);font-weight:600} .neg{color:var(--num-down);font-weight:600}
+  .bar{background:var(--chart-1)}
+  .trend.ok{color:var(--sig-favor);border-color:color-mix(in srgb,var(--sig-favor) 50%,transparent)}
+  .trend.mid{color:var(--risk-1);border-color:color-mix(in srgb,var(--risk-1) 50%,transparent)}
+  .trend.bad{color:var(--risk-2);border-color:color-mix(in srgb,var(--risk-2) 50%,transparent)}
 </style>
 </head>
 <body>

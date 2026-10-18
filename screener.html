@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#2F4245" />
+<meta name="theme-color" content="#202629" />
 <meta name="robots" content="noindex, nofollow" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -80,8 +80,58 @@
   .zs .ctx{margin-top:0}
   @media (max-width:640px){ .ctx{grid-template-columns:1fr} th,td{padding:8px 7px;font-size:13px} .hide-s{display:none} }
 </style>
+<style>/* ===== 深色莫蘭迪金融主題 v1.0 ＋ 語意配色 ===== */
+:root{--bg-main:#202629;--bg-section:#252E33;--bg-card:#303A40;--bg-card-hover:#39464D;
+--bg-preopen:#34434D;--bg-preopen-detail:#3C4C56;--bg-preopen-metric:#2C383F;--border-preopen:#718B9A;
+--border-section:#53636C;--border-card:#586A73;--border-subtle:#3E4B52;
+--text-primary:#F0F1ED;--text-secondary:#C1CBCB;--text-muted:#9BA9AD;--text-disabled:#748187;
+--accent-blue:#A0B9CB;--accent-sage:#8FB7A5;--accent-gold:#D0B783;--accent-purple:#B1A6BF;
+--market-up:#F08F89;--market-down:#70D0A5;--market-flat:#BBC5C8;
+--bg-positive:#293F38;--bg-negative:#493536;--bg-warning:#484131;--bg-neutral:#303D45;
+--chart-grid:#3A484F;--chart-axis:#9BA9AD;--chart-up:#F08F89;--chart-down:#70D0A5}
+.market-international{--market-up:#70D0A5;--market-down:#F08F89}
+.market-taiwan{--market-up:#F08F89;--market-down:#70D0A5}
+body{font-variant-numeric:tabular-nums}
+
+:root{--ink:var(--bg-main);--panel:var(--bg-card);--panel2:var(--bg-preopen-metric);--line:var(--border-card);
+  --text:var(--text-primary);--muted:var(--text-muted);--gold:var(--accent-gold);--up:#F08F89;--down:#70D0A5;--warn:var(--accent-gold)}
+html,body{background:var(--bg-main)!important}
+.zs-a{--sb:var(--bg-section);--sl:var(--border-section);--panel:var(--bg-card);--panel2:var(--bg-preopen-metric);--line:var(--border-card);--acc:var(--accent-gold);--text:var(--text-primary);--muted:var(--text-muted);--gold:var(--accent-gold);--up:var(--market-up);--down:var(--market-down);--warn:var(--accent-gold);color:var(--text)} .zs-b{--sb:var(--bg-section);--sl:var(--border-preopen);--panel:var(--bg-card);--panel2:var(--bg-preopen-metric);--line:var(--border-card);--acc:var(--accent-blue);--text:var(--text-primary);--muted:var(--text-muted);--gold:var(--accent-gold);--up:var(--market-up);--down:var(--market-down);--warn:var(--accent-gold);color:var(--text)} .zs-c{--sb:var(--bg-section);--sl:var(--border-section);--panel:var(--bg-card);--panel2:var(--bg-preopen-metric);--line:var(--border-card);--acc:var(--accent-purple);--text:var(--text-primary);--muted:var(--text-muted);--gold:var(--accent-gold);--up:var(--market-up);--down:var(--market-down);--warn:var(--accent-gold);color:var(--text)}
+.zs::before{background:var(--acc)!important}
+.btn:hover{background:var(--bg-card-hover)}
+.tip{background:var(--bg-card)!important;border-color:var(--border-section)!important}
+tr.first td{background:var(--bg-warning)}
+:root{
+ /* 訊號狀態（莫蘭迪） */
+ --sig-danger:#C97E78; --sig-danger-soft:#D9A19B; --sig-danger-bg:#46302F;
+ --sig-caution:#D0B26E; --sig-caution-soft:#DDC48F; --sig-caution-bg:#463F2C;
+ --sig-neutral:#8FA8BD; --sig-neutral-bg:#2E3B45;
+ --sig-favor:#8FB7A5;
+ /* 數字漲跌（鮮明） */
+ --num-up:#FF4D4F; --num-down:#2EE68A;
+ /* 曲線（莫蘭迪橘） */
+ --chart-1:#D99A6C; --chart-2:#E6B48C; --chart-3:#C2825A; --chart-4:#EDC7A6; --chart-5:#B8775A;
+}
+
+.lv-超賣{color:var(--sig-favor)!important} .lv-過熱{color:var(--sig-danger)!important}
+.lv-留意{color:var(--sig-caution)!important} .lv-中性{color:var(--sig-neutral)!important}
+.ctx.go{border-left-color:var(--sig-favor)} .ctx.go .tag{color:var(--sig-favor)}
+.ctx.hot{border-left-color:var(--sig-danger)} .ctx.hot .tag{color:var(--sig-danger)}
+.ctx.mid{border-left-color:var(--sig-caution)} .ctx.mid .tag{color:var(--sig-caution)}
+.ctx{border-left-color:var(--sig-neutral)}
+tr.first td{background:var(--sig-caution-bg)}
+:root{--risk-3:#D9665E;--risk-2:#D08A82;--risk-1:#DDB3AD;--risk-bg:#3E2F2F}
+
+.lv-過熱{color:var(--risk-3)!important} .lv-留意{color:var(--risk-1)!important}
+.ctx.hot{border-left-color:var(--risk-3)} .ctx.hot .tag{color:var(--risk-3)}
+.ctx.mid{border-left-color:var(--risk-1)} .ctx.mid .tag{color:var(--risk-1)}
+tr.first td{background:color-mix(in srgb,var(--chart-1) 14%,transparent)}
+:root{--sand:#C9B8A6;--gold:var(--sand)!important;--accent-gold:var(--sand)}
+.zs-a{--acc:var(--sand)!important}.zs-a,.zs-b,.zs-c{--gold:var(--sand)!important}
+.ctx.flat .tag{color:var(--sig-neutral)}
+</style>
 </head>
-<body>
+<body class="market-taiwan">
 <header class="top">
   <div>
     <h1>市場寬度＋每日選股</h1>
@@ -135,10 +185,10 @@ const D = {"date": ["2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "202
       el('line', { x1: m.l, x2: W - m.r, y1: y(g), y2: y(g), stroke: g === 0 ? css('--muted') : css('--line'), 'stroke-width': 1 });
       const t = el('text', { x: m.l - 6, y: y(g) + 4, 'text-anchor': 'end', 'font-size': 10, fill: css('--muted'), 'font-family': css('--mono') }); t.textContent = g;
     }
-    [[-40, css('--up')], [20, css('--down')]].forEach(([r, c]) => el('line', { x1: m.l, x2: W - m.r, y1: y(r), y2: y(r), stroke: c, 'stroke-dasharray': '4 4', 'stroke-width': 1, opacity: .8 }));
+    [[-40, css('--sig-favor')], [20, css('--risk-3')]].forEach(([r, c]) => el('line', { x1: m.l, x2: W - m.r, y1: y(r), y2: y(r), stroke: c, 'stroke-dasharray': '4 4', 'stroke-width': 1, opacity: .8 }));
     v.forEach((d, i) => { if (d === null) return;
       el('rect', { x: x(i) + bw * .12, width: Math.max(1, bw * .76), y: Math.min(y(0), y(d)), height: Math.max(1, Math.abs(y(d) - y(0))),
-                   fill: d < -40 ? css('--up') : d > 20 ? css('--down') : css('--gold'), opacity: (d < -40 || d > 20) ? 1 : .55, rx: 1 }); });
+                   fill: d < -40 ? css('--sig-favor') : d > 20 ? css('--risk-3') : css('--chart-1'), opacity: (d < -40 || d > 20) ? 1 : .55, rx: 1 }); });
     let lastM = '';
     D.date.forEach((s, i) => { const mo = s.slice(0, 7); if (mo !== lastM && i > 2) {
       const t = el('text', { x: x(i), y: H - 6, 'font-size': 10, fill: css('--muted'), 'font-family': css('--mono') }); t.textContent = (+s.slice(5, 7)) + '月'; }
