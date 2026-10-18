@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#202629" />
+<meta name="theme-color" content="#091426" />
 <meta name="robots" content="noindex, nofollow" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -129,6 +129,16 @@ tr.first td{background:color-mix(in srgb,var(--chart-1) 14%,transparent)}
 :root{--sand:#C9B8A6;--gold:var(--sand)!important;--accent-gold:var(--sand)}
 .zs-a{--acc:var(--sand)!important}.zs-a,.zs-b,.zs-c{--gold:var(--sand)!important}
 .ctx.flat .tag{color:var(--sig-neutral)}
+/* ===== 背板：深藍底 #091426，大區塊亮一階、卡片深一階（2026-10-18 定稿） ===== */
+:root{--bg-main:#091426;--bg-section:#1E2730;--bg-card:#151C23;--bg-card-hover:#1B2430;
+--border-section:#36434F;--border-card:#2E3A45;--border-subtle:#2A3540;
+--border-preopen:#5B7C93;--bg-preopen:#13202C;--bg-preopen-detail:#18232E;--bg-preopen-metric:#121A22;
+--chart-grid:#2A3540;--text-muted:#A3AFB3}
+html,body{background:var(--bg-main)!important}
+.zone-sec{box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 8px 24px -12px rgba(0,0,0,.6)}
+.zone-sec .ov-card,.zone-sec .tx-card,.zone-sec .tile,.zone-sec .tx-bgc,.ov-verdict,.zone{box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+.tile::before,.tile::after{opacity:.5}
+.zs .tile,.zs .card,.zs .ctx{box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
 </style>
 </head>
 <body class="market-taiwan">
@@ -188,7 +198,7 @@ const D = {"date": ["2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "202
     [[-40, css('--sig-favor')], [20, css('--risk-3')]].forEach(([r, c]) => el('line', { x1: m.l, x2: W - m.r, y1: y(r), y2: y(r), stroke: c, 'stroke-dasharray': '4 4', 'stroke-width': 1, opacity: .8 }));
     v.forEach((d, i) => { if (d === null) return;
       el('rect', { x: x(i) + bw * .12, width: Math.max(1, bw * .76), y: Math.min(y(0), y(d)), height: Math.max(1, Math.abs(y(d) - y(0))),
-                   fill: d < -40 ? css('--sig-favor') : d > 20 ? css('--risk-3') : css('--chart-1'), opacity: (d < -40 || d > 20) ? 1 : .55, rx: 1 }); });
+                   fill: d < -40 ? css('--sig-favor') : d > 20 ? css('--risk-3') : css('--chart-1'), opacity: (d < -40 || d > 20) ? 1 : .85, rx: 1 }); });
     let lastM = '';
     D.date.forEach((s, i) => { const mo = s.slice(0, 7); if (mo !== lastM && i > 2) {
       const t = el('text', { x: x(i), y: H - 6, 'font-size': 10, fill: css('--muted'), 'font-family': css('--mono') }); t.textContent = (+s.slice(5, 7)) + '月'; }

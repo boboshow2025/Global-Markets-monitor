@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#202629" />
+<meta name="theme-color" content="#091426" />
 <title>主動ETF選股名單 · Global Markets Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -65,9 +65,9 @@
   @media (max-width:640px){ .ctx{grid-template-columns:1fr} th,td{padding:8px 7px;font-size:13px} .hide-s{display:none} }
   /* ===== 深色莫蘭迪金融主題 v1.0 ＋ 語意配色（與首頁一致） ===== */
   :root{
-    --bg-main:#202629; --bg-section:#252E33; --bg-card:#303A40; --bg-card-hover:#39464D;
-    --border-section:#53636C; --border-card:#586A73; --border-subtle:#3E4B52;
-    --text-primary:#F0F1ED; --text-secondary:#C1CBCB; --text-muted:#9BA9AD;
+    --bg-main:#091426; --bg-section:#1E2730; --bg-card:#151C23; --bg-card-hover:#1B2430;
+    --border-section:#36434F; --border-card:#2E3A45; --border-subtle:#2A3540;
+    --text-primary:#F0F1ED; --text-secondary:#C1CBCB; --text-muted:#A3AFB3;
     --risk-3:#D9665E; --risk-2:#D08A82; --risk-1:#DDB3AD; --sig-neutral:#8FA8BD; --sig-favor:#8FB7A5;
     --num-up:#FF4D4F; --num-down:#2EE68A; --chart-1:#D99A6C; --sand:#C9B8A6;
     --ink:var(--bg-main); --panel:var(--bg-card); --panel2:var(--bg-section); --line:var(--border-card);
@@ -78,7 +78,8 @@
   .ctx{background:var(--bg-section);border-color:var(--border-section);border-left-color:var(--sig-neutral)}
   .ctx.go{border-left-color:var(--sig-favor)} .ctx.go .tag{color:var(--sig-favor)}
   .ctx.def{border-left-color:var(--risk-2)} .ctx.def .tag{color:var(--risk-2)}
-  .card{background:var(--bg-card);border-color:var(--border-card)}
+  .card{background:var(--bg-card);border-color:var(--border-section)}
+  .ctx,.card{box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 8px 24px -12px rgba(0,0,0,.6)}
   th{background:var(--bg-section)}
   .tab{background:var(--bg-section);border-color:var(--border-card)}
   .tab.on{border-color:var(--sand);color:var(--text-primary);background:var(--bg-card-hover)}
