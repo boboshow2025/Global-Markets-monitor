@@ -25,6 +25,7 @@ if "%AUTO_PUSH%"=="1" (
         echo [info] no change, skip commit
     ) || (
         git commit -m "chore: update %date%"
+        git pull --rebase --autostash
         git push
         if errorlevel 1 echo [warn] push failed, data written locally
     )

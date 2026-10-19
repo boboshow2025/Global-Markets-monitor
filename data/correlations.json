@@ -1,17 +1,17 @@
 {
  "schema": 2,
- "sig": "2026-10-16|2026-10-16|twse|2026-10-16|20261019",
- "generated_at": "2026-10-17T18:21:05+08:00",
- "us_date": "2026-10-16",
- "tw_last_date": "2026-10-16",
- "tw_last_close": 47111.26,
- "tw_last_pct": 0.3,
+ "sig": "2026-10-19|2026-10-19|twse|2026-10-19|20261019",
+ "generated_at": "2026-10-19T22:58:22+08:00",
+ "us_date": "2026-10-19",
+ "tw_last_date": "2026-10-19",
+ "tw_last_close": 46822.08,
+ "tw_last_pct": -0.61,
  "fresh": true,
- "overall": "watch",
- "overall_text": "偏空",
- "action": "保守操作，新倉等盤中確認",
- "driver": "night",
- "z_used": -1.39,
+ "overall": "calm",
+ "overall_text": "中性",
+ "action": "照原計畫",
+ "driver": "sox",
+ "z_used": 1.0,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -21,12 +21,12 @@
   {
    "key": "SOX",
    "label": "費城半導體",
-   "sub": "美股 10/16 收盤",
-   "value": 11137.29,
-   "pct": -3.83,
-   "z": -1.4,
-   "state": "watch",
-   "used": false,
+   "sub": "美股 10/19 收盤",
+   "value": 11426.21,
+   "pct": 2.59,
+   "z": 1.0,
+   "state": "calm",
+   "used": true,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
@@ -34,20 +34,20 @@
    "label": "台指期夜盤",
    "sub": "近月 202610",
    "value": 46140.0,
-   "pct": -2.42,
-   "z": -1.39,
-   "state": "watch",
-   "used": true,
+   "pct": null,
+   "z": null,
+   "state": "unknown",
+   "used": false,
    "date": "20261019",
-   "stale": false,
-   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
+   "stale": true,
+   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
   }
  ],
  "flow": {
-  "date": "2026-10-16",
-  "net": -461.5,
-  "sum5": -5862.3,
-  "z": null,
+  "date": "2026-10-19",
+  "net": -767.4,
+  "sum5": -6107.7,
+  "z": -0.7,
   "night": {
    "date": "2026-10-19",
    "tx_net": 2143,
@@ -55,72 +55,71 @@
    "tx_short": 21794,
    "mtx_net": 878,
    "net_equiv": 2362,
-   "fresh": true
+   "fresh": false
   },
   "fut": {
-   "date": "2026-10-16",
-   "net": -93675,
-   "long": 9812,
-   "short": 103487,
-   "chg": 3907,
-   "prev_date": "2026-10-15"
+   "date": "2026-10-19",
+   "net": -91145,
+   "long": 11962,
+   "short": 103107,
+   "chg": 2530,
+   "prev_date": "2026-10-16"
   }
  },
  "background": [
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 109.86,
-   "metric": 4.91,
+   "value": 108.21,
+   "metric": 1.46,
    "unit": "%",
-   "z": 0.49,
+   "z": 0.01,
    "state": "calm"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
-   "value": 5.1,
-   "metric": 0.9,
+   "value": 5.13,
+   "metric": 2.9,
    "unit": "bp",
-   "z": 0.04,
+   "z": 0.5,
    "state": "calm"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 101.84,
-   "metric": -0.36,
+   "value": 101.94,
+   "metric": -0.62,
    "unit": "%",
-   "z": -0.63,
+   "z": -0.95,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 157.99,
-   "metric": -0.05,
+   "value": 158.42,
+   "metric": 0.14,
    "unit": "%",
-   "z": 0.11,
+   "z": 0.24,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 8.45,
-   "metric": 8.45,
+   "value": 10.5,
+   "metric": 10.5,
    "unit": "美元",
-   "z": 0.44,
+   "z": 1.1,
    "state": "calm"
   }
  ],
  "notes": [
-  "前一日台股上漲但外資賣超 461 億，漲勢不是外資推的。",
-  "外資近 5 日累計賣超 5862 億，籌碼面偏弱。",
-  "外資台指期淨空單減少 3,907 口，空方在回補。"
+  "外資近 5 日累計賣超 6108 億，籌碼面偏弱。",
+  "美股訊號雖不差，但外資持續撤出，不宜追高。"
  ],
  "backtest": {
-  "n": 469,
-  "start": "2024-12-02",
+  "n": 468,
+  "start": "2024-12-04",
   "base": {
    "avg": 0.1,
    "down_pct": 44.0
@@ -138,34 +137,34 @@
    {
     "state": "watch",
     "label": "偏空",
-    "n": 54,
+    "n": 53,
     "avg": -1.14,
-    "median": -0.73,
+    "median": -0.7,
     "down_pct": 81.0,
-    "worse_than_1pct": 41.0
+    "worse_than_1pct": 40.0
    },
    {
     "state": "calm",
     "label": "中性",
-    "n": 327,
-    "avg": 0.24,
-    "median": 0.28,
-    "down_pct": 40.0,
+    "n": 329,
+    "avg": 0.23,
+    "median": 0.26,
+    "down_pct": 41.0,
     "worse_than_1pct": 16.0
    },
    {
     "state": "up",
     "label": "偏多",
-    "n": 68,
-    "avg": 1.12,
+    "n": 66,
+    "avg": 1.14,
     "median": 0.91,
-    "down_pct": 19.0,
+    "down_pct": 20.0,
     "worse_than_1pct": 6.0
    }
   ]
  },
  "live": {
-  "n": 0,
+  "n": 1,
   "pending": 1,
   "buckets": [
    {
@@ -178,9 +177,9 @@
    {
     "state": "watch",
     "label": "偏空",
-    "n": 0,
-    "avg": null,
-    "down_pct": null
+    "n": 1,
+    "avg": -0.61,
+    "down_pct": 100.0
    },
    {
     "state": "calm",
@@ -199,18 +198,20 @@
   ],
   "recent": [
    {
-    "us_date": "2026-10-16",
-    "state": "watch",
+    "us_date": "2026-10-19",
+    "state": "calm",
     "target": null,
     "ret": null
+   },
+   {
+    "us_date": "2026-10-16",
+    "state": "watch",
+    "target": "2026-10-19",
+    "ret": -0.61
    }
   ]
  },
  "rolling_corr": [
-  {
-   "d": "2025-09-25",
-   "v": 0.25
-  },
   {
    "d": "2025-09-26",
    "v": 0.252
@@ -1206,6 +1207,10 @@
   {
    "d": "2026-10-16",
    "v": 0.665
+  },
+  {
+   "d": "2026-10-19",
+   "v": 0.684
   }
  ]
 }
