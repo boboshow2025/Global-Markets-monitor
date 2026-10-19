@@ -62,6 +62,8 @@
 
   .note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:14px}
   .empty{padding:40px 16px;text-align:center;color:var(--muted)}
+  .grp{align-self:center;font-size:12px;color:var(--muted);margin:0 4px 0 2px;white-space:nowrap}
+  .grp.sell{margin-left:14px;color:#e07a6e}
   @media (max-width:640px){ .ctx{grid-template-columns:1fr} th,td{padding:8px 7px;font-size:13px} .hide-s{display:none} }
   /* ===== 深色莫蘭迪金融主題 v1.0 ＋ 語意配色（與首頁一致） ===== */
   :root{
@@ -100,6 +102,7 @@
     <div class="sub" id="sub">載入中…</div>
   </div>
   <nav class="links">
+    <a class="btn" href="./health.html">持股健檢</a>
     <a class="btn" href="./index.html">← 回盤勢監控</a>
   </nav>
 </header>
@@ -114,6 +117,7 @@
 
 <p class="note">
   名單來源：portfolio_backtest.py，依所有主動ETF最新一天的持股合成。<b>高超配</b>＝主動經理人合計權重比 0050 多最多的股票（主動ETF真正押注的地方）；<b>共識持股</b>＝最多檔主動ETF同時持有；<b>合成權重</b>＝把所有主動ETF當成一檔基金的權重排名。三份名單都從<b>前 30 名</b>中，只列出符合進場條件的股票：<b>站上 MA60 且 MA60 往上、跌破 MA20、經理人最近 2 個交易日淨買進</b>（扣除申購贖回）。<br>
+  <b>減碼名單</b>＝剛跌破 MA20（0～-5%）、MA20 走平或往下，且經理人開始減碼（最近一個交易日淨賣出、前一天沒有）。<br>
   均線欄位：收盤價相對 20 日／60 日均線的距離，兩條都在上方＝趨勢仍在。<br>
   使用方式：資金輪動在「進攻」時依名單布局；轉「防守」時名單只做觀察，等轉回進攻再進場。僅供參考，非投資建議。
 </p>
@@ -122,9 +126,11 @@
 const STRAT_DESC = {
   "高超配": "超配度前 30 名中，符合進場條件（多頭回檔＋經理人回補）的股票。",
   "共識持股": "持有檔數前 30 名中，符合進場條件（多頭回檔＋經理人回補）的股票。",
-  "合成權重": "合成權重前 30 名中，符合進場條件（多頭回檔＋經理人回補）的股票。"
+  "合成權重": "合成權重前 30 名中，符合進場條件（多頭回檔＋經理人回補）的股票。",
+  "減碼名單": "收盤剛跌破 MA20（0～-5%）、MA20 走平或往下，且經理人開始減碼（最近一個交易日淨賣出、前一天沒有，扣申購贖回）的股票。依淨賣出金額排序，持有中的可考慮減碼或避開。"
 };
-const ORDER = ["高超配", "共識持股", "合成權重"];
+const ORDER = ["高超配", "共識持股", "合成權重", "減碼名單"];
+const SELL = "減碼名單";
 const fmt = (v, d = 2, sign = false) => v == null || isNaN(v) ? "—" : (sign && v > 0 ? "+" : "") + Number(v).toFixed(d);
 const cls = v => v == null ? "mut" : v > 0 ? "pos" : v < 0 ? "neg" : "mut";
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -157,10 +163,14 @@ function renderCtx(rot, panic, picks) {
 
 let DATA = null, CUR = "高超配";
 function renderTabs() {
-  document.getElementById("tabs").innerHTML = ORDER.filter(s => DATA.picks[s]).map(s => {
+  const btn = s => {
     const n = ((DATA.changes || {})[s] || {}).in || [];
     return `<button class="tab${s === CUR ? " on" : ""}" data-s="${s}">${s}${n.length ? `<em>+${n.length}</em>` : ""}</button>`;
-  }).join("");
+  };
+  const longs = ORDER.filter(s => s !== SELL && DATA.picks[s]);
+  document.getElementById("tabs").innerHTML =
+    `<span class="grp">多單進場名單</span>` + longs.map(btn).join("") +
+    (DATA.picks[SELL] ? `<span class="grp sell">減碼名單</span>` + btn(SELL) : "");
   document.querySelectorAll(".tab").forEach(b => b.onclick = () => { CUR = b.dataset.s; renderTabs(); renderPicks(); });
 }
 
@@ -181,7 +191,7 @@ function renderPicks() {
   const newSet = new Set(ch ? ch.in : []);
   const maxW = Math.max(...rows.map(r => Math.abs(CUR === "高超配" ? r.over : r.agg_w) || 0), 0.001);
   const head = `<tr><th>#</th><th>股票</th><th>持有檔數</th><th>合成權重%</th><th class="hide-s">0050權重%</th><th>超配度%</th>
-    <th>近5日%</th><th class="hide-s">收盤</th><th>距MA20%</th><th>距MA60%</th><th>趨勢</th></tr>`;
+    <th>近5日%</th><th class="hide-s">收盤</th><th>距MA20%</th><th>距MA60%</th><th>趨勢</th><th>經理人近2日(億)</th></tr>`;
   const body = rows.map((r, i) => {
     const key = CUR === "高超配" ? r.over : r.agg_w;
     const w = Math.max(4, Math.round(Math.abs(key || 0) / maxW * 46));
@@ -196,9 +206,10 @@ function renderPicks() {
       <td class="num hide-s">${fmt(r.close, r.close >= 100 ? 1 : 2)}</td>
       <td class="num ${cls(r.vs_ma20)}">${fmt(r.vs_ma20, 1, true)}</td>
       <td class="num ${cls(r.vs_ma60)}">${fmt(r.vs_ma60, 1, true)}</td>
-      <td>${trend(r)}</td></tr>`;
+      <td>${trend(r)}</td>
+      <td class="num ${cls(r.mgr)}">${fmt(r.mgr, 2, true)}${CUR === SELL ? `<span class="code">${r.exits ? `出清${r.exits}檔` : ""}${r.exits && r.bigcuts ? "・" : ""}${r.bigcuts ? `大減${r.bigcuts}檔` : ""}</span>` : ""}</td></tr>`;
   }).join("");
-  document.getElementById("picks").innerHTML = head + (body || `<tr><td colspan="11" class="empty">今天沒有符合進場條件的股票（站上上揚的 MA60、跌破 MA20、經理人近 2 日淨買進）</td></tr>`);
+  document.getElementById("picks").innerHTML = head + (body || `<tr><td colspan="12" class="empty">${CUR === SELL ? "今天沒有符合減碼條件的股票" : "今天沒有符合進場條件的股票（站上上揚的 MA60、跌破 MA20、經理人近 2 日淨買進）"}</td></tr>`);
 }
 
 (async () => {
