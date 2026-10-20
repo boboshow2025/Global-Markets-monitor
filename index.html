@@ -352,8 +352,10 @@ html,body{background:var(--bg-main)!important}
         '<div class="ov-act">' + esc(d.action) + '</div>' +
         '<div class="ov-meta">依美股 ' + md(d.us_date) + ' 收盤' + (d.fresh ? '' : ' · <span style="color:var(--ov-orange)">台股已開過，已過期</span>') + '</div>' +
         '<div class="ov-rows">' +
-          (used ? row(esc(used.label), used.key === 'NIGHT' && used.value && used.chg !== null && used.chg !== undefined
-            ? '<span class="' + (used.chg > 0 ? 'pos' : used.chg < 0 ? 'neg' : '') + '">' + Number(used.value).toLocaleString() + '</span><small>' + sgn(used.chg, 0) + ' 點</small>'
+          (used ? row(esc(used.label), used.key === 'NIGHT' && used.value && used.pct !== null && used.pct !== undefined
+            ? '<span class="' + (used.pct > 0 ? 'pos' : used.pct < 0 ? 'neg' : '') + '">' + sgn(used.pct) + '%</span><small>' +
+              ((used.chg === null || used.chg === undefined) ? '約&nbsp;' : '') +
+              sgn((used.chg === null || used.chg === undefined) ? Math.round(used.value - used.value / (1 + used.pct / 100)) : used.chg, 0) + '&nbsp;點</small>'
             : '<span class="' + (used.pct > 0 ? 'pos' : used.pct < 0 ? 'neg' : '') + '">' + sgn(used.pct) + '%</span><small>z ' + sgn(used.z, 1) + '</small>') : '') +
           row('外資現貨 ' + md(f.date), '<span class="flow">' + num(f.net) + '</span><small>億</small>') +
           (fu ? row('外資台指期淨口數', '<span class="flow">' + num(fu.net) + '</span><small>' + (fu.chg === null ? '' : '較前日 ' + sgn(fu.chg, 0)) + '</small>') : '') +
@@ -572,20 +574,24 @@ html,body{background:var(--bg-main)!important}
 
       $('tx-notes').innerHTML = (d.notes || []).map((n) => '<li>' + esc(n) + '</li>').join('');
 
+      // 夜盤漲跌點數：有官方漲跌價就用；舊資料只有收盤與 %，就用兩者反推（標「約」）
+      const nightPts = (c) => (c.chg !== null && c.chg !== undefined) ? c.chg
+        : (c.value && c.pct !== null && c.pct !== undefined) ? Math.round(c.value - c.value / (1 + c.pct / 100)) : null;
+      const ptsTxt = (c) => { const p = nightPts(c); return (c.chg === null || c.chg === undefined ? '約 ' : '') + (p > 0 ? '+' : '') + p + ' 點'; };
       // 核心
       const cards = d.core.map((c) => {
         const tag = c.used ? '<span class="tx-tag">決定燈號</span>' : '';
         const big = c.pct === null || c.pct === undefined
           ? '<div class="tx-big">—<small>' + (c.stale ? '今晚場次尚未公布' : '未取得') + '</small></div>'
-          : (c.key === 'NIGHT' && c.value && c.chg !== null && c.chg !== undefined)
-            ? '<div class="tx-big"><span class="' + cls(c.chg) + '">' + Number(c.value).toLocaleString() + '</span>' +
-              '<small class="' + cls(c.chg) + '">' + sgn(c.chg, 0) + ' 點（' + sgn(c.pct) + '%）</small></div>'
+          : (c.key === 'NIGHT' && nightPts(c) !== null)
+            ? '<div class="tx-big"><span class="' + cls(c.pct) + '">' + sgn(c.pct) + '%</span>' +
+              '<span class="' + cls(c.pct) + '" style="font-size:18px;margin-left:10px">' + ptsTxt(c) + '</span></div>'
             : '<div class="tx-big"><span class="' + cls(c.pct) + '">' + sgn(c.pct) + '%</span><small>z ' + sgn(c.z, 1) + '</small></div>';
-        const isNight = c.key === 'NIGHT' && c.chg !== null && c.chg !== undefined;
+        const isNight = c.key === 'NIGHT' && nightPts(c) !== null;
         return '<div class="tx-card' + (c.used ? ' used' : '') + '" data-st="' + c.state + '">' +
           '<div class="tx-card-h"><span><i></i>' + esc(c.label) + '</span>' + tag + '</div>' + big +
           '<div class="tx-sub">' + esc(c.sub) + (isNight
-            ? ' · 收盤 · 參考價 ' + Number(c.ref).toLocaleString() + ' · z ' + sgn(c.z, 1)
+            ? ' · 收盤 ' + Number(c.value).toLocaleString() + (c.ref ? ' · 參考價 ' + Number(c.ref).toLocaleString() : '') + ' · z ' + sgn(c.z, 1)
             : (c.value ? ' · ' + Number(c.value).toLocaleString() : '')) + '</div>' +
           '<div class="tx-rule">' + esc(c.rule) + '</div></div>';
       });
