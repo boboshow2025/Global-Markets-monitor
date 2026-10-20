@@ -759,6 +759,8 @@ def build_payload(mk: pd.DataFrame, taiex: pd.Series, flow: pd.Series,
         "sub": f"近月 {night['month']}" if night else "期交所",
         "value": _r(night["last"], 0) if night else None,
         "pct": _r(night["pct"], 2) if night and not night_stale else None, "z": _r(night_z, 2),
+        "chg": _r(night["last"] - night["ref"], 0) if night and not night_stale and night.get("ref") else None,
+        "ref": _r(night["ref"], 0) if night and night.get("ref") else None,
         "state": classify(night_z) if night_z is not None else "unknown", "used": driver == "night",
         "date": night["date"] if night else None, "stale": night_stale,
         "rule": ("期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"

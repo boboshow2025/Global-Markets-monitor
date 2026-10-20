@@ -352,7 +352,9 @@ html,body{background:var(--bg-main)!important}
         '<div class="ov-act">' + esc(d.action) + '</div>' +
         '<div class="ov-meta">依美股 ' + md(d.us_date) + ' 收盤' + (d.fresh ? '' : ' · <span style="color:var(--ov-orange)">台股已開過，已過期</span>') + '</div>' +
         '<div class="ov-rows">' +
-          (used ? row(esc(used.label), '<span class="' + (used.pct > 0 ? 'pos' : used.pct < 0 ? 'neg' : '') + '">' + sgn(used.pct) + '%</span><small>z ' + sgn(used.z, 1) + '</small>') : '') +
+          (used ? row(esc(used.label), used.key === 'NIGHT' && used.value && used.chg !== null && used.chg !== undefined
+            ? '<span class="' + (used.chg > 0 ? 'pos' : used.chg < 0 ? 'neg' : '') + '">' + Number(used.value).toLocaleString() + '</span><small>' + sgn(used.chg, 0) + ' 點</small>'
+            : '<span class="' + (used.pct > 0 ? 'pos' : used.pct < 0 ? 'neg' : '') + '">' + sgn(used.pct) + '%</span><small>z ' + sgn(used.z, 1) + '</small>') : '') +
           row('外資現貨 ' + md(f.date), '<span class="flow">' + num(f.net) + '</span><small>億</small>') +
           (fu ? row('外資台指期淨口數', '<span class="flow">' + num(fu.net) + '</span><small>' + (fu.chg === null ? '' : '較前日 ' + sgn(fu.chg, 0)) + '</small>') : '') +
           (f.night && f.night.fresh ? row('外資昨晚夜盤淨口數', '<span class="flow">' + sgn(f.night.net_equiv, 0) + '</span><small>口</small>') : '') +
@@ -575,10 +577,16 @@ html,body{background:var(--bg-main)!important}
         const tag = c.used ? '<span class="tx-tag">決定燈號</span>' : '';
         const big = c.pct === null || c.pct === undefined
           ? '<div class="tx-big">—<small>' + (c.stale ? '今晚場次尚未公布' : '未取得') + '</small></div>'
-          : '<div class="tx-big"><span class="' + cls(c.pct) + '">' + sgn(c.pct) + '%</span><small>z ' + sgn(c.z, 1) + '</small></div>';
+          : (c.key === 'NIGHT' && c.value && c.chg !== null && c.chg !== undefined)
+            ? '<div class="tx-big"><span class="' + cls(c.chg) + '">' + Number(c.value).toLocaleString() + '</span>' +
+              '<small class="' + cls(c.chg) + '">' + sgn(c.chg, 0) + ' 點（' + sgn(c.pct) + '%）</small></div>'
+            : '<div class="tx-big"><span class="' + cls(c.pct) + '">' + sgn(c.pct) + '%</span><small>z ' + sgn(c.z, 1) + '</small></div>';
+        const isNight = c.key === 'NIGHT' && c.chg !== null && c.chg !== undefined;
         return '<div class="tx-card' + (c.used ? ' used' : '') + '" data-st="' + c.state + '">' +
           '<div class="tx-card-h"><span><i></i>' + esc(c.label) + '</span>' + tag + '</div>' + big +
-          '<div class="tx-sub">' + esc(c.sub) + (c.value ? ' · ' + Number(c.value).toLocaleString() : '') + '</div>' +
+          '<div class="tx-sub">' + esc(c.sub) + (isNight
+            ? ' · 收盤 · 參考價 ' + Number(c.ref).toLocaleString() + ' · z ' + sgn(c.z, 1)
+            : (c.value ? ' · ' + Number(c.value).toLocaleString() : '')) + '</div>' +
           '<div class="tx-rule">' + esc(c.rule) + '</div></div>';
       });
       const f = d.flow || {}, fu = f.fut;
