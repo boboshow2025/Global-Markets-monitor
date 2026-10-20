@@ -146,6 +146,8 @@
   .nav-links .screener-link{margin-top:0}
   .screener-link.l-sc{border-color:#F0CDBE;color:#F7DDD1;background:rgba(0,0,0,.08)} .screener-link.l-sc:hover{background:rgba(217,174,152,.12)}
   .screener-link.l-etf{border-color:#C5E0D3;color:#DCEFE6;background:rgba(0,0,0,.08)} .screener-link.l-etf:hover{background:rgba(141,181,160,.14)}
+  .screener-link.l-mk{border-color:#CFC7E6;color:#E4DEF5;background:rgba(0,0,0,.08)} .screener-link.l-mk:hover{background:rgba(160,150,200,.14)}
+  .screener-link.l-home{border-color:#E8D9B8;color:#F3E8CF;background:rgba(0,0,0,.08)} .screener-link.l-home:hover{background:rgba(205,174,114,.14)}
 </style>
 <style>.tile:hover{box-shadow:0 10px 24px -14px rgba(0,0,0,.6)}.zone{background:#283A3D}</style>
 
@@ -251,6 +253,7 @@ html,body{background:var(--bg-main)!important}
       <div class="nav-links">
         <a class="screener-link l-sc" href="./screener.html">台股市場寬度＋每日選股 →</a>
         <a class="screener-link l-etf" href="./etf.html">主動ETF選股名單 →</a>
+        <a class="screener-link l-mk" href="./markets.html">全球行情 →</a>
       </div>
     </div>
     <div class="zones" id="zones"></div>
@@ -623,88 +626,7 @@ html,body{background:var(--bg-main)!important}
   </script>
 </section>
 
-  <section class="zone-sec sec-mk" id="mk-panel">
-  <div class="sec-title"><span class="no">03</span><span class="zh">全球行情</span><span class="en">Live charts</span><span class="hint">點右上角 ⤢ 放大</span></div>
-  <main class="grid" id="grid"></main>
-  </section>
-
-  <footer>
-    <div><b>標的：</b>道瓊/那斯達克/日經為券商 CFD（近 24 小時，反映電子盤走勢）；美元含美元指數（DXY）、美元/台幣、美元/日圓；原油為布蘭特（海運定價，反映中東供給風險）；債券以 7–10 年債反向 ETF（PST）替代，與 10 年期殖利率「同向」（殖利率上升→上漲）。</div>
-    <div class="warn">※ 顏色為國際慣例「綠漲紅跌」，與台股「紅漲綠跌」相反，判讀請留意。</div>
-    <div>※ 資料來源 TradingView。免費行情可能延遲約 10–15 分鐘（期貨盤尤其），僅供參考，非交易或下單依據。</div>
-  </footer>
-
-  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="完整K線圖">
-    <div class="modal-box">
-      <div class="modal-bar">
-        <div class="t" id="modalTitle">—</div>
-        <button class="modal-close" id="modalClose" aria-label="關閉">✕</button>
-      </div>
-      <div class="modal-chart" id="modalChart"></div>
-    </div>
-  </div>
-
 <script>
-/* ---------------- 標的設定（可自行增刪 / 換代碼） ---------------- */
-const SYMBOLS = [
-  { name:"道瓊 電子盤",    code:"OANDA:US30USD",   color:"#D99A6C" }, // 美股：藍
-  { name:"那斯達克 電子盤", code:"OANDA:NAS100USD", color:"#D99A6C" }, // 美股：藍
-  { name:"日經 225",      code:"OANDA:JP225USD",  color:"#E6B48C" }, // 亞股：紫
-  { name:"美元指數 DXY",  code:"CAPITALCOM:DXY",  color:"#C2825A" }, // 美元：金（若空白改 PEPPERSTONE:USDX 或 AMEX:UUP）
-  { name:"美元/台幣",     code:"FX_IDC:USDTWD",   color:"#C2825A" }, // 美元：金
-  { name:"美元/日圓",     code:"FX_IDC:USDJPY",   color:"#C2825A" }, // 日圓匯率(全球基準)；想看日圓/台幣改 FX_IDC:JPYTWD
-  { name:"比特幣",        code:"BINANCE:BTCUSDT", color:"#EDC7A6" }, // 加密：橘
-  { name:"布蘭特原油",    code:"TVC:UKOIL",       color:"#B8775A" }, // 原油：紅橘。中東地緣風險看布蘭特，不看 WTI
-  { name:"美10年債·PST", code:"AMEX:PST", range:"3M", color:"#E6B48C" }, // 債券：青綠。與10Y殖利率同向；多日趨勢平滑曲線。想賭24h連續可改 CBOT:ZN1!（期貨，可能被擋）
-];
-
-/* ---------------- 建立每個 mini chart tile ---------------- */
-function rgba(hex,a){
-  const h=hex.replace("#",""); const n=parseInt(h.length===3?h.replace(/(.)/g,"$1$1"):h,16);
-  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
-}
-const grid = document.getElementById("grid");
-SYMBOLS.forEach(s=>{
-  const tile = document.createElement("section");
-  tile.className = "tile";
-  if(s.color) tile.style.setProperty("--c", s.color);
-  tile.innerHTML =
-    '<div class="head"><span class="name">'+s.name+'</span>'+
-    '<span class="code">'+s.code+'</span>'+
-    '<button class="expand" title="放大完整K線圖" aria-label="放大">⤢</button>'+
-    '</div>'+
-    '<div class="chart"><div class="fallback">'+
-    '載入中…（若持續空白，多半是離線或瀏覽器擋外部腳本，請直接部署到網站或用一般瀏覽器開啟）'+
-    '</div></div>';
-  grid.appendChild(tile);
-  const expandBtn = tile.querySelector(".expand");
-  if(expandBtn) expandBtn.addEventListener("click",e=>{ e.stopPropagation(); openModal(s); });
-
-  const chart = tile.querySelector(".chart");
-  const box = document.createElement("div");
-  box.className = "tradingview-widget-container";
-  const w = document.createElement("div");
-  w.className = "tradingview-widget-container__widget";
-  box.appendChild(w);
-
-  const line = s.color || "#93AEC4";
-  const script = document.createElement("script");
-  script.type = "text/javascript";
-  script.async = true;
-  script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
-  script.text = JSON.stringify({
-    symbol: s.code, width:"100%", height:"100%", locale:"zh_TW",
-    dateRange:(s.range||"1D"), colorTheme:"dark", isTransparent:true, autosize:true,
-    chartOnly:false, noTimeScale:false,
-    trendLineColor:line, underLineColor:rgba(line,0.20), underLineBottomColor:rgba(line,0)
-  });
-  box.appendChild(script);
-
-  // widget 載入後會蓋掉 fallback 提示
-  script.addEventListener("load", ()=>{ const f=chart.querySelector(".fallback"); if(f) f.remove(); });
-  chart.appendChild(box);
-});
-
 /* ---------------- 多時區時鐘 + 交易時段狀態 ---------------- */
 const MARKETS = [
   { city:"台北", tz:"Asia/Taipei",     sessions:[[540,810]] },              // 09:00-13:30
@@ -751,31 +673,6 @@ function tick(){
 }
 tick(); setInterval(tick,1000);
 
-/* ---------------- 「放大」→ 完整 K 線圖 ---------------- */
-const modal=document.getElementById("modal");
-const modalChart=document.getElementById("modalChart");
-const modalTitle=document.getElementById("modalTitle");
-function openModal(s){
-  modalTitle.innerHTML=s.name+' <span>'+s.code+'</span>';
-  modalChart.innerHTML="";
-  const box=document.createElement("div");
-  box.className="tradingview-widget-container";
-  const w=document.createElement("div"); w.className="tradingview-widget-container__widget"; box.appendChild(w);
-  const cfg={
-    autosize:true, symbol:s.code, interval:"D", timezone:"Asia/Taipei",
-    theme:"dark", style:"1", locale:"zh_TW", hide_side_toolbar:false,
-    allow_symbol_change:true, calendar:false, support_host:"https://www.tradingview.com"
-  };
-  const sc=document.createElement("script"); sc.type="text/javascript"; sc.async=true;
-  sc.src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-  sc.text=JSON.stringify(cfg); box.appendChild(sc);
-  modalChart.appendChild(box);
-  modal.classList.add("show");
-}
-function closeModal(){ modal.classList.remove("show"); modalChart.innerHTML=""; }
-document.getElementById("modalClose").addEventListener("click",closeModal);
-modal.addEventListener("click",e=>{ if(e.target===modal) closeModal(); });
-document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
 </script>
 
 </body>
