@@ -404,7 +404,7 @@ html,body{background:var(--bg-main)!important}
           if (c.pct !== undefined && c.pct !== null) v += '<small>第' + c.pct + '百分位</small>';
           if (c.chg10 !== undefined && c.chg10 !== null) v += '<small>10日 ' + sgn(c.chg10) + '%</small>';
           if (c.parts && c.parts.otc) v += '<br><small style="margin-left:0">上市 ' + num(c.parts.twse && c.parts.twse.value) + '（' + sgn(c.parts.twse && c.parts.twse.chg10) + '%）· 上櫃 ' + num(c.parts.otc.value) + '（' + sgn(c.parts.otc.chg10) + '%）</small>';
-          if (c.sub) v = '<small style="margin-left:0">' + esc(c.sub) + '</small><br>' + v;
+          if (c.sub) v = '<small style="margin-left:0">' + esc(c.sub) + (c.lagged ? ' · ' + md(c.date) + '（今日尚未公布）' : '') + '</small><br>' + v;
           return row(esc(c.label) + '<span class="ov-chip" data-c="' + f[1] + '">' + f[0] + '</span><br><span class="v">' + v + '</span>',
                      spark(c.spark), PAN_C[d.state]);
         }).join('') + '</div>' +

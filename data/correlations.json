@@ -1,17 +1,17 @@
 {
  "schema": 2,
- "sig": "2026-10-19|2026-10-20|twse|2026-10-20|20261020",
- "generated_at": "2026-10-20T17:25:38+08:00",
- "us_date": "2026-10-19",
+ "sig": "2026-10-20|2026-10-20|twse|2026-10-20|20261020",
+ "generated_at": "2026-10-20T22:45:39+08:00",
+ "us_date": "2026-10-20",
  "tw_last_date": "2026-10-20",
  "tw_last_close": 46292.93,
  "tw_last_pct": -1.13,
- "fresh": false,
+ "fresh": true,
  "overall": "calm",
  "overall_text": "中性",
  "action": "照原計畫",
  "driver": "sox",
- "z_used": 0.64,
+ "z_used": 0.35,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -21,10 +21,10 @@
   {
    "key": "SOX",
    "label": "費城半導體",
-   "sub": "美股 10/19 收盤",
-   "value": 11316.34,
-   "pct": 1.61,
-   "z": 0.64,
+   "sub": "美股 10/20 收盤",
+   "value": 11417.81,
+   "pct": 0.9,
+   "z": 0.35,
    "state": "calm",
    "used": true,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
@@ -72,46 +72,46 @@
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 111.5,
-   "metric": 5.5,
+   "value": 106.78,
+   "metric": 1.03,
    "unit": "%",
-   "z": 0.68,
+   "z": -0.04,
    "state": "calm"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
-   "value": 5.14,
-   "metric": 3.8,
+   "value": 5.07,
+   "metric": -6.1,
    "unit": "bp",
-   "z": 0.7,
-   "state": "calm"
+   "z": -1.52,
+   "state": "watch"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 101.9,
-   "metric": -0.27,
+   "value": 101.58,
+   "metric": -0.59,
    "unit": "%",
-   "z": -0.46,
+   "z": -0.87,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 158.1,
-   "metric": -0.26,
+   "value": 157.94,
+   "metric": -0.37,
    "unit": "%",
-   "z": -0.01,
+   "z": -0.07,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 11.01,
-   "metric": 11.01,
+   "value": 10.75,
+   "metric": 10.75,
    "unit": "美元",
-   "z": 1.26,
+   "z": 1.18,
    "state": "calm"
   }
  ],
@@ -167,7 +167,7 @@
  },
  "live": {
   "n": 2,
-  "pending": 0,
+  "pending": 1,
   "buckets": [
    {
     "state": "alert",
@@ -199,6 +199,12 @@
    }
   ],
   "recent": [
+   {
+    "us_date": "2026-10-20",
+    "state": "calm",
+    "target": null,
+    "ret": null
+   },
    {
     "us_date": "2026-10-19",
     "state": "calm",

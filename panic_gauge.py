@@ -476,6 +476,10 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
         return [None if pd.isna(v) else _r(v, 3) for v in s]
 
     vol_label = "台指VIX" if vol_source == "vix" else "加權指數10日實現波動率"
+    # 融資餘額證交所較晚公布（約晚上 9 點後）。今天還沒出來就沿用最近一個有資料的交易日，並標出日期。
+    has_m = df["margin"].notna()
+    m = df[has_m].iloc[-1] if pd.isna(last["margin"]) and has_m.any() else last
+    m_date = (df.index[has_m][-1] if pd.isna(last["margin"]) and has_m.any() else t).strftime("%Y-%m-%d")
     comps = [
         {"key": "vol", "label": "波動度", "sub": vol_label, "value": _r(last["vol"], 2), "unit": "%" if vol_source != "vix" else "",
          "pct": _r(last["vol_pct"] * 100, 0) if pd.notna(last["vol_pct"]) else None,
@@ -487,13 +491,14 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
          "flag": flag(last["short_panic"], last["short_ease"]),
          "rule": f"≥ 近{PCT_WINDOW}日第{int(SHORT_PANIC_PCT * 100)}百分位＝恐慌；從10日高點減少{int(SHORT_EASE_DROP * 100)}%以上＝回補",
          "spark": spark("short")},
-        {"key": "margin", "label": "融資餘額", "sub": margin_src_label, "value": _r(last["margin"], 0), "unit": "億",
-         "parts": {k: {"value": _r(last.get(f"{k}_margin"), 0),
-                       "chg10": _r(last.get(f"{k}_chg10", np.nan) * 100, 2) if pd.notna(last.get(f"{k}_chg10", np.nan)) else None}
+        {"key": "margin", "label": "融資餘額", "sub": margin_src_label, "value": _r(m["margin"], 0), "unit": "億",
+         "date": m_date, "lagged": m_date != t.strftime("%Y-%m-%d"),
+         "parts": {k: {"value": _r(m.get(f"{k}_margin"), 0),
+                       "chg10": _r(m.get(f"{k}_chg10", np.nan) * 100, 2) if pd.notna(m.get(f"{k}_chg10", np.nan)) else None}
                    for k in ("twse", "otc") if f"{k}_margin" in df},
-         "chg10": _r(last["margin_chg10"] * 100, 2) if pd.notna(last["margin_chg10"]) else None,
-         "flag": "capit" if last["capit_recent"] else "panic" if last["margin_panic"] else ("washed" if (last["margin_washed"] and pd.notna(last["margin_chg10"])) else "normal"),
-         "stable": bool(last["margin_stable"]) if pd.notna(last["margin"]) else None,
+         "chg10": _r(m["margin_chg10"] * 100, 2) if pd.notna(m["margin_chg10"]) else None,
+         "flag": "capit" if last["capit_recent"] else "panic" if m["margin_panic"] else ("washed" if (m["margin_washed"] and pd.notna(m["margin_chg10"])) else "normal"),
+         "stable": bool(m["margin_stable"]) if pd.notna(m["margin"]) else None,
          "rule": f"10日減少{abs(int(MARGIN_PANIC_CHG * 100))}%以上＝去槓桿（恐慌）；{abs(int(MARGIN_CAPIT_CHG * 100))}%以上＝斷頭潮；近{MARGIN_WASH_LOOKBACK}日內發生過＝籌碼已洗",
          "spark": spark("margin")},
     ]
