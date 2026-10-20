@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#091426" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="全球行情" />
+<title>全球行情 · Global Markets Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#2F4245;          /* page background */
+    --panel:#283A3D;        /* tile background */
+    --line:#476064;         /* hairline borders */
+    --text:#F2EFEA;         /* primary text */
+    --muted:#C6D0CF;        /* secondary text */
+    --gold:#F0D9C6;         /* single accent */
+    --open:#8DB5A0;         /* market open */
+    --closed:#6E7473;       /* market closed */
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:"Space Grotesk","PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+    --sans:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ink);color:var(--text);font-family:var(--sans)}
+  body{min-height:100vh;padding:calc(18px + env(safe-area-inset-top)) clamp(14px,3vw,34px) calc(28px + env(safe-area-inset-bottom))}
+
+  /* ---------- header ---------- */
+  .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;
+    padding-bottom:16px;border-bottom:1px solid var(--line);position:relative}
+  .top::after{content:"";position:absolute;left:0;bottom:-1px;width:120px;height:2px;
+    background:linear-gradient(90deg,var(--gold),transparent)}
+  .brand h1{font-family:var(--disp);font-size:clamp(20px,2.6vw,30px);font-weight:700;
+    letter-spacing:.02em;line-height:1}
+  .brand .sub{margin-top:6px;color:var(--muted);font-family:var(--mono);font-size:12px;
+    letter-spacing:.14em;text-transform:uppercase}
+  .brand .sub b{color:var(--gold);font-weight:600}
+  .screener-link{display:inline-block;margin-top:10px;padding:7px 12px;border:1px solid var(--gold);
+    border-radius:8px;color:var(--gold);font-size:13px;text-decoration:none}
+  .screener-link:hover{background:rgba(207,179,159,.10)}
+
+  /* ---------- timezone / session strip (signature) ---------- */
+  .zones{display:flex;flex-wrap:wrap;gap:10px}
+  .zone{display:flex;align-items:center;gap:9px;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:132px}
+  .zone .dot{width:8px;height:8px;border-radius:50%;background:var(--closed);flex:0 0 auto}
+  .zone.live .dot{background:var(--open);box-shadow:0 0 0 0 rgba(141,181,160,.55);
+    animation:pulse 2.4s ease-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(141,181,160,.5)}70%{box-shadow:0 0 0 7px rgba(141,181,160,0)}100%{box-shadow:0 0 0 0 rgba(141,181,160,0)}}
+  .zone .meta{display:flex;flex-direction:column;line-height:1.25}
+  .zone .city{font-size:12px;color:var(--text)}
+  .zone .clock{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.02em}
+  .zone .state{font-size:11px;color:var(--muted)}
+  .zone.live .state{color:var(--open)}
+
+  /* ---------- grid ---------- */
+  .grid{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){
+    .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .tile{min-height:172px;border-radius:12px}
+    .tile .head{padding:9px 10px 6px}
+    .tile .name{font-size:12px}
+    .tile .code{font-size:9px}
+    .tile .expand{width:22px;height:22px;font-size:12px}
+  }
+
+  .tile{position:relative;background:var(--panel);border:1px solid var(--line);
+    border-top:3px solid var(--c,var(--line));border-radius:14px;
+    overflow:hidden;display:flex;flex-direction:column;min-height:236px;
+    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+  .tile::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(130% 90% at 0% 0%, color-mix(in srgb, var(--c,transparent) 14%, transparent), transparent 62%)}
+  .tile>*{position:relative;z-index:1}
+  .tile:hover{transform:translateY(-2px);box-shadow:0 10px 28px -14px var(--c,#000)}
+  .tile .head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    padding:12px 14px 8px}
+  .tile .name{font-size:14px;font-weight:600;letter-spacing:.01em;color:var(--c,var(--text))}
+  .tile .code{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.03em;
+    white-space:nowrap}
+  .tile .chart{flex:1;min-height:0;position:relative}
+  .tile .tradingview-widget-container,
+  .tile .tradingview-widget-container__widget{height:100%;width:100%}
+  .tile .fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:0 18px;color:var(--muted);font-size:12px;line-height:1.6}
+
+  /* ---------- footer ---------- */
+  footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:11.5px;line-height:1.9;max-width:900px}
+  footer b{color:var(--text);font-weight:600}
+  footer .warn{color:var(--gold)}
+
+  /* ---------- expand button ---------- */
+  .tile .head{align-items:center}
+  .tile .expand{margin-left:6px;background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:7px;width:26px;height:26px;font-size:14px;line-height:1;cursor:pointer;flex:0 0 auto;
+    transition:color .15s ease,border-color .15s ease}
+  .tile .expand:hover{color:var(--gold);border-color:var(--gold)}
+
+  /* ---------- modal (full chart) ---------- */
+  .modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+    background:rgba(15,17,19,.72);backdrop-filter:blur(3px);padding:clamp(12px,3vw,40px)}
+  .modal.show{display:flex}
+  .modal-box{width:min(1120px,96vw);height:min(78vh,760px);background:var(--panel);
+    border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .modal-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 16px;border-bottom:1px solid var(--line)}
+  .modal-bar .t{font-size:15px;font-weight:600}
+  .modal-bar .t span{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:8px}
+  .modal-close{background:transparent;border:1px solid var(--line);color:var(--text);border-radius:8px;
+    width:32px;height:32px;font-size:15px;cursor:pointer;flex:0 0 auto;
+    transition:color .15s ease,border-color .15s ease}
+  .modal-close:hover{color:var(--gold);border-color:var(--gold)}
+  .modal-chart{flex:1;min-height:0}
+  .modal-chart .tradingview-widget-container,
+  .modal-chart .tradingview-widget-container__widget{height:100%;width:100%}
+
+  @media(prefers-reduced-motion:reduce){.zone.live .dot{animation:none}}
+
+  /* ===== 區塊配色：三大區各自一個底色與主色，方便一眼分辨 ===== */
+  .zone-sec{--accent:var(--gold);border-radius:18px;padding:16px clamp(12px,2vw,20px) 18px;margin-top:22px;
+    background:var(--sec-bg);border:1px solid var(--sec-line);position:relative}
+  .zone-sec::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:0 4px 4px 0;background:var(--accent)}
+  .zone-sec .sec-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+  .zone-sec .sec-title .no{font:700 13px/1 var(--mono);color:var(--sec-bg);background:var(--accent);border-radius:6px;padding:4px 7px}
+  .zone-sec .sec-title .zh{font:700 clamp(17px,2vw,20px)/1.2 var(--disp);color:var(--accent);letter-spacing:.03em}
+  .zone-sec .sec-title .en{font:600 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .zone-sec .sec-title .hint{font-size:12px;color:var(--muted);flex-basis:100%}
+  @media(min-width:700px){.zone-sec .sec-title .hint{flex-basis:auto;margin-left:auto}}
+  /* 01 局勢總覽：琥珀金 */
+  .sec-ov{--sec-bg:#34342D;--sec-line:#5A5A4C;--panel:#3E3E35;--line:#5C5C4F;--accent:#C1C0AF}
+  /* 02 開盤前訊號：湖水藍 */
+  .sec-tx{--sec-bg:#3A322D;--sec-line:#5C4B41;--panel:#463C36;--line:#61504A;--accent:#CFB39F}
+  /* 03 全球行情：紫 */
+  .sec-mk{--sec-bg:#2B3639;--sec-line:#4A5F64;--panel:#33434A;--line:#4E666C;--accent:#839DA4}
+  .zone-sec .ov-eyebrow,.zone-sec .tx-eyebrow{display:none}
+  .zone-sec.tx{margin:22px 0 0;padding-top:16px;border-top:1px solid var(--sec-line)}
+  .zone-sec .grid{margin-top:0}
+  .nav-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .nav-links .screener-link{margin-top:0}
+  .screener-link.l-sc{border-color:#F0CDBE;color:#F7DDD1;background:rgba(0,0,0,.08)} .screener-link.l-sc:hover{background:rgba(217,174,152,.12)}
+  .screener-link.l-etf{border-color:#C5E0D3;color:#DCEFE6;background:rgba(0,0,0,.08)} .screener-link.l-etf:hover{background:rgba(141,181,160,.14)}
+  .screener-link.l-mk{border-color:#CFC7E6;color:#E4DEF5;background:rgba(0,0,0,.08)} .screener-link.l-mk:hover{background:rgba(160,150,200,.14)}
+  .screener-link.l-home{border-color:#E8D9B8;color:#F3E8CF;background:rgba(0,0,0,.08)} .screener-link.l-home:hover{background:rgba(205,174,114,.14)}
+</style>
+<style>.tile:hover{box-shadow:0 10px 24px -14px rgba(0,0,0,.6)}.zone{background:#283A3D}</style>
+
+<style>/* 區塊底色＝莫蘭迪主色、文字與標題改深色 */
+.zone-sec.sec-ov.ov{--sec-bg:#C1C0AF;--sec-line:#A2A190;--panel:#D5D4C7;--line:#A2A190;--accent:#34342D;--text:#24292C;--muted:#55574D;--gold:#6B4E37;--closed:#7C807C;color:var(--text);--ov-red:#963B36;--ov-orange:#93512F;--ov-amber:#6F5719;}
+.zone-sec.sec-tx.tx{--sec-bg:#CFB39F;--sec-line:#B09581;--panel:#DEC8B8;--line:#B09581;--accent:#3A322D;--text:#24292C;--muted:#5C4C41;--gold:#6B4E37;--closed:#7C807C;color:var(--text);--st-alert:#963B36;--st-watch:#93512F;--st-up:#6B4E37}
+.zone-sec.sec-mk{--sec-bg:#D8CAC8;--sec-line:#B5A3A1;--panel:#E6DCDA;--line:#B5A3A1;--accent:#3A2E2E;--text:#24292C;--muted:#5E4F4F;--gold:#6B4E37;--closed:#7C807C;color:var(--text)}
+.zone-sec .sec-title .no{color:var(--sec-bg)}
+.zone-sec.sec-ov .pos{color:#3F6B58} .zone-sec.sec-ov .neg{color:#963B36}
+.zone-sec.sec-tx .tx-bgblock{--panel:#D5E1DF;--line:#9DB4B1;--muted:#3E5451;--text:#22302E;background:#BFD0CD;border:1px solid #9DB4B1;border-radius:14px;padding:12px 14px 14px;margin-top:16px;color:var(--text)}.zone-sec.sec-tx .tx-bgblock .tx-sec{margin:0 0 10px;color:#22302E;font:700 13px/1.2 var(--disp);letter-spacing:.04em;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}.zone-sec.sec-tx .tx-bgblock .tx-sec span{font:400 11px/1.4 var(--sans);color:#3E5451;letter-spacing:0}
+.zone-sec .tile:hover{box-shadow:0 10px 24px -14px rgba(0,0,0,.45)}
+</style>
+<style>/* ===== 深色莫蘭迪金融主題 v1.0 ＋ 語意配色（風險紅色分級／中性藍／有利綠／漲鮮紅跌亮綠／曲線橘／外資黃） ===== */
+/* Dark Morandi Financial Theme v1.0 */
+:root{--bg-main:#202629;--bg-section:#252E33;--bg-card:#303A40;--bg-card-hover:#39464D;
+--bg-preopen:#34434D;--bg-preopen-detail:#3C4C56;--bg-preopen-metric:#2C383F;--border-preopen:#718B9A;
+--border-section:#53636C;--border-card:#586A73;--border-subtle:#3E4B52;
+--text-primary:#F0F1ED;--text-secondary:#C1CBCB;--text-muted:#9BA9AD;--text-disabled:#748187;
+--accent-blue:#A0B9CB;--accent-sage:#8FB7A5;--accent-gold:#D0B783;--accent-purple:#B1A6BF;
+--market-up:#F08F89;--market-down:#70D0A5;--market-flat:#BBC5C8;
+--bg-positive:#293F38;--bg-negative:#493536;--bg-warning:#484131;--bg-neutral:#303D45;
+--chart-grid:#3A484F;--chart-axis:#9BA9AD;--chart-up:#F08F89;--chart-down:#70D0A5}
+.market-international{--market-up:#70D0A5;--market-down:#F08F89}
+.market-taiwan{--market-up:#F08F89;--market-down:#70D0A5}
+body{font-variant-numeric:tabular-nums}
+
+:root{--ink:var(--bg-main);--panel:var(--bg-card);--line:var(--border-card);--text:var(--text-primary);
+  --muted:var(--text-muted);--gold:var(--accent-gold);--open:var(--accent-sage);--closed:var(--text-disabled)}
+html,body{background:var(--bg-main)!important;color:var(--text-primary)}
+.zone{background:var(--bg-card);border-color:var(--border-card)}
+.screener-link.l-sc{border-color:var(--market-up);color:var(--market-up);background:transparent}
+.screener-link.l-etf{border-color:var(--accent-sage);color:var(--accent-sage);background:transparent}
+.screener-link:hover{background:var(--bg-card-hover)}
+.zone-sec.sec-ov.ov{--sec-bg:var(--bg-section);--sec-line:var(--border-section);--panel:var(--bg-card);--line:var(--border-card);--accent:var(--accent-gold);--text:var(--text-primary);--muted:var(--text-muted);--gold:var(--accent-gold);--closed:var(--text-disabled);color:var(--text);background:var(--bg-section)!important;border:1px solid var(--border-section)!important;--ov-red:var(--market-up);--ov-orange:#E3A27A;--ov-amber:var(--accent-gold)}
+.zone-sec.sec-tx.tx{--sec-bg:var(--bg-section);--sec-line:var(--border-preopen);--panel:var(--bg-preopen-metric);--line:var(--border-card);--accent:var(--accent-blue);--text:var(--text-primary);--muted:var(--text-muted);--gold:var(--accent-gold);--closed:var(--text-disabled);color:var(--text);background:var(--bg-section)!important;border:1px solid var(--border-preopen)!important;--st-alert:var(--market-up);--st-watch:#E3A27A;--st-up:var(--accent-gold)}
+.zone-sec.sec-mk{--sec-bg:var(--bg-section);--sec-line:var(--border-section);--panel:var(--bg-card);--line:var(--border-card);--accent:var(--accent-purple);--text:var(--text-primary);--muted:var(--text-muted);--gold:var(--accent-gold);--closed:var(--text-disabled);color:var(--text);background:var(--bg-section)!important;border:1px solid var(--border-section)!important}
+.zone-sec .sec-title{border-bottom:1px solid var(--border-subtle);padding-bottom:12px;margin-bottom:14px}
+.zone-sec .sec-title .zh{color:var(--text-primary)}
+.zone-sec .sec-title .no{color:var(--bg-main);background:var(--accent)}
+.zone-sec::before{background:var(--accent)!important}
+.ov-card,.tile{background:var(--bg-card);border-color:var(--border-card);transition:background .2s ease}
+.ov-card:hover,.tile:hover{background:var(--bg-card-hover)}
+.ov-verdict{background:var(--bg-card)!important;border-color:var(--border-card)!important}
+.zone-sec.sec-tx .tx-verdict{background:var(--bg-preopen)!important;border:1px solid var(--border-preopen)!important;border-left:4px solid var(--accent-blue)!important}
+.zone-sec.sec-tx .tx-card{background:var(--bg-preopen-metric);border-color:var(--border-card)}
+.zone-sec.sec-tx .tx-bgblock{--panel:var(--bg-preopen-metric);--line:var(--border-card);--muted:var(--text-secondary);--text:var(--text-primary);
+  background:var(--bg-preopen-detail);border:1px solid var(--border-preopen);border-radius:7px}
+.zone-sec.sec-tx .tx-bgblock .tx-sec{color:var(--accent-blue)} .zone-sec.sec-tx .tx-bgblock .tx-sec span{color:var(--text-secondary)}
+.zone-sec .pos{color:var(--market-up)} .zone-sec .neg{color:var(--market-down)}
+.modal-box{background:var(--bg-card);border-color:var(--border-section)}
+footer{border-top-color:var(--border-subtle)}
+@media(max-width:768px){.zone-sec{padding:12px!important;margin-bottom:14px}.zone-sec.sec-tx .tx-bgblock{padding:10px}}
+/* 語意配色層 */
+:root{
+ /* 訊號狀態（莫蘭迪） */
+ --sig-danger:#C97E78; --sig-danger-soft:#D9A19B; --sig-danger-bg:#46302F;
+ --sig-caution:#D0B26E; --sig-caution-soft:#DDC48F; --sig-caution-bg:#463F2C;
+ --sig-neutral:#8FA8BD; --sig-neutral-bg:#2E3B45;
+ --sig-favor:#8FB7A5;
+ /* 數字漲跌（鮮明） */
+ --num-up:#FF4D4F; --num-down:#2EE68A;
+ /* 曲線（莫蘭迪橘） */
+ --chart-1:#D99A6C; --chart-2:#E6B48C; --chart-3:#C2825A; --chart-4:#EDC7A6; --chart-5:#B8775A;
+}
+
+.ov{--ov-red:var(--sig-danger)!important;--ov-orange:var(--sig-caution)!important;--ov-amber:var(--sig-caution-soft)!important;--ov-calm:var(--sig-neutral)!important}
+.ov [data-c=gold]{--c:var(--sig-favor)!important}
+.tx{--st-alert:var(--sig-danger)!important;--st-watch:var(--sig-caution)!important;--st-calm:var(--sig-neutral)!important;--st-up:var(--sig-favor)!important}
+.pos,.zone-sec .pos,.ov .pos,.zone-sec.sec-ov .pos{color:var(--num-up)!important;font-weight:700}
+.neg,.zone-sec .neg,.ov .neg,.zone-sec.sec-ov .neg{color:var(--num-down)!important;font-weight:700}
+.ov-spark polyline:last-child{stroke:var(--chart-1)!important}
+.ov-spark polyline[stroke-dasharray]{stroke:var(--text-muted)!important}
+.screener-link.l-sc{border-color:var(--chart-1);color:var(--chart-1)}
+/* 風險一律紅色系，深淺分級 */
+:root{--risk-3:#D9665E;--risk-2:#D08A82;--risk-1:#DDB3AD;--risk-bg:#3E2F2F}
+
+.ov{--ov-red:var(--risk-3)!important;--ov-orange:var(--risk-2)!important;--ov-amber:var(--risk-1)!important}
+.tx{--st-alert:var(--risk-3)!important;--st-watch:var(--risk-2)!important}
+/* 黃色專用於外資籌碼；其他金色裝飾改沙色 */
+:root{--flow:#D9BC6A;--sand:#C9B8A6;--gold:var(--sand)!important;--accent-gold:var(--sand)}
+.zone-sec.sec-ov.ov{--accent:var(--sand)!important}
+.zone-sec,.ov,.tx{--gold:var(--sand)!important}
+.flow,.tx-row .v{color:var(--flow)!important;font-weight:700}
+.tx-row .v small{color:var(--muted)}
+/* ===== 背板：深藍底 #091426，大區塊亮一階、卡片深一階（2026-10-18 定稿） ===== */
+:root{--bg-main:#091426;--bg-section:#1E2730;--bg-card:#151C23;--bg-card-hover:#1B2430;
+--border-section:#36434F;--border-card:#2E3A45;--border-subtle:#2A3540;
+--border-preopen:#5B7C93;--bg-preopen:#13202C;--bg-preopen-detail:#18232E;--bg-preopen-metric:#121A22;
+--chart-grid:#2A3540;--text-muted:#A3AFB3}
+html,body{background:var(--bg-main)!important}
+.zone-sec{box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 8px 24px -12px rgba(0,0,0,.6)}
+.zone-sec .ov-card,.zone-sec .tx-card,.zone-sec .tile,.zone-sec .tx-bgc,.ov-verdict,.zone{box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+.tile::before,.tile::after{opacity:.5}
+.zs .tile,.zs .card,.zs .ctx{box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+</style>
+</head>
+<body>
+
+  <header class="top">
+    <div class="brand">
+      <h1>全球行情</h1>
+      <div class="sub">Global Markets Monitor · <b id="tpe">--:--:--</b> 台北</div>
+      <div class="nav-links">
+        <a class="screener-link l-home" href="./index.html">← 盤勢監控首頁</a>
+        <a class="screener-link l-sc" href="./screener.html">台股市場寬度＋每日選股 →</a>
+        <a class="screener-link l-etf" href="./etf.html">主動ETF選股名單 →</a>
+      </div>
+    </div>
+    <div class="zones" id="zones"></div>
+  </header>
+
+  <section class="zone-sec sec-mk" id="mk-panel">
+  <div class="sec-title"><span class="zh">全球行情</span><span class="en">Live charts</span><span class="hint">點右上角 ⤢ 放大</span></div>
+  <main class="grid" id="grid"></main>
+  </section>
+
+  <footer>
+    <div><b>標的：</b>道瓊/那斯達克/日經為券商 CFD（近 24 小時，反映電子盤走勢）；美元含美元指數（DXY）、美元/台幣、美元/日圓；原油為布蘭特（海運定價，反映中東供給風險）；債券以 7–10 年債反向 ETF（PST）替代，與 10 年期殖利率「同向」（殖利率上升→上漲）。</div>
+    <div class="warn">※ 顏色為國際慣例「綠漲紅跌」，與台股「紅漲綠跌」相反，判讀請留意。</div>
+    <div>※ 資料來源 TradingView。免費行情可能延遲約 10–15 分鐘（期貨盤尤其），僅供參考，非交易或下單依據。</div>
+  </footer>
+
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="完整K線圖">
+    <div class="modal-box">
+      <div class="modal-bar">
+        <div class="t" id="modalTitle">—</div>
+        <button class="modal-close" id="modalClose" aria-label="關閉">✕</button>
+      </div>
+      <div class="modal-chart" id="modalChart"></div>
+    </div>
+  </div>
+
+<script>
+/* ---------------- 標的設定（可自行增刪 / 換代碼） ---------------- */
+const SYMBOLS = [
+  { name:"道瓊 電子盤",    code:"OANDA:US30USD",   color:"#D99A6C" }, // 美股：藍
+  { name:"那斯達克 電子盤", code:"OANDA:NAS100USD", color:"#D99A6C" }, // 美股：藍
+  { name:"日經 225",      code:"OANDA:JP225USD",  color:"#E6B48C" }, // 亞股：紫
+  { name:"美元指數 DXY",  code:"CAPITALCOM:DXY",  color:"#C2825A" }, // 美元：金（若空白改 PEPPERSTONE:USDX 或 AMEX:UUP）
+  { name:"美元/台幣",     code:"FX_IDC:USDTWD",   color:"#C2825A" }, // 美元：金
+  { name:"美元/日圓",     code:"FX_IDC:USDJPY",   color:"#C2825A" }, // 日圓匯率(全球基準)；想看日圓/台幣改 FX_IDC:JPYTWD
+  { name:"比特幣",        code:"BINANCE:BTCUSDT", color:"#EDC7A6" }, // 加密：橘
+  { name:"布蘭特原油",    code:"TVC:UKOIL",       color:"#B8775A" }, // 原油：紅橘。中東地緣風險看布蘭特，不看 WTI
+  { name:"美10年債·PST", code:"AMEX:PST", range:"3M", color:"#E6B48C" }, // 債券：青綠。與10Y殖利率同向；多日趨勢平滑曲線。想賭24h連續可改 CBOT:ZN1!（期貨，可能被擋）
+];
+
+/* ---------------- 建立每個 mini chart tile ---------------- */
+function rgba(hex,a){
+  const h=hex.replace("#",""); const n=parseInt(h.length===3?h.replace(/(.)/g,"$1$1"):h,16);
+  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
+}
+const grid = document.getElementById("grid");
+SYMBOLS.forEach(s=>{
+  const tile = document.createElement("section");
+  tile.className = "tile";
+  if(s.color) tile.style.setProperty("--c", s.color);
+  tile.innerHTML =
+    '<div class="head"><span class="name">'+s.name+'</span>'+
+    '<span class="code">'+s.code+'</span>'+
+    '<button class="expand" title="放大完整K線圖" aria-label="放大">⤢</button>'+
+    '</div>'+
+    '<div class="chart"><div class="fallback">'+
+    '載入中…（若持續空白，多半是離線或瀏覽器擋外部腳本，請直接部署到網站或用一般瀏覽器開啟）'+
+    '</div></div>';
+  grid.appendChild(tile);
+  const expandBtn = tile.querySelector(".expand");
+  if(expandBtn) expandBtn.addEventListener("click",e=>{ e.stopPropagation(); openModal(s); });
+
+  const chart = tile.querySelector(".chart");
+  const box = document.createElement("div");
+  box.className = "tradingview-widget-container";
+  const w = document.createElement("div");
+  w.className = "tradingview-widget-container__widget";
+  box.appendChild(w);
+
+  const line = s.color || "#93AEC4";
+  const script = document.createElement("script");
+  script.type = "text/javascript";
+  script.async = true;
+  script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
+  script.text = JSON.stringify({
+    symbol: s.code, width:"100%", height:"100%", locale:"zh_TW",
+    dateRange:(s.range||"1D"), colorTheme:"dark", isTransparent:true, autosize:true,
+    chartOnly:false, noTimeScale:false,
+    trendLineColor:line, underLineColor:rgba(line,0.20), underLineBottomColor:rgba(line,0)
+  });
+  box.appendChild(script);
+
+  // widget 載入後會蓋掉 fallback 提示
+  script.addEventListener("load", ()=>{ const f=chart.querySelector(".fallback"); if(f) f.remove(); });
+  chart.appendChild(box);
+});
+
+/* ---------------- 多時區時鐘 + 交易時段狀態 ---------------- */
+const MARKETS = [
+  { city:"台北", tz:"Asia/Taipei",     sessions:[[540,810]] },              // 09:00-13:30
+  { city:"紐約", tz:"America/New_York", sessions:[[570,960]] },              // 09:30-16:00
+  { city:"東京", tz:"Asia/Tokyo",       sessions:[[540,690],[750,930]] },    // 09:00-11:30, 12:30-15:30（2024/11 起延長）
+  { city:"首爾", tz:"Asia/Seoul",       sessions:[[540,930]] },              // 09:00-15:30
+];
+const WD = {Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+
+function tzParts(tz){
+  const p = new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,
+    weekday:"short",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date());
+  const o={}; p.forEach(x=>o[x.type]=x.value);
+  let h = parseInt(o.hour,10); if(h===24) h=0;
+  return { wd:WD[o.weekday], h, m:parseInt(o.minute,10), s:parseInt(o.second,10) };
+}
+function isOpen(mk){
+  const t = tzParts(mk.tz);
+  if(t.wd===0 || t.wd===6) return false;            // 週末休市
+  const mins = t.h*60 + t.m;
+  return mk.sessions.some(([a,b])=> mins>=a && mins<b);
+}
+const pad=n=>String(n).padStart(2,"0");
+
+const zonesEl = document.getElementById("zones");
+MARKETS.forEach(mk=>{
+  const el=document.createElement("div"); el.className="zone"; el.dataset.tz=mk.tz;
+  el.innerHTML='<span class="dot"></span><div class="meta">'+
+    '<span class="city">'+mk.city+'</span>'+
+    '<span class="clock">--:--</span>'+
+    '<span class="state">—</span></div>';
+  zonesEl.appendChild(el);
+});
+
+function tick(){
+  const tpe=tzParts("Asia/Taipei");
+  document.getElementById("tpe").textContent=pad(tpe.h)+":"+pad(tpe.m)+":"+pad(tpe.s);
+  document.querySelectorAll(".zone").forEach((el,i)=>{
+    const mk=MARKETS[i], t=tzParts(mk.tz), open=isOpen(mk);
+    el.querySelector(".clock").textContent=pad(t.h)+":"+pad(t.m);
+    el.querySelector(".state").textContent=open?"交易中":"收盤";
+    el.classList.toggle("live",open);
+  });
+}
+tick(); setInterval(tick,1000);
+
+/* ---------------- 「放大」→ 完整 K 線圖 ---------------- */
+const modal=document.getElementById("modal");
+const modalChart=document.getElementById("modalChart");
+const modalTitle=document.getElementById("modalTitle");
+function openModal(s){
+  modalTitle.innerHTML=s.name+' <span>'+s.code+'</span>';
+  modalChart.innerHTML="";
+  const box=document.createElement("div");
+  box.className="tradingview-widget-container";
+  const w=document.createElement("div"); w.className="tradingview-widget-container__widget"; box.appendChild(w);
+  const cfg={
+    autosize:true, symbol:s.code, interval:"D", timezone:"Asia/Taipei",
+    theme:"dark", style:"1", locale:"zh_TW", hide_side_toolbar:false,
+    allow_symbol_change:true, calendar:false, support_host:"https://www.tradingview.com"
+  };
+  const sc=document.createElement("script"); sc.type="text/javascript"; sc.async=true;
+  sc.src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+  sc.text=JSON.stringify(cfg); box.appendChild(sc);
+  modalChart.appendChild(box);
+  modal.classList.add("show");
+}
+function closeModal(){ modal.classList.remove("show"); modalChart.innerHTML=""; }
+document.getElementById("modalClose").addEventListener("click",closeModal);
+modal.addEventListener("click",e=>{ if(e.target===modal) closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+</script>
+
+</body>
+</html>
