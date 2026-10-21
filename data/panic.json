@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-21T21:30+08:00",
+ "generated_at": "2026-10-21T22:49+08:00",
  "date": "2026-10-21",
  "close": 46887.77,
  "state": "watch",
@@ -293,13 +293,16 @@
    "unit": "億",
    "date": "2026-10-21",
    "lagged": false,
+   "chg1": 72.33,
    "parts": {
     "twse": {
      "value": 6444.0,
+     "chg1": 62.73,
      "chg10": 1.05
     },
     "otc": {
      "value": 2160.0,
+     "chg1": 9.6,
      "chg10": -4.5
     }
    },

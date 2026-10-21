@@ -480,6 +480,13 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
     has_m = df["margin"].notna()
     m = df[has_m].iloc[-1] if pd.isna(last["margin"]) and has_m.any() else last
     m_date = (df.index[has_m][-1] if pd.isna(last["margin"]) and has_m.any() else t).strftime("%Y-%m-%d")
+
+    def chg1(col):
+        """融資餘額單日增減（億元）＝這一天 − 前一個有資料的交易日"""
+        if col not in df:
+            return None
+        s_ = df[col].loc[:pd.Timestamp(m_date)].dropna()
+        return _r(s_.iloc[-1] - s_.iloc[-2], 2) if len(s_) >= 2 else None
     comps = [
         {"key": "vol", "label": "波動度", "sub": vol_label, "value": _r(last["vol"], 2), "unit": "%" if vol_source != "vix" else "",
          "pct": _r(last["vol_pct"] * 100, 0) if pd.notna(last["vol_pct"]) else None,
@@ -492,8 +499,8 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
          "rule": f"≥ 近{PCT_WINDOW}日第{int(SHORT_PANIC_PCT * 100)}百分位＝恐慌；從10日高點減少{int(SHORT_EASE_DROP * 100)}%以上＝回補",
          "spark": spark("short")},
         {"key": "margin", "label": "融資餘額", "sub": margin_src_label, "value": _r(m["margin"], 0), "unit": "億",
-         "date": m_date, "lagged": m_date != t.strftime("%Y-%m-%d"),
-         "parts": {k: {"value": _r(m.get(f"{k}_margin"), 0),
+         "date": m_date, "lagged": m_date != t.strftime("%Y-%m-%d"), "chg1": chg1("margin"),
+         "parts": {k: {"value": _r(m.get(f"{k}_margin"), 0), "chg1": chg1(f"{k}_margin"),
                        "chg10": _r(m.get(f"{k}_chg10", np.nan) * 100, 2) if pd.notna(m.get(f"{k}_chg10", np.nan)) else None}
                    for k in ("twse", "otc") if f"{k}_margin" in df},
          "chg10": _r(m["margin_chg10"] * 100, 2) if pd.notna(m["margin_chg10"]) else None,

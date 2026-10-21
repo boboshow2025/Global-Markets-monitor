@@ -1,7 +1,7 @@
 {
  "schema": 2,
  "sig": "2026-10-21|2026-10-21|twse|2026-10-21|20261021",
- "generated_at": "2026-10-21T22:08:17+08:00",
+ "generated_at": "2026-10-21T22:48:49+08:00",
  "us_date": "2026-10-21",
  "tw_last_date": "2026-10-21",
  "tw_last_close": 46887.77,
@@ -11,7 +11,7 @@
  "overall_text": "中性",
  "action": "照原計畫",
  "driver": "sox",
- "z_used": 0.45,
+ "z_used": 0.53,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -22,9 +22,9 @@
    "key": "SOX",
    "label": "費城半導體",
    "sub": "美股 10/21 收盤",
-   "value": 11419.72,
-   "pct": 1.2,
-   "z": 0.45,
+   "value": 11443.08,
+   "pct": 1.41,
+   "z": 0.53,
    "state": "calm",
    "used": true,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
@@ -72,46 +72,46 @@
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 108.38,
-   "metric": 2.19,
+   "value": 109.12,
+   "metric": 2.89,
    "unit": "%",
-   "z": 0.14,
+   "z": 0.25,
    "state": "calm"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
-   "value": 5.08,
-   "metric": -3.4,
+   "value": 5.1,
+   "metric": -1.5,
    "unit": "bp",
-   "z": -0.94,
+   "z": -0.51,
    "state": "calm"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 101.69,
-   "metric": -0.84,
+   "value": 101.75,
+   "metric": -0.78,
    "unit": "%",
-   "z": -1.18,
+   "z": -1.11,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 158.07,
-   "metric": -0.16,
+   "value": 158.11,
+   "metric": -0.13,
    "unit": "%",
-   "z": 0.07,
+   "z": 0.08,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 11.2,
-   "metric": 11.2,
+   "value": 11.22,
+   "metric": 11.22,
    "unit": "美元",
-   "z": 1.32,
+   "z": 1.33,
    "state": "calm"
   }
  ],
