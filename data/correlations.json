@@ -1,7 +1,7 @@
 {
  "schema": 2,
- "sig": "2026-10-21|2026-10-21|twse|2026-10-21|20261021",
- "generated_at": "2026-10-21T22:48:49+08:00",
+ "sig": "2026-10-21|2026-10-21|twse|2026-10-21|20261022",
+ "generated_at": "2026-10-22T06:30:12+08:00",
  "us_date": "2026-10-21",
  "tw_last_date": "2026-10-21",
  "tw_last_close": 46887.77,
@@ -10,8 +10,8 @@
  "overall": "calm",
  "overall_text": "中性",
  "action": "照原計畫",
- "driver": "sox",
- "z_used": 0.53,
+ "driver": "night",
+ "z_used": 0.58,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -22,27 +22,27 @@
    "key": "SOX",
    "label": "費城半導體",
    "sub": "美股 10/21 收盤",
-   "value": 11443.08,
-   "pct": 1.41,
-   "z": 0.53,
+   "value": 11505.56,
+   "pct": 1.97,
+   "z": 0.74,
    "state": "calm",
-   "used": true,
+   "used": false,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
    "key": "NIGHT",
    "label": "台指期夜盤",
-   "sub": "近月 202610",
-   "value": 46975.0,
-   "pct": null,
-   "z": null,
-   "chg": null,
-   "ref": 46341.0,
-   "state": "unknown",
-   "used": false,
-   "date": "20261021",
-   "stale": true,
-   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
+   "sub": "近月 202611",
+   "value": 47482.0,
+   "pct": 1.0,
+   "z": 0.58,
+   "chg": 469.0,
+   "ref": 47013.0,
+   "state": "calm",
+   "used": true,
+   "date": "20261022",
+   "stale": false,
+   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
   }
  ],
  "flow": {
@@ -51,13 +51,13 @@
   "sum5": -5027.5,
   "z": null,
   "night": {
-   "date": "2026-10-21",
-   "tx_net": 720,
-   "tx_long": 19927,
-   "tx_short": 19207,
-   "mtx_net": -283,
-   "net_equiv": 649,
-   "fresh": false
+   "date": "2026-10-22",
+   "tx_net": -918,
+   "tx_long": 18496,
+   "tx_short": 19414,
+   "mtx_net": -1582,
+   "net_equiv": -1314,
+   "fresh": true
   },
   "fut": {
    "date": "2026-10-21",
@@ -72,47 +72,47 @@
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 109.12,
-   "metric": 2.89,
+   "value": 109.88,
+   "metric": 3.6,
    "unit": "%",
-   "z": 0.25,
+   "z": 0.37,
    "state": "calm"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
-   "value": 5.1,
-   "metric": -1.5,
+   "value": 5.15,
+   "metric": 2.9,
    "unit": "bp",
-   "z": -0.51,
+   "z": 0.47,
    "state": "calm"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 101.75,
-   "metric": -0.78,
+   "value": 101.69,
+   "metric": -0.84,
    "unit": "%",
-   "z": -1.11,
+   "z": -1.18,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 158.11,
-   "metric": -0.13,
+   "value": 158.14,
+   "metric": -0.11,
    "unit": "%",
-   "z": 0.08,
+   "z": 0.1,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 11.22,
-   "metric": 11.22,
+   "value": 12.02,
+   "metric": 12.02,
    "unit": "美元",
-   "z": 1.33,
-   "state": "calm"
+   "z": 1.58,
+   "state": "watch"
   }
  ],
  "notes": [
@@ -121,11 +121,11 @@
   "外資台指期淨空單減少 3,676 口，空方在回補。"
  ],
  "backtest": {
-  "n": 470,
-  "start": "2024-12-04",
+  "n": 469,
+  "start": "2024-12-05",
   "base": {
    "avg": 0.1,
-   "down_pct": 44.0
+   "down_pct": 45.0
   },
   "buckets": [
    {
@@ -149,7 +149,7 @@
    {
     "state": "calm",
     "label": "中性",
-    "n": 331,
+    "n": 330,
     "avg": 0.23,
     "median": 0.26,
     "down_pct": 41.0,
