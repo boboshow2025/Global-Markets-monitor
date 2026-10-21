@@ -225,11 +225,14 @@ def fetch_taiex_twse(cache: Path, verbose: bool) -> pd.Series:
 
 
 def fetch_foreign_flow(cache: Path, tw_dates: list[pd.Timestamp], verbose: bool) -> pd.Series:
-    """證交所 BFI82U：外資及陸資（不含外資自營商）買賣差額，單位：億元。"""
+    """證交所 BFI82U：外資買賣差額＝「外資及陸資(不含外資自營商)」＋「外資自營商」，單位：億元。
+    與新聞、期貨商盤後快報的「外資買賣超」口徑相同（三大法人合計＝自營商＋投信＋這個數字）。
+    舊快取只含「不含外資自營商」那一列（欄名 net_100m），偵測到就整批重抓。"""
     old = pd.Series(dtype=float)
     if cache.exists():
         df = pd.read_csv(cache, parse_dates=["date"])
-        old = df.set_index("date")["net_100m"]
+        if "net_100m_all" in df.columns:
+            old = df.set_index("date")["net_100m_all"]
     want = [d for d in tw_dates[-30:] if d not in old.index]
     got = {}
     fails = 0
@@ -245,11 +248,11 @@ def fetch_foreign_flow(cache: Path, tw_dates: list[pd.Timestamp], verbose: bool)
             j = json.loads(_get(url).decode("utf-8"))
             fails = 0
             if j.get("stat") == "OK":
-                for row in j.get("data", []):
-                    if row[0].startswith("外資及陸資"):
-                        v = _num(row[3])
-                        if v is not None:
-                            got[d] = v / 1e8
+                vals = [_num(row[3]) for row in j.get("data", [])
+                        if str(row[0]).strip().startswith(("外資及陸資", "外資自營商"))]
+                vals = [v for v in vals if v is not None]
+                if vals:
+                    got[d] = sum(vals) / 1e8
         except Exception as exc:  # noqa: BLE001
             if verbose:
                 print(f"[twse] 外資 {d:%Y-%m-%d} 失敗：{exc}")
@@ -259,7 +262,7 @@ def fetch_foreign_flow(cache: Path, tw_dates: list[pd.Timestamp], verbose: bool)
     s = pd.concat(parts) if parts else pd.Series(dtype=float)
     s = s[~s.index.duplicated(keep="last")].sort_index()
     if len(s):
-        pd.DataFrame({"date": s.index.strftime("%Y-%m-%d"), "net_100m": s.round(2).values}).to_csv(cache, index=False)
+        pd.DataFrame({"date": s.index.strftime("%Y-%m-%d"), "net_100m_all": s.round(2).values}).to_csv(cache, index=False)
     if verbose:
         print(f"[twse] 外資買賣超 {len(s)} 筆" + (f"，最新 {s.index[-1]:%Y-%m-%d} {s.iloc[-1]:+.1f} 億" if len(s) else ""))
     return s
