@@ -344,6 +344,16 @@ html,body{background:var(--bg-main)!important}
     const ROT_C = {'進攻': 'gold', '進攻（留意）': 'amber', '防守': 'orange', '強烈防守': 'red'};
     const PAN_C = {calm: 'calm', watch: 'orange', heat: 'red', capit: 'amber', ease: 'gold', unknown: 'off'};
 
+    /* 外資台指期未平倉：把「較前日增減」翻成白話（淨空單增加＝加空；淨多單增加＝回補或加多） */
+    window.oiChgTxt = window.oiChgTxt || function (fu) {
+      if (!fu || fu.chg === null || fu.chg === undefined) return '';
+      const c = Number(fu.chg), net = Number(fu.net), prev = net - c, n = Math.abs(c).toLocaleString();
+      if (c === 0) return '與前日持平';
+      let t, cl;
+      if (c < 0) { t = '當日淨空單增加 ' + n + ' 口'; cl = 'neg'; t += prev > 0 ? (net < 0 ? '（多翻空）' : '（多單調節）') : '（加空）'; }
+      else       { t = '當日淨多單增加 ' + n + ' 口'; cl = 'pos'; t += prev < 0 ? (net > 0 ? '（空翻多）' : '（空單回補）') : '（加多）'; }
+      return '<span class="' + cl + '">' + t + '</span>';
+    };
     function renderPre(d) {
       const el = $('ov-pre');
       if (!d) { el.innerHTML = head('開盤前訊號', '今天') + '<div class="ov-missing">讀不到 data/correlations.json</div>'; return; }
@@ -361,7 +371,7 @@ html,body{background:var(--bg-main)!important}
               sgn((used.chg === null || used.chg === undefined) ? Math.round(used.value - used.value / (1 + used.pct / 100)) : used.chg, 0) + '&nbsp;點</small>'
             : '<span class="' + (used.pct > 0 ? 'pos' : used.pct < 0 ? 'neg' : '') + '">' + sgn(used.pct) + '%</span><small>z ' + sgn(used.z, 1) + '</small>') : '') +
           row('外資現貨 ' + md(f.date), '<span class="flow">' + num(f.net) + '</span><small>億</small>') +
-          (fu ? row('外資台指期淨口數', '<span class="flow">' + num(fu.net) + '</span><small>' + (fu.chg === null ? '' : '較前日 ' + sgn(fu.chg, 0)) + '</small>') : '') +
+          (fu ? row('外資台指期淨口數', '<span class="flow">' + num(fu.net) + '</span><small>口</small>' + (fu.chg !== null && fu.chg !== undefined ? '<br><small style="margin-left:0">' + oiChgTxt(fu) + '</small>' : '')) : '') +
           (f.night && f.night.fresh ? row('外資昨晚夜盤淨口數', '<span class="flow">' + sgn(f.night.net_equiv, 0) + '</span><small>口</small>') : '') +
         '</div>';
     }
@@ -612,7 +622,7 @@ html,body{background:var(--bg-main)!important}
         '<div class="tx-row"><span class="k">現貨買賣超<br>' + md(f.date) + '</span><span><span class="v">' + n0(f.net) + '<small>億</small></span>' +
           '<span class="d">近 5 日 ' + n0(f.sum5) + ' 億</span></span></div>' +
         '<div class="tx-row"><span class="k">台指期淨未平倉<br>' + (fu ? md(fu.date) : '期交所') + '</span><span><span class="v">' + (fu ? n0(fu.net) : '—') + '<small>口</small></span>' +
-          '<span class="d">' + (fu ? (fu.chg === null ? '明天起顯示增減' : '較前日 ' + n0(fu.chg) + ' 口') + ' · 多 ' + fu.long.toLocaleString() + ' / 空 ' + fu.short.toLocaleString() : '未取得') + '</span></span></div>' +
+          '<span class="d">' + (fu ? (fu.chg === null ? '明天起顯示增減' : oiChgTxt(fu)) + '<br>多 ' + fu.long.toLocaleString() + ' / 空 ' + fu.short.toLocaleString() : '未取得') + '</span></span></div>' +
         (f.night ? '<div class="tx-row"><span class="k">夜盤外資交易<br>' + md(f.night.date) + ' 歸屬</span><span><span class="v">' + n0(f.night.net_equiv) + '<small>口</small></span>' +
           '<span class="d">大台 ' + n0(f.night.tx_net) + (f.night.mtx_net === null ? '' : ' · 小台 ' + n0(f.night.mtx_net)) + (f.night.fresh ? '' : ' · 台股已開過') + '</span></span></div>' : '') +
         '<div class="tx-rule">淨未平倉為負＝外資淨空單。空單擴大代表期貨端在避險，縮小代表回補。夜盤外資只公布交易口數（不公布未平倉），折算大台＝大台＋小台÷4。不單獨決定燈號。</div></div>');
