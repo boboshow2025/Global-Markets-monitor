@@ -1,8 +1,8 @@
 {
  "schema": 2,
- "sig": "2026-10-23|2026-10-22|twse|2026-10-22|20261027",
- "generated_at": "2026-10-24T09:58:39+08:00",
- "us_date": "2026-10-23",
+ "sig": "2026-10-26|2026-10-22|twse|2026-10-22|20261027",
+ "generated_at": "2026-10-26T22:17:46+08:00",
+ "us_date": "2026-10-26",
  "tw_last_date": "2026-10-22",
  "tw_last_close": 46041.43,
  "tw_last_pct": -1.81,
@@ -21,10 +21,10 @@
   {
    "key": "SOX",
    "label": "費城半導體",
-   "sub": "美股 10/23 收盤",
-   "value": 10779.46,
-   "pct": 0.44,
-   "z": 0.14,
+   "sub": "美股 10/26 收盤",
+   "value": 10909.57,
+   "pct": 1.21,
+   "z": 0.51,
    "state": "calm",
    "used": false,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
@@ -72,46 +72,46 @@
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 111.66,
-   "metric": 1.64,
+   "value": 110.59,
+   "metric": 0.95,
    "unit": "%",
-   "z": -0.01,
+   "z": -0.18,
    "state": "calm"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
-   "value": 4.99,
-   "metric": 3.5,
+   "value": 4.97,
+   "metric": -1.6,
    "unit": "bp",
-   "z": 0.57,
+   "z": -0.42,
    "state": "calm"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 101.75,
-   "metric": -0.09,
+   "value": 102.02,
+   "metric": 0.04,
    "unit": "%",
-   "z": -0.17,
+   "z": -0.04,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 156.81,
-   "metric": -0.84,
+   "value": 157.44,
+   "metric": -0.23,
    "unit": "%",
-   "z": -0.36,
+   "z": 0.01,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 8.22,
-   "metric": 8.22,
+   "value": 9.16,
+   "metric": 9.16,
    "unit": "美元",
-   "z": 0.28,
+   "z": 0.51,
    "state": "calm"
   }
  ],
@@ -120,11 +120,11 @@
   "美股訊號雖不差，但外資持續撤出，不宜追高。"
  ],
  "backtest": {
-  "n": 468,
-  "start": "2024-12-09",
+  "n": 466,
+  "start": "2024-12-11",
   "base": {
-   "avg": 0.09,
-   "down_pct": 45.0
+   "avg": 0.1,
+   "down_pct": 44.0
   },
   "buckets": [
    {
@@ -139,16 +139,16 @@
    {
     "state": "watch",
     "label": "偏空",
-    "n": 54,
+    "n": 53,
     "avg": -1.14,
-    "median": -0.73,
+    "median": -0.7,
     "down_pct": 81.0,
-    "worse_than_1pct": 41.0
+    "worse_than_1pct": 42.0
    },
    {
     "state": "calm",
     "label": "中性",
-    "n": 329,
+    "n": 328,
     "avg": 0.23,
     "median": 0.26,
     "down_pct": 41.0,
@@ -167,7 +167,7 @@
  },
  "live": {
   "n": 4,
-  "pending": 2,
+  "pending": 3,
   "buckets": [
    {
     "state": "alert",
@@ -199,6 +199,12 @@
    }
   ],
   "recent": [
+   {
+    "us_date": "2026-10-26",
+    "state": "calm",
+    "target": null,
+    "ret": null
+   },
    {
     "us_date": "2026-10-23",
     "state": "calm",

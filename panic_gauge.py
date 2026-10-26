@@ -8,9 +8,12 @@ panic_gauge.py  --  恐慌儀表（Global-Markets-monitor）
   1. 波動度      台指VIX（期交所，累積滿 120 天後啟用）；之前用加權指數 10 日實現波動率代替
   2. 外資期貨空單 外資台指期淨空單口數（期交所三大法人 CSV）
   3. 融資餘額    上市融資金額 10 日變化（證交所信用交易統計）
+  4. 融資維持率  Σ(個股融資餘額張 × 1000 × 收盤價) ÷ 融資金額（上市＋上櫃）
+                 個股融資張數與收盤價讀 stock-screener 的 prices.db（chip_screener.py 每晚 21:45 更新），
+                 融資金額用第 3 項的快取；< 160% 算恐慌，< 140% 進入斷頭區（個股 130% 追繳）
 
-狀態：
-  平靜      三項都正常
+狀態（四項中幾項進入恐慌區）：
+  平靜      四項都正常
   警戒      一項進入恐慌區
   恐慌升溫  兩項以上進入恐慌區
   融資斷頭  上市融資 10 日減少 15% 以上（斷頭潮），觸發後 5 個交易日內顯示
@@ -59,6 +62,9 @@ HEAT_LOOKBACK = 15          # 「近期曾恐慌」的回看天數
 MARGIN_WASH_LOOKBACK = 15   # 「融資已大減過」的回看天數
 MARGIN_CAPIT_CHG = -0.15    # 融資 10 日減少 15% 以上 → 斷頭潮（可能的恐慌底）
 CAPIT_SHOW_DAYS = 5         # 斷頭警示觸發後維持顯示幾個交易日
+MAINT_PANIC = 160.0        # 融資維持率 < 160% → 恐慌（2024/10 以來 5 段，都在波段低點附近）
+MAINT_CAPIT = 140.0        # 融資維持率 < 140% → 斷頭區（2025/4/7–4/9，最低 130%）
+PRICES_DB = Path(__file__).resolve().parent.parent / "stock-screener" / "prices.db"   # 個股融資張數＋收盤價
 VIX_MIN_DAYS = 120          # 台指VIX 累積滿這麼多天才取代實現波動率
 BACKFILL_DAYS = 500         # 第一次補歷史的交易日數（約兩年）
 HORIZONS = [5, 10, 20]
@@ -347,6 +353,70 @@ def fetch_margin_otc(tw_dates: list[pd.Timestamp], verbose: bool) -> pd.Series:
     return _fetch_daily("margin_otc.csv", "margin上櫃", _margin_otc_one_day, tw_dates, verbose)
 
 
+# 融資維持率的分子：每日 Σ(個股融資餘額張 × 1000 × 收盤價)，依市場分開（億元）
+MV_SQL = """
+SELECT m.date, m.market,
+       SUM(CASE WHEN p.close > 0 THEN m.bal * 1000.0 * p.close ELSE 0 END) / 1e8 AS mv
+FROM margin m JOIN prices p ON p.code = m.code AND p.date = m.date
+WHERE m.date >= ?
+GROUP BY m.date, m.market
+"""
+
+
+def fetch_margin_mv(verbose: bool, since: str = "2024-01-01") -> dict:
+    """讀 stock-screener/prices.db，回傳 {'twse': Series, 'otc': Series}（融資市值，億元）。
+    結果快取在 data/panic/margin_mv_{twse,otc}.csv；每次只重算快取最後 5 天之後的日子。
+    找不到資料庫就只用快取（沒有快取則回傳空的，網頁不顯示維持率）。"""
+    out = {}
+    caches = {"twse": CACHE_DIR / "margin_mv_twse.csv", "otc": CACHE_DIR / "margin_mv_otc.csv"}
+    old = {k: _load_cache(p, "mv_100m") for k, p in caches.items()}
+    if not PRICES_DB.exists():
+        if verbose:
+            print(f"[maint] 找不到 {PRICES_DB}，融資維持率只用快取")
+        return {k: v for k, v in old.items() if len(v)}
+    last = min((v.index.max() for v in old.values() if len(v)), default=None)
+    start = (last - timedelta(days=7)).strftime("%Y-%m-%d") if last is not None else since
+    try:
+        import sqlite3
+        con = sqlite3.connect(f"file:{PRICES_DB}?mode=ro", uri=True)
+        try:
+            raw = pd.read_sql(MV_SQL, con, params=[start])
+        finally:
+            con.close()
+    except Exception as exc:  # noqa: BLE001
+        if verbose:
+            print(f"[maint] 讀取 prices.db 失敗（{exc}），只用快取")
+        return {k: v for k, v in old.items() if len(v)}
+    raw["date"] = pd.to_datetime(raw["date"])
+    for k, mkt in (("twse", "TWSE"), ("otc", "TPEx")):
+        new = raw[raw["market"] == mkt].set_index("date")["mv"].astype(float)
+        merged = pd.concat([x for x in (old[k], new) if len(x)]) if (len(old[k]) or len(new)) else pd.Series(dtype=float)
+        if len(merged):
+            out[k] = _save_cache(caches[k], merged, "mv_100m")
+    if verbose and out:
+        print(f"[maint] 融資市值 {start} 起重算，最新 {max(v.index.max() for v in out.values()):%Y-%m-%d}")
+    return out
+
+
+def maintenance_ratio(mv: dict, amt: dict) -> tuple[pd.Series, dict]:
+    """融資維持率（%）＝融資市值 ÷ 融資金額。回傳（合計, {'twse':..., 'otc':...}）；
+    上櫃那天缺資料時，合計只用上市（避免分子分母不一致）。"""
+    parts = {}
+    for k in ("twse", "otc"):
+        if k in mv and k in amt and len(amt[k]):
+            r = (mv[k] / amt[k] * 100).dropna()
+            parts[k] = r[(r > 50) & (r < 400)]          # 排除明顯錯誤（資料缺漏）
+    if not parts:
+        return pd.Series(dtype=float), {}
+    if "otc" in parts:
+        idx = parts["twse"].index.intersection(parts["otc"].index)
+        both = (mv["twse"].reindex(idx) + mv["otc"].reindex(idx)) / (amt["twse"].reindex(idx) + amt["otc"].reindex(idx)) * 100
+        total = pd.concat([parts["twse"].drop(idx, errors="ignore"), both]).sort_index()
+    else:
+        total = parts["twse"]
+    return total, parts
+
+
 # --------------------------------------------------------------------------
 # 指標與狀態
 # --------------------------------------------------------------------------
@@ -362,14 +432,19 @@ def realized_vol(close: pd.Series, n: int = 10) -> pd.Series:
 
 
 def compute(close: pd.Series, vol: pd.Series, net_oi: pd.Series, margin: pd.Series,
-            parts: dict | None = None) -> pd.DataFrame:
-    """margin＝判斷用的融資餘額（上市＋上櫃，或只有上市）；parts＝{'twse':..., 'otc':...} 另外算各自的10日變化"""
+            parts: dict | None = None, maint: pd.Series | None = None,
+            maint_parts: dict | None = None) -> pd.DataFrame:
+    """margin＝判斷用的融資餘額（上市＋上櫃，或只有上市）；parts＝{'twse':..., 'otc':...} 另外算各自的10日變化
+    maint＝融資維持率（%，可為空）；沒有資料的日子不算恐慌"""
     idx = close.index
     df = pd.DataFrame(index=idx)
     df["close"] = close
     df["vol"] = vol.reindex(idx)
     df["short"] = (-net_oi).reindex(idx)                  # 淨空單口數（正數＝空單）
     df["margin"] = margin.reindex(idx)
+    df["maint"] = (maint if maint is not None else pd.Series(dtype=float)).reindex(idx)
+    for k, ser in (maint_parts or {}).items():
+        df[f"{k}_maint"] = ser.reindex(idx)
 
     df["vol_pct"] = _pct_rank(df["vol"], PCT_WINDOW)
     df["short_pct"] = _pct_rank(df["short"], PCT_WINDOW)
@@ -378,6 +453,8 @@ def compute(close: pd.Series, vol: pd.Series, net_oi: pd.Series, margin: pd.Seri
     df["vol_panic"] = df["vol_pct"] >= VOL_PANIC_PCT
     df["short_panic"] = (df["short_pct"] >= SHORT_PANIC_PCT) & (df["short"] > 0)
     df["margin_panic"] = df["margin_chg10"] <= MARGIN_PANIC_CHG
+    df["maint_panic"] = df["maint"] < MAINT_PANIC          # NaN → False
+    df["maint_capit"] = df["maint"] < MAINT_CAPIT
 
     vmax10 = df["vol"].rolling(10, min_periods=3).max()
     smax10 = df["short"].rolling(10, min_periods=3).max()
@@ -389,7 +466,7 @@ def compute(close: pd.Series, vol: pd.Series, net_oi: pd.Series, margin: pd.Seri
     df["margin_washed"] = (df["margin_panic"].astype(float).rolling(MARGIN_WASH_LOOKBACK, min_periods=1).max() == 1) | ~has_margin
     df["margin_stable"] = (df["margin"].diff() >= 0) & (df["margin"].diff().shift(1) >= 0)
 
-    df["n_panic"] = df[["vol_panic", "short_panic", "margin_panic"]].astype(int).sum(axis=1)
+    df["n_panic"] = df[["vol_panic", "short_panic", "margin_panic", "maint_panic"]].astype(int).sum(axis=1)
     df["heat"] = df["n_panic"] >= 2
     recent_heat = df["heat"].astype(float).rolling(HEAT_LOOKBACK, min_periods=1).max() == 1
     df["ease"] = recent_heat & (df["vol_ease"] | df["short_ease"]) & df["margin_washed"] & \
@@ -487,6 +564,17 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
             return None
         s_ = df[col].loc[:pd.Timestamp(m_date)].dropna()
         return _r(s_.iloc[-1] - s_.iloc[-2], 2) if len(s_) >= 2 else None
+    # 融資維持率：跟融資餘額一樣晚公布，沿用最近一個有資料的交易日
+    has_mt = df["maint"].notna()
+    mt_row = df[has_mt].iloc[-1] if has_mt.any() else None
+    mt_date = df.index[has_mt][-1].strftime("%Y-%m-%d") if has_mt.any() else None
+
+    def mt_chg1(col):
+        if col not in df or mt_date is None:
+            return None
+        s_ = df[col].loc[:pd.Timestamp(mt_date)].dropna()
+        return _r(s_.iloc[-1] - s_.iloc[-2], 1) if len(s_) >= 2 else None
+
     comps = [
         {"key": "vol", "label": "波動度", "sub": vol_label, "value": _r(last["vol"], 2), "unit": "%" if vol_source != "vix" else "",
          "pct": _r(last["vol_pct"] * 100, 0) if pd.notna(last["vol_pct"]) else None,
@@ -509,6 +597,18 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
          "rule": f"10日減少{abs(int(MARGIN_PANIC_CHG * 100))}%以上＝去槓桿（恐慌）；{abs(int(MARGIN_CAPIT_CHG * 100))}%以上＝斷頭潮；近{MARGIN_WASH_LOOKBACK}日內發生過＝籌碼已洗",
          "spark": spark("margin")},
     ]
+    if mt_row is not None:
+        v = mt_row["maint"]
+        comps.append(
+            {"key": "maint", "label": "融資維持率", "sub": "上市＋上櫃（融資市值 ÷ 融資金額）", "value": _r(v, 1), "unit": "%",
+             "date": mt_date, "lagged": mt_date != t.strftime("%Y-%m-%d"), "chg1": mt_chg1("maint"),
+             "parts": {k: {"value": _r(mt_row.get(f"{k}_maint"), 1), "chg1": mt_chg1(f"{k}_maint")}
+                       for k in ("twse", "otc") if f"{k}_maint" in df and pd.notna(mt_row.get(f"{k}_maint"))},
+             "pct": _r(_pct_rank(df["maint"].dropna(), PCT_WINDOW).iloc[-1] * 100, 0)
+             if df["maint"].notna().sum() >= PCT_WINDOW // 2 else None,
+             "flag": "capit" if v < MAINT_CAPIT else "panic" if v < MAINT_PANIC else "normal",
+             "rule": f"< {MAINT_PANIC:.0f}%＝恐慌；< {MAINT_CAPIT:.0f}%＝斷頭區（個股低於 130% 會被追繳）",
+             "spark": spark("maint")})
     hist = [[d.strftime("%Y-%m-%d"), s] for d, s in df["state"].tail(60).items()]
     flips = df["state"][df["state"] != df["state"].shift(1)].tail(8)
     payload = {
@@ -518,6 +618,7 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
         "close": _r(last["close"], 2),
         "state": last["state"], "state_text": STATE_TEXT[last["state"]], "action": ACTION_TEXT[last["state"]],
         "n_panic": int(last["n_panic"]),
+        "n_total": len(comps),
         "capit": ({"date": df.index[df["capit"]][-1].strftime("%Y-%m-%d"),
                    "close": _r(df.loc[df["capit"], "close"].iloc[-1], 2)} if bool(last["capit_recent"]) else None),
         # 最近一次斷頭（給網頁判斷「斷頭後恐慌又升溫」時，試單部位該續抱）
@@ -539,7 +640,8 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
         payload["notes"].append(f"上櫃融資已累積 {otc_days} 天，補齊後自動改用上市＋上櫃合計判斷；目前只用上市。")
     if vol_source != "vix":
         payload["notes"].append(f"台指VIX 已累積 {len(vix)} 天，滿 {VIX_MIN_DAYS} 天後自動改用VIX判斷；目前用加權指數實現波動率代替。")
-    payload["sig"] = f"v3|{margin_src}|{payload['date']}|{payload['close']}|{comps[1]['value']}|{comps[2]['value']}|{payload['vix']}"
+    payload["sig"] = (f"v4|{margin_src}|{payload['date']}|{payload['close']}|{comps[1]['value']}|{comps[2]['value']}|{payload['vix']}"
+                      f"|{comps[3]['value'] if len(comps) > 3 else None}|{comps[3]['date'] if len(comps) > 3 else None}")
     return payload
 
 
@@ -573,6 +675,12 @@ def synthetic(n: int = 520):
         margin.iloc[c + 14:] -= 220
     otc = margin * 0.35 + pd.Series(rng.normal(0, 3, n), idx)
     return close, -short, margin, otc
+
+
+def synthetic_mv(close: pd.Series, m_twse: pd.Series, m_otc: pd.Series) -> dict:
+    """離線測試用：融資市值跟著指數漲跌（基準維持率約 170%）"""
+    k = close / close.rolling(60, min_periods=1).mean()
+    return {"twse": m_twse * 1.70 * k, "otc": m_otc * 1.70 * k}
 
 
 # --------------------------------------------------------------------------
@@ -666,6 +774,7 @@ def main() -> int:
         if args.offline_test:
             close, net_oi, m_twse, m_otc = synthetic()
             vix = pd.Series(dtype=float)
+            mv = synthetic_mv(close, m_twse, m_otc)
         else:
             close = fetch_taiex_twse(DATA_DIR / "taiex_twse.csv", verbose)
             if len(close) < 150:
@@ -675,6 +784,11 @@ def main() -> int:
             net_oi = fetch_foreign_short(dates, verbose)
             m_twse = fetch_margin(dates, verbose)
             m_otc = fetch_margin_otc(dates, verbose)
+            try:
+                mv = fetch_margin_mv(verbose)
+            except Exception as exc:  # noqa: BLE001   維持率失敗不影響其他三項
+                print(f"[maint] 略過融資維持率：{exc}")
+                mv = {}
             if len(net_oi) < 60:
                 raise RuntimeError("外資期貨未平倉資料不足")
 
@@ -686,14 +800,16 @@ def main() -> int:
             margin, margin_src = m_twse, "twse"
         parts = {"twse": m_twse, "otc": m_otc} if len(m_otc) else {"twse": m_twse}
 
+        maint, maint_parts = maintenance_ratio(mv, {"twse": m_twse, "otc": m_otc})
+
         use_vix = len(vix) >= VIX_MIN_DAYS
         vol = vix if use_vix else realized_vol(close)
-        df = compute(close, vol, net_oi, margin, parts)
+        df = compute(close, vol, net_oi, margin, parts, maint, maint_parts)
         # 最後一天三項資料都要有（避免期交所/證交所還沒公布時誤判）
         df = df[df["short"].notna() & df["vol"].notna()]
         if not len(df):
             raise RuntimeError("沒有可計算的日子")
-        bt = backtest(compute(close, realized_vol(close), net_oi, margin, parts))   # 回測一律用實現波動率（歷史較長）
+        bt = backtest(compute(close, realized_vol(close), net_oi, margin, parts, maint, maint_parts))   # 回測一律用實現波動率（歷史較長）
         payload = build_payload(df, "vix" if use_vix else "rv", vix, bt, margin_src, len(m_otc))
     except Exception as exc:  # noqa: BLE001
         print(f"[error] 恐慌儀表產生失敗：{exc}", file=sys.stderr)
@@ -719,6 +835,7 @@ def main() -> int:
         for c in payload["components"]:
             extra = f"  百分位 {c['pct']}" if c.get("pct") is not None else ""
             extra += f"  10日變化 {c['chg10']:+.2f}%" if c.get("chg10") is not None else ""
+            extra += f"  （{c['date']}）" if c.get("lagged") else ""
             print(f"     {c['label']:<8} {c['value']}{c['unit']}{extra}  [{c['flag']}]")
         b = payload["backtest"]
         print(f"     回測 {b['start']} ~ {b['end']}（{b['n_days']} 天，用實現波動率）")

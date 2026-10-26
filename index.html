@@ -413,17 +413,25 @@ html,body{background:var(--bg-main)!important}
       el.innerHTML = head('恐慌儀表', '底部轉折') +
         '<div class="ov-state">' + esc(d.state_text) + '</div>' +
         '<div class="ov-act">' + esc(d.action) + '</div>' +
-        '<div class="ov-meta">' + md(d.date) + ' · 自 ' + md(d.since) + ' 起 · ' + d.n_panic + '/3 項在恐慌區</div>' +
+        '<div class="ov-meta">' + md(d.date) + ' · 自 ' + md(d.since) + ' 起 · ' + d.n_panic + '/' + (d.n_total || 3) + ' 項在恐慌區</div>' +
         (d.capit ? '<div class="ov-flip" data-c="amber">🔔 ' + md(d.capit.date) + ' 融資斷頭（10日減少15%以上）· 當日收盤 ' + num(d.capit.close, 0) + '，試單停損設在這附近下方</div>' : '') +
         '<div class="ov-rows">' + d.components.map((c) => {
           const f = FL[c.flag] || FL.normal;
-          let v = num(c.value, c.key === 'vol' ? 1 : 0) + '<small>' + esc(c.unit) + '</small>';
+          let v = num(c.value, (c.key === 'vol' || c.key === 'maint') ? 1 : 0) + '<small>' + esc(c.unit) + '</small>';
           if (c.pct !== undefined && c.pct !== null) v += '<small>第' + c.pct + '百分位</small>';
           if (c.chg10 !== undefined && c.chg10 !== null) v += '<small>10日 ' + sgn(c.chg10) + '%</small>';
           // 融資單日增減（億元），台股慣例紅增綠減
           const d1 = (x) => (x === null || x === undefined) ? '' : '<span class="' + (x > 0 ? 'pos' : x < 0 ? 'neg' : '') + '">' + (x > 0 ? '+' : '') + Number(x).toFixed(1) + '</span>';
           if (c.key === 'margin' && c.chg1 !== null && c.chg1 !== undefined) v += '<br><small style="margin-left:0">' + md(c.date) + ' 單日 ' + d1(c.chg1) + ' 億</small>';
-          if (c.parts && c.parts.otc) v += '<br><small style="margin-left:0">上市 ' + num(c.parts.twse && c.parts.twse.value) + (c.parts.twse && c.parts.twse.chg1 != null ? '（' + d1(c.parts.twse.chg1) + '）' : '') +
+          // 融資維持率：單日變化（百分點）與上市／上櫃分開
+          const pt = (x) => (x === null || x === undefined) ? '' : '<span class="' + (x > 0 ? 'pos' : x < 0 ? 'neg' : '') + '">' + (x > 0 ? '+' : '') + Number(x).toFixed(1) + '</span>';
+          if (c.key === 'maint') {
+            if (c.chg1 !== null && c.chg1 !== undefined) v += '<br><small style="margin-left:0">' + md(c.date) + ' 單日 ' + pt(c.chg1) + ' 點</small>';
+            if (c.parts && c.parts.twse) v += '<br><small style="margin-left:0">上市 ' + num(c.parts.twse.value, 1) + '%' +
+              (c.parts.otc ? ' · 上櫃 ' + num(c.parts.otc.value, 1) + '%' : '') + '</small>';
+            v += '<br><small style="margin-left:0">&lt; 160% 恐慌 · &lt; 140% 斷頭區</small>';
+          }
+          if (c.key === 'margin' && c.parts && c.parts.otc) v += '<br><small style="margin-left:0">上市 ' + num(c.parts.twse && c.parts.twse.value) + (c.parts.twse && c.parts.twse.chg1 != null ? '（' + d1(c.parts.twse.chg1) + '）' : '') +
             ' · 上櫃 ' + num(c.parts.otc.value) + (c.parts.otc.chg1 != null ? '（' + d1(c.parts.otc.chg1) + '）' : '') + '</small>' +
             '<br><small style="margin-left:0">10日 上市 ' + sgn(c.parts.twse && c.parts.twse.chg10) + '% · 上櫃 ' + sgn(c.parts.otc.chg10) + '%</small>';
           if (c.sub) v = '<small style="margin-left:0">' + esc(c.sub) + (c.lagged ? ' · ' + md(c.date) + '（今日尚未公布）' : '') + '</small><br>' + v;
