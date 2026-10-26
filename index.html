@@ -308,10 +308,38 @@ html,body{background:var(--bg-main)!important}
   .ov-tblwrap{overflow-x:auto}
   .ov .pos{color:#8DB5A0} .ov .neg{color:#D58079}
   @media (max-width:900px){ .ov-grid{grid-template-columns:1fr} .ov-act{min-height:0} }
+  /* 今天市場：一眼看懂的大盤＋情緒卡 */
+  .td{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px 20px 14px; margin-bottom:12px}
+  .td-h{font-size:15px; font-weight:600; color:var(--text-secondary,var(--muted)); margin-bottom:10px}
+  .td-body{display:grid; grid-template-columns:minmax(0,200px) minmax(0,1fr); gap:14px 32px; align-items:center}
+  .td-chg{font:700 clamp(40px,6vw,56px)/1 var(--disp); letter-spacing:-.01em}
+  .td-chg.up{color:var(--num-up)} .td-chg.down{color:var(--num-down)}
+  .td-lbl{font-size:14px; color:var(--text); margin-top:6px}
+  .td-flow{font-size:14px; color:var(--text); margin-top:10px}
+  .td-flow b{color:var(--flow); font:700 15px var(--mono)}
+  .td-bars{display:flex; align-items:flex-end; gap:5px; height:34px; margin-top:8px}
+  .td-bars i{flex:1; min-height:2px; border-radius:2px 2px 0 0; opacity:.55}
+  .td-bars i.b{background:var(--num-up)} .td-bars i.s{background:var(--num-down)} .td-bars i:last-child{opacity:1}
+  .td-bx{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); margin-top:4px}
+  .td-mood{display:flex; justify-content:space-between; align-items:baseline; gap:10px}
+  .td-mood .k{font-size:15px; color:var(--text)}
+  .td-mood .v{font:700 clamp(22px,3vw,28px)/1 var(--disp); color:var(--c)}
+  .td-mood .v small{font-size:.85em; margin-left:6px}
+  .td-track{position:relative; height:14px; border-radius:7px; margin:14px 0 12px;
+      background:linear-gradient(90deg,#8FB7A5 0%,#A9B78F 30%,#D0B26E 52%,#D08A82 72%,#D9665E 100%)}
+  .td-knob{position:absolute; top:50%; width:22px; height:22px; border-radius:50%; background:#F0F1ED;
+      border:3px solid #10161C; transform:translate(-50%,-50%); box-shadow:0 1px 4px rgba(0,0,0,.5)}
+  .td-tick{position:absolute; top:-2px; bottom:-2px; width:1px; background:rgba(9,20,38,.55)}
+  .td-say{font-size:16px; color:var(--text)}
+  .td-cnt{font-size:14px; color:var(--muted); margin-top:4px}
+  .td-cnt .pos,.td-cnt .neg{font-weight:600!important}
+  .td-foot{border-top:1px solid var(--line); margin-top:14px; padding-top:9px; font-size:11px; line-height:1.6; color:var(--muted)}
+  @media (max-width:640px){ .td{padding:14px 15px 12px} .td-body{grid-template-columns:1fr} }
   </style>
 
   <p class="ov-eyebrow">Market regime · 局勢總覽</p>
   <div class="sec-title"><span class="no">01</span><span class="zh">局勢總覽</span><span class="en">Market regime</span><span class="hint">開盤前 → 資金輪動 → 恐慌儀表</span></div>
+  <div class="td" id="ov-today" hidden></div>
   <div class="ov-verdict" id="ov-verdict" data-c="off"><span class="t">載入中…</span></div>
   <div class="ov-grid">
     <div class="ov-card" id="ov-pre" data-c="off"></div>
@@ -442,6 +470,44 @@ html,body{background:var(--bg-main)!important}
       renderBt(d.backtest);
     }
 
+    function renderToday(d) {
+      const el = $('ov-today'), t = d && d.today;
+      if (!t || t.score === null || t.score === undefined) { el.hidden = true; return; }
+      const C = {red: 'var(--risk-3)', orange: 'var(--risk-2)', calm: 'var(--sig-neutral)', gold: 'var(--sig-favor)', off: 'var(--muted)'};
+      const chg = t.chg_pct, f = t.flow;
+      const fmt = (x) => Number(x).toLocaleString('en-US', {maximumFractionDigits: 0});
+      let say = '';
+      if (t.down_ratio !== null && t.down_ratio !== undefined) {
+        const dn = t.down_ratio, cheng = Math.round((dn >= 50 ? dn : 100 - dn) / 10);
+        say = Math.abs(dn - 50) < 5 ? '漲跌家數差不多' : '約 ' + cheng + ' 成股票' + (dn >= 50 ? '下跌' : '上漲');
+      }
+      let bars = '';
+      if (f && f.hist && f.hist.length) {
+        const mx = Math.max(...f.hist.map((x) => Math.abs(x)), 1);
+        bars = '<div class="td-bars">' + f.hist.map((x, i) => '<i class="' + (x >= 0 ? 'b' : 's') + '" style="height:' +
+          Math.max(6, Math.abs(x) / mx * 100).toFixed(0) + '%" title="' + md(f.dates[i]) + ' ' + (x >= 0 ? '買超 ' : '賣超 ') + fmt(Math.abs(x)) + ' 億"></i>').join('') +
+          '</div><div class="td-bx"><span>近 ' + f.hist.length + ' 日</span><span>' + md(f.date) + '</span></div>';
+      }
+      const prev = t.score_prev, dlt = (prev === null || prev === undefined) ? '' :
+        ' · 前一日 ' + prev + (t.score > prev ? '（升溫 ' + (t.score - prev) + '）' : t.score < prev ? '（降溫 ' + (prev - t.score) + '）' : '');
+      el.style.setProperty('--c', C[t.c] || C.off);
+      el.innerHTML = '<div class="td-h">今天市場 <span style="font:400 12px var(--mono);color:var(--muted);margin-left:6px">' + md(t.date) + ' 收盤</span></div>' +
+        '<div class="td-body"><div>' +
+          '<div class="td-chg ' + (chg > 0 ? 'up' : chg < 0 ? 'down' : '') + '">' + (chg > 0 ? '+' : '') + Number(chg).toFixed(2) + '%</div>' +
+          '<div class="td-lbl">大盤 <span style="color:var(--muted);font-family:var(--mono);font-size:12.5px">' + fmt(t.close) + '</span></div>' +
+          (f ? '<div class="td-flow">外資' + (f.net >= 0 ? '買超' : '賣超') + ' <b>' + fmt(Math.abs(f.net)) + '</b> 億</div>' + bars : '') +
+        '</div><div>' +
+          '<div class="td-mood"><span class="k">今日情緒</span><span class="v">' + t.score + '<small>' + esc(t.label) + '</small></span></div>' +
+          '<div class="td-track">' + (t.bands || []).filter((b) => b[0] > 0).map((b) => '<span class="td-tick" style="left:' + b[0] + '%"></span>').join('') +
+            '<span class="td-knob" style="left:' + Math.min(98, Math.max(2, t.score)) + '%"></span></div>' +
+          (say ? '<div class="td-say">' + say + '</div>' : '') +
+          (t.up !== undefined ? '<div class="td-cnt">上漲 <span class="pos">' + fmt(t.up) + '</span> · 下跌 <span class="neg">' + fmt(t.down) + '</span> 家</div>' : '') +
+        '</div></div>' +
+        '<div class="td-foot">情緒 0～100，越高越恐慌：' + (t.parts || []).map((p) => esc(p.name) + ' ' + p.v).join('、') + ' 的平均' + dlt +
+          '<br>70 以上恐慌 · 50～69 警戒 · 30～49 中性 · 30 以下平靜（把下方指標濃縮成一個數字方便判讀，門檻非回測結果）</div>';
+      el.hidden = false;
+    }
+
     function renderBt(b) {
       if (!b || !b.buckets) return;
       const c = (v) => v === null || v === undefined ? '—' : '<span class="' + (v > 0 ? 'pos' : v < 0 ? 'neg' : '') + '">' + sgn(v) + '%</span>';
@@ -481,7 +547,7 @@ html,body{background:var(--bg-main)!important}
     Promise.all([get('./data/correlations.json'), get('./data/rotation.json'), get('./data/panic.json')])
       .then(([pre, rot, pan]) => {
         pre = pre && pre.schema === 2 ? pre : null;
-        renderPre(pre); renderRot(rot); renderPan(pan); verdict(pre, rot, pan);
+        renderPre(pre); renderRot(rot); renderPan(pan); verdict(pre, rot, pan); renderToday(pan);
       });
   })();
   </script>

@@ -69,6 +69,11 @@ VIX_MIN_DAYS = 120          # 台指VIX 累積滿這麼多天才取代實現波�
 BACKFILL_DAYS = 500         # 第一次補歷史的交易日數（約兩年）
 HORIZONS = [5, 10, 20]
 
+# 「今天市場」情緒分數（0~100，越高越恐慌）：五項各換算成 0~100 後平均，只是把現有指標濃縮成一個數字，不是回測門檻
+BREADTH_CSV = PRICES_DB.parent / "market_breadth.csv"   # stock-screener 的市場寬度（每晚 18:30 更新）
+FLOW_CSV = Path("data") / "foreign_flow.csv"             # market_corr.py 寫的外資現貨買賣超（億元）
+MOOD_BANDS = [(70, "恐慌", "red"), (50, "警戒", "orange"), (30, "中性", "calm"), (0, "平靜", "gold")]
+
 DATA_DIR = Path("data")
 CACHE_DIR = DATA_DIR / "panic"
 
@@ -539,6 +544,63 @@ def _events(df: pd.DataFrame, d: pd.DataFrame, state: str) -> list:
 # 輸出
 # --------------------------------------------------------------------------
 
+def _read_breadth() -> pd.DataFrame:
+    try:
+        b = pd.read_csv(BREADTH_CSV, encoding="utf-8-sig", parse_dates=["日期"]).set_index("日期").sort_index()
+        return b[~b.index.duplicated(keep="last")]
+    except Exception:  # noqa: BLE001   沒有 stock-screener 也能跑，只是少了家數
+        return pd.DataFrame()
+
+
+def mood_score(df: pd.DataFrame, breadth: pd.DataFrame) -> tuple[pd.Series, pd.DataFrame]:
+    """情緒分數 0~100（越高越恐慌）＝下列各項 0~100 的平均（缺資料的項目不算）：
+       下跌家數占比、空方擴散度（60% 視為滿分）、外資期貨淨空單百分位、波動度百分位、融資維持率（200%→0、140%→100）"""
+    idx = df.index
+    parts = pd.DataFrame(index=idx)
+    if len(breadth):
+        b = breadth.reindex(idx)
+        parts["下跌家數占比"] = b["下跌"] / (b["上漲"] + b["下跌"]) * 100
+        parts["空方擴散度"] = (b["空方擴散度%"] / 60 * 100).clip(0, 100)
+    parts["外資期貨空單"] = df["short_pct"] * 100
+    parts["波動度"] = df["vol_pct"] * 100
+    parts["融資維持率"] = ((200 - df["maint"]) / 60 * 100).clip(0, 100)
+    return parts.mean(axis=1, skipna=True).round(0), parts
+
+
+def today_block(df: pd.DataFrame) -> dict:
+    """首頁「今天市場」卡片：大盤漲跌、外資買賣超（近 10 日）、情緒分數、漲跌家數"""
+    t = df.index[-1]
+    close = df["close"]
+    prev = close.iloc[-2] if len(close) >= 2 else np.nan
+    breadth = _read_breadth()
+    score, parts = mood_score(df, breadth)
+    sc = score.iloc[-1]
+    band = next((b for b in MOOD_BANDS if pd.notna(sc) and sc >= b[0]), (None, "無資料", "off"))
+    out = {
+        "date": t.strftime("%Y-%m-%d"),
+        "close": _r(close.iloc[-1], 2),
+        "chg_pct": _r((close.iloc[-1] / prev - 1) * 100, 2) if pd.notna(prev) else None,
+        "score": int(sc) if pd.notna(sc) else None,
+        "score_prev": int(score.iloc[-2]) if len(score) >= 2 and pd.notna(score.iloc[-2]) else None,
+        "label": band[1], "c": band[2],
+        "parts": [{"name": k, "v": _r(v, 0)} for k, v in parts.iloc[-1].items() if pd.notna(v)],
+        "bands": [[b[0], b[1]] for b in MOOD_BANDS],
+    }
+    if len(breadth) and t in breadth.index:
+        r = breadth.loc[t]
+        up, dn = int(r["上漲"]), int(r["下跌"])
+        out.update({"up": up, "down": dn, "flat": int(r["平盤"]) if pd.notna(r.get("平盤")) else None,
+                    "down_ratio": _r(dn / (up + dn) * 100, 1) if up + dn else None})
+    try:
+        f = pd.read_csv(FLOW_CSV, parse_dates=["date"]).set_index("date")["net_100m_all"].sort_index()
+        f = f.loc[:t].tail(10)
+        out["flow"] = {"date": f.index[-1].strftime("%Y-%m-%d"), "net": _r(f.iloc[-1], 1),
+                       "hist": [_r(x, 1) for x in f.values], "dates": [d.strftime("%Y-%m-%d") for d in f.index]}
+    except Exception:  # noqa: BLE001
+        out["flow"] = None
+    return out
+
+
 def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
                   margin_src: str = "twse", otc_days: int = 0) -> dict:
     margin_src_label = "上市＋上櫃（億元）" if margin_src == "all" else "上市（億元）"
@@ -630,6 +692,7 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
         "vol_source": vol_source,
         "vix": {"value": _r(vix.iloc[-1], 2), "date": vix.index[-1].strftime("%Y-%m-%d"), "days": int(len(vix))} if len(vix) else None,
         "components": comps,
+        "today": today_block(df),
         "spark_dates": [d.strftime("%Y-%m-%d") for d in df.index[-120:]],
         "history": hist,
         "flips": [[d.strftime("%Y-%m-%d"), s, STATE_TEXT[s]] for d, s in flips.items()],
@@ -641,7 +704,8 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
     if vol_source != "vix":
         payload["notes"].append(f"台指VIX 已累積 {len(vix)} 天，滿 {VIX_MIN_DAYS} 天後自動改用VIX判斷；目前用加權指數實現波動率代替。")
     payload["sig"] = (f"v4|{margin_src}|{payload['date']}|{payload['close']}|{comps[1]['value']}|{comps[2]['value']}|{payload['vix']}"
-                      f"|{comps[3]['value'] if len(comps) > 3 else None}|{comps[3]['date'] if len(comps) > 3 else None}")
+                      f"|{comps[3]['value'] if len(comps) > 3 else None}|{comps[3]['date'] if len(comps) > 3 else None}"
+                      f"|{payload['today'].get('up')}|{payload['today'].get('down')}|{(payload['today'].get('flow') or {}).get('date')}")
     return payload
 
 
@@ -832,6 +896,9 @@ def main() -> int:
     if verbose:
         print(f"[ok] {out}")
         print(f"     恐慌儀表（{payload['date']}）：【{payload['state_text']}】自 {payload['since']} 起 → {payload['action']}")
+        td = payload["today"]
+        print(f"     今天市場：大盤 {td['chg_pct']}%・情緒 {td['score']} {td['label']}・上漲 {td.get('up')}／下跌 {td.get('down')}"
+              f"・外資 {(td.get('flow') or {}).get('net')} 億")
         for c in payload["components"]:
             extra = f"  百分位 {c['pct']}" if c.get("pct") is not None else ""
             extra += f"  10日變化 {c['chg10']:+.2f}%" if c.get("chg10") is not None else ""
