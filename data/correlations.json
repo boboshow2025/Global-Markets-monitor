@@ -1,17 +1,17 @@
 {
  "schema": 2,
- "sig": "2026-10-26|2026-10-27|twse|2026-10-27|20261027",
- "generated_at": "2026-10-27T17:10:30+08:00",
- "us_date": "2026-10-26",
+ "sig": "2026-10-27|2026-10-27|twse|2026-10-27|20261028",
+ "generated_at": "2026-10-28T06:30:12+08:00",
+ "us_date": "2026-10-27",
  "tw_last_date": "2026-10-27",
  "tw_last_close": 46096.23,
  "tw_last_pct": 0.12,
- "fresh": false,
+ "fresh": true,
  "overall": "up",
  "overall_text": "偏多",
  "action": "環境有利，可依計畫進場",
- "driver": "sox",
- "z_used": 1.17,
+ "driver": "night",
+ "z_used": 1.04,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -21,28 +21,28 @@
   {
    "key": "SOX",
    "label": "費城半導體",
-   "sub": "美股 10/26 收盤",
-   "value": 11083.47,
-   "pct": 2.82,
-   "z": 1.17,
+   "sub": "美股 10/27 收盤",
+   "value": 11482.5,
+   "pct": 3.6,
+   "z": 1.45,
    "state": "up",
-   "used": true,
+   "used": false,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
    "key": "NIGHT",
    "label": "台指期夜盤",
    "sub": "近月 202611",
-   "value": 45654.0,
-   "pct": null,
-   "z": null,
-   "chg": null,
-   "ref": 46234.0,
-   "state": "unknown",
-   "used": false,
-   "date": "20261027",
-   "stale": true,
-   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
+   "value": 46880.0,
+   "pct": 1.68,
+   "z": 1.04,
+   "chg": 774.0,
+   "ref": 46106.0,
+   "state": "up",
+   "used": true,
+   "date": "20261028",
+   "stale": false,
+   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
   }
  ],
  "flow": {
@@ -51,13 +51,13 @@
   "sum5": -2438.0,
   "z": 0.23,
   "night": {
-   "date": "2026-10-27",
-   "tx_net": 1049,
-   "tx_long": 22127,
-   "tx_short": 21078,
-   "mtx_net": 1482,
-   "net_equiv": 1420,
-   "fresh": false
+   "date": "2026-10-28",
+   "tx_net": 684,
+   "tx_long": 14739,
+   "tx_short": 14055,
+   "mtx_net": 790,
+   "net_equiv": 882,
+   "fresh": true
   },
   "fut": {
    "date": "2026-10-27",
@@ -72,46 +72,46 @@
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 111.37,
-   "metric": 2.37,
+   "value": 109.44,
+   "metric": 0.6,
    "unit": "%",
-   "z": 0.03,
+   "z": -0.28,
    "state": "calm"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
    "value": 4.99,
-   "metric": -0.2,
+   "metric": 0.7,
    "unit": "bp",
-   "z": -0.14,
+   "z": 0.06,
    "state": "calm"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 102.15,
-   "metric": 0.41,
+   "value": 102.36,
+   "metric": 0.62,
    "unit": "%",
-   "z": 0.46,
+   "z": 0.75,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 157.66,
-   "metric": -0.54,
+   "value": 157.97,
+   "metric": -0.35,
    "unit": "%",
-   "z": -0.23,
+   "z": -0.1,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 9.04,
-   "metric": 9.04,
+   "value": 9.46,
+   "metric": 9.46,
    "unit": "美元",
-   "z": 0.42,
+   "z": 0.55,
    "state": "calm"
   }
  ],
@@ -167,7 +167,7 @@
  },
  "live": {
   "n": 7,
-  "pending": 0,
+  "pending": 1,
   "buckets": [
    {
     "state": "alert",
@@ -199,6 +199,12 @@
    }
   ],
   "recent": [
+   {
+    "us_date": "2026-10-27",
+    "state": "up",
+    "target": null,
+    "ret": null
+   },
    {
     "us_date": "2026-10-26",
     "state": "calm",
