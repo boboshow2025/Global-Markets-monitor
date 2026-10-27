@@ -333,23 +333,35 @@ html,body{background:var(--bg-main)!important}
   .td-say{font-size:16px; color:var(--text)}
   .td-cnt{font-size:14px; color:var(--muted); margin-top:4px}
   .td-cnt .pos,.td-cnt .neg{font-weight:600!important}
+  .td-scale{position:relative; height:14px; margin:-6px 0 8px; font-size:10.5px; color:var(--muted)}
+  .td-scale span{position:absolute; transform:translateX(-50%); white-space:nowrap}
+  .ov-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ov .ov-card .ov-more{margin-top:10px; background:none; border:0; border-top:1px dashed var(--line); border-radius:0; padding:8px 0 0}
+  .ov-more>summary{cursor:pointer; font-size:12px; color:var(--muted); list-style:none}
+  .ov-more>summary::-webkit-details-marker{display:none}
+  .ov-more>summary::before{content:"▸ "} .ov-more[open]>summary::before{content:"▾ "}
+  .ov-chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px}
+  .ov-chips .cp{display:flex; align-items:baseline; gap:6px; padding:5px 9px; border-radius:8px; font-size:12px;
+      border:1px solid var(--line); color:var(--text)}
+  .ov-chips .cp b{font:600 12.5px var(--mono)}
+  .ov-chips .cp[data-c=red]{border-color:var(--risk-3); background:color-mix(in srgb,var(--risk-3) 14%,transparent)}
+  .ov-chips .cp[data-c=red] b{color:var(--risk-3)}
+  .ov-chips .cp[data-c=amber]{border-color:var(--risk-1)} .ov-chips .cp[data-c=gold]{border-color:var(--sig-favor)}
   .td-foot{border-top:1px solid var(--line); margin-top:14px; padding-top:9px; font-size:11px; line-height:1.6; color:var(--muted)}
   @media (max-width:640px){ .td{padding:14px 15px 12px} .td-body{grid-template-columns:1fr} }
+  @media (max-width:900px){ .ov-grid.two{grid-template-columns:1fr} }
   </style>
 
   <p class="ov-eyebrow">Market regime · 局勢總覽</p>
-  <div class="sec-title"><span class="no">01</span><span class="zh">局勢總覽</span><span class="en">Market regime</span><span class="hint">開盤前 → 資金輪動 → 恐慌儀表</span></div>
+  <div class="sec-title"><span class="no">01</span><span class="zh">局勢總覽</span><span class="en">Market regime</span><span class="hint">大盤多空力道 → 資金輪動（數週）→ 恐慌儀表（底部）</span></div>
   <div class="td" id="ov-today" hidden></div>
   <div class="ov-verdict" id="ov-verdict" data-c="off"><span class="t">載入中…</span></div>
-  <div class="ov-grid">
-    <div class="ov-card" id="ov-pre" data-c="off"></div>
+  <div class="ov-grid two">
     <div class="ov-card" id="ov-rot" data-c="off"></div>
     <div class="ov-card" id="ov-pan" data-c="off"></div>
   </div>
   <details id="ov-bt"><summary>恐慌儀表回測：各狀態之後加權指數表現、每次「融資斷頭」與「恐慌退燒」離真正低點多遠</summary><div id="ov-bt-body"></div></details>
-  <p class="ov-foot">三張卡由短到長：開盤前（今天）→ 資金輪動（數週，資金在成長股還是防禦股）→ 恐慌儀表（底部轉折）。
-    資金輪動與恐慌儀表都是「確認」工具，不是預測：轉守通常比大盤早幾天；轉攻通常在低點反彈約一成後才確認，恐慌退燒用來補這段空窗。
-    燈號顏色：紅色越深代表風險越高、持股水位越該下降；藍＝中性；綠＝有利。數字漲跌另用鮮紅（漲）／亮綠（跌）。</p>
+  <p class="ov-foot">資金輪動看「資金在成長股還是防禦股」（數週）；恐慌儀表看「跌勢是否接近尾聲」。兩者都是確認工具，不是預測。開盤前訊號見下方 02。紅色越深＝風險越高。</p>
 
   <script>
   (function () {
@@ -388,6 +400,7 @@ html,body{background:var(--bg-main)!important}
     };
     function renderPre(d) {
       const el = $('ov-pre');
+      if (!el) return;
       if (!d) { el.innerHTML = head('開盤前訊號', '今天') + '<div class="ov-missing">讀不到 data/correlations.json</div>'; return; }
       el.dataset.c = PRE_C[d.overall] || 'off';
       const used = (d.core || []).find((c) => c.used) || (d.core || [])[0];
@@ -425,12 +438,14 @@ html,body{background:var(--bg-main)!important}
         : (d.label === '強烈防守' ? '三條線都在MA' + d.ma + '之下：以高息低波或現金為主' : '資金撤出成長股：降低進攻部位');
       el.innerHTML = head('資金輪動', '數週') +
         '<div class="ov-state">' + esc(d.label) + '</div>' +
-        '<div class="ov-act">' + esc(act) + '</div>' +
+        '<div class="ov-act">' + esc(act) + '</div>' + flip +
+        '<div class="ov-chips">' + d.lines.map((l) => '<span class="cp" data-c="' + (l.above ? 'gold' : 'red') + '">' + esc(l.name) + ' <b>' + (l.above ? '站上' : '跌破') + '</b></span>').join('') + '</div>' +
+        '<details class="ov-more"><summary>細節</summary>' +
         '<div class="ov-meta">' + md(d.date) + ' 收盤 · 自 ' + md(d.since) + ' 起 ' + d.days_in_state + ' 個交易日' +
-          (old ? ' · <span style="color:var(--ov-orange)">資料超過5天未更新</span>' : '') + '</div>' + flip +
+          (old ? ' · <span style="color:var(--ov-orange)">資料超過5天未更新</span>' : '') + '</div>' +
         '<div class="ov-rows">' + d.lines.map((l) =>
           row(esc(l.name) + '<br>' + (l.above ? '站上' : '跌破') + ' MA' + d.ma + ' ' + sgn(l.dist_pct) + '%（' + Math.abs(l.streak) + '天）',
-              spark(l.spark, l.spark_ma), l.above ? 'gold' : 'orange')).join('') + '</div>';
+              spark(l.spark, l.spark_ma), l.above ? 'gold' : 'orange')).join('') + '</div></details>';
     }
 
     function renderPan(d) {
@@ -438,10 +453,14 @@ html,body{background:var(--bg-main)!important}
       if (!d) { el.innerHTML = head('恐慌儀表', '底部轉折') + '<div class="ov-missing">讀不到 data/panic.json<br>（執行 panic_gauge.py 產生）</div>'; return; }
       el.dataset.c = PAN_C[d.state] || 'off';
       const FL = {panic: ['恐慌', 'red'], capit: ['斷頭', 'amber'], ease: ['退燒', 'gold'], washed: ['已洗', 'amber'], normal: ['正常', 'calm']};
+      const SHORT = {vol: '波動度', short: '外資空單', margin: '融資餘額', maint: '維持率'};
       el.innerHTML = head('恐慌儀表', '底部轉折') +
         '<div class="ov-state">' + esc(d.state_text) + '</div>' +
         '<div class="ov-act">' + esc(d.action) + '</div>' +
-        '<div class="ov-meta">' + md(d.date) + ' · 自 ' + md(d.since) + ' 起 · ' + d.n_panic + '/' + (d.n_total || 3) + ' 項在恐慌區</div>' +
+        '<div class="ov-chips">' + d.components.map((c) => { const f = FL[c.flag] || FL.normal;
+          return '<span class="cp" data-c="' + f[1] + '">' + esc(SHORT[c.key] || c.label) + ' <b>' + f[0] + '</b></span>'; }).join('') + '</div>' +
+        '<details class="ov-more"><summary>細節（' + d.n_panic + '/' + (d.n_total || 3) + ' 項在恐慌區）</summary>' +
+        '<div class="ov-meta">' + md(d.date) + ' · 自 ' + md(d.since) + ' 起</div>' +
         (d.capit ? '<div class="ov-flip" data-c="amber">🔔 ' + md(d.capit.date) + ' 融資斷頭（10日減少15%以上）· 當日收盤 ' + num(d.capit.close, 0) + '，試單停損設在這附近下方</div>' : '') +
         '<div class="ov-rows">' + d.components.map((c) => {
           const f = FL[c.flag] || FL.normal;
@@ -466,7 +485,7 @@ html,body{background:var(--bg-main)!important}
           return row(esc(c.label) + '<span class="ov-chip" data-c="' + f[1] + '">' + f[0] + '</span><br><span class="v">' + v + '</span>',
                      spark(c.spark), PAN_C[d.state]);
         }).join('') + '</div>' +
-        ((d.notes || []).length ? '<div class="ov-meta" style="margin-top:8px">※ ' + d.notes.map(esc).join('<br>※ ') + '</div>' : '');
+        ((d.notes || []).length ? '<div class="ov-meta" style="margin-top:8px">※ ' + d.notes.map(esc).join('<br>※ ') + '</div>' : '') + '</details>';
       renderBt(d.backtest);
     }
 
@@ -491,7 +510,7 @@ html,body{background:var(--bg-main)!important}
       const prev = t.score_prev, dlt = (prev === null || prev === undefined) ? '' :
         ' · 前一日 ' + prev + (t.score > prev ? '（升溫 ' + (t.score - prev) + '）' : t.score < prev ? '（降溫 ' + (prev - t.score) + '）' : '');
       el.style.setProperty('--c', C[t.c] || C.off);
-      el.innerHTML = '<div class="td-h">今天市場 <span style="font:400 12px var(--mono);color:var(--muted);margin-left:6px">' + md(t.date) + ' 收盤</span></div>' +
+      el.innerHTML = '<div class="td-h">大盤多空力道 <span style="font:400 12px var(--mono);color:var(--muted);margin-left:6px">' + md(t.date) + ' 收盤</span></div>' +
         '<div class="td-body"><div>' +
           '<div class="td-chg ' + (chg > 0 ? 'up' : chg < 0 ? 'down' : '') + '">' + (chg > 0 ? '+' : '') + Number(chg).toFixed(2) + '%</div>' +
           '<div class="td-lbl">大盤 <span style="color:var(--muted);font-family:var(--mono);font-size:12.5px">' + fmt(t.close) + '</span></div>' +
@@ -500,11 +519,11 @@ html,body{background:var(--bg-main)!important}
           '<div class="td-mood"><span class="k">今日情緒</span><span class="v">' + t.score + '<small>' + esc(t.label) + '</small></span></div>' +
           '<div class="td-track">' + (t.bands || []).filter((b) => b[0] > 0).map((b) => '<span class="td-tick" style="left:' + b[0] + '%"></span>').join('') +
             '<span class="td-knob" style="left:' + Math.min(98, Math.max(2, t.score)) + '%"></span></div>' +
+          '<div class="td-scale"><span style="left:15%">平靜</span><span style="left:40%">中性</span><span style="left:60%">警戒</span><span style="left:85%">恐慌</span></div>' +
           (say ? '<div class="td-say">' + say + '</div>' : '') +
           (t.up !== undefined ? '<div class="td-cnt">上漲 <span class="pos">' + fmt(t.up) + '</span> · 下跌 <span class="neg">' + fmt(t.down) + '</span> 家</div>' : '') +
         '</div></div>' +
-        '<div class="td-foot">情緒 0～100，越高越恐慌：' + (t.parts || []).map((p) => esc(p.name) + ' ' + p.v).join('、') + ' 的平均' + dlt +
-          '<br>70 以上恐慌 · 50～69 警戒 · 30～49 中性 · 30 以下平靜（把下方指標濃縮成一個數字方便判讀，門檻非回測結果）</div>';
+        '<div class="td-foot">情緒＝' + (t.parts || []).map((p) => esc(p.name) + ' ' + p.v).join('・') + ' 的平均' + dlt + '（門檻非回測）</div>';
       el.hidden = false;
     }
 
