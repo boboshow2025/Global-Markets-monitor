@@ -336,6 +336,7 @@ html,body{background:var(--bg-main)!important}
   .td-scale{position:relative; height:14px; margin:-6px 0 8px; font-size:10.5px; color:var(--muted)}
   .td-scale span{position:absolute; transform:translateX(-50%); white-space:nowrap}
   .ov-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ov-grid.one{grid-template-columns:1fr}
   .ov .ov-card .ov-more{margin-top:10px; background:none; border:0; border-top:1px dashed var(--line); border-radius:0; padding:8px 0 0}
   .ov-more>summary{cursor:pointer; font-size:12px; color:var(--muted); list-style:none}
   .ov-more>summary::-webkit-details-marker{display:none}
@@ -363,15 +364,15 @@ html,body{background:var(--bg-main)!important}
   </style>
 
   <p class="ov-eyebrow">Market regime · 局勢總覽</p>
-  <div class="sec-title"><span class="no">01</span><span class="zh">局勢總覽</span><span class="en">Market regime</span><span class="hint">大盤多空力道 → 資金輪動（數週）→ 恐慌儀表（底部）</span></div>
+  <div class="sec-title"><span class="no">01</span><span class="zh">局勢總覽</span><span class="en">Market regime</span><span class="hint">大盤多空力道 → 恐慌儀表（底部）</span></div>
   <div class="td" id="ov-today" hidden></div>
   <div class="ov-verdict" id="ov-verdict" data-c="off"><span class="t">載入中…</span></div>
-  <div class="ov-grid two">
-    <div class="ov-card" id="ov-rot" data-c="off"></div>
+  <div class="ov-grid one">
+    <div class="ov-card" id="ov-rot" data-c="off" hidden></div>
     <div class="ov-card" id="ov-pan" data-c="off"></div>
   </div>
   <details id="ov-bt"><summary>恐慌儀表回測：各狀態之後加權指數表現、每次「融資斷頭」與「恐慌退燒」離真正低點多遠</summary><div id="ov-bt-body"></div></details>
-  <p class="ov-foot">資金輪動看「資金在成長股還是防禦股」（數週）；恐慌儀表看「跌勢是否接近尾聲」。兩者都是確認工具，不是預測。開盤前訊號見下方 02。紅色越深＝風險越高。</p>
+  <p class="ov-foot">恐慌儀表看「跌勢是否接近尾聲」，是確認工具，不是預測。開盤前訊號見下方 02。紅色越深＝風險越高。</p>
 
   <script>
   (function () {
@@ -596,6 +597,7 @@ html,body{background:var(--bg-main)!important}
       $('ov-bt-body').innerHTML = h;
     }
 
+    const SHOW_ROT = false;   // 資金輪動區塊暫時拿掉（改回 true 即恢復卡片，綜合判斷也會再納入資金輪動）
     function head(n, tag) { return '<div class="ov-h"><span class="n">' + n + '</span><span class="tag">' + tag + '</span></div>'; }
     function row(k, v, c) { return '<div class="ov-row"' + (c ? ' data-c="' + c + '"' : '') + '><div class="k">' + k + '</div><div class="v">' + v + '</div></div>'; }
 
@@ -603,16 +605,18 @@ html,body{background:var(--bg-main)!important}
       const el = $('ov-verdict');
       const R = rot ? rot.state : null, RL = rot ? rot.label : null, P = pan ? pan.state : null;
       let t, s, c;
-      if (!rot && !pan) { t = '資料不足'; s = '資金輪動與恐慌儀表都還沒有資料。'; c = 'off'; }
-      else if (P === 'capit') { t = '可小量試單 1/5'; s = '<b>融資斷頭潮</b>，恐慌可能見底（回測兩次都在最低點前 1 天）：小量試單，停損設在 ' + md(pan.capit && pan.capit.date) + ' 低點下方；之後等恐慌退燒加到 1/3、資金輪動轉攻再加滿。'; c = 'amber'; }
+      if (!rot && !pan) { t = '資料不足'; s = (SHOW_ROT ? '資金輪動與恐慌儀表都' : '恐慌儀表') + '還沒有資料。'; c = 'off'; }
+      else if (P === 'capit') { t = '可小量試單 1/5'; s = '<b>融資斷頭潮</b>，恐慌可能見底（回測兩次都在最低點前 1 天）：小量試單，停損設在 ' + md(pan.capit && pan.capit.date) + ' 低點下方；之後等恐慌退燒加到 1/3' + (SHOW_ROT ? '、資金輪動轉攻再加滿' : '') + '。'; c = 'amber'; }
       else if (P === 'heat' && pan.last_capit && pan.last_capit.days_ago <= 15) { t = '試單續抱'; s = md(pan.last_capit.date) + ' 已出現<b>融資斷頭</b>，恐慌仍在<b>升溫</b>：試單部位守停損續抱，等恐慌退燒再加碼。'; c = 'orange'; }
       else if (R === '防守' && P === 'heat') { t = '暫不進場'; s = '資金<b>' + RL + '</b>，恐慌<b>升溫中</b>：等恐慌退燒再說。'; c = 'red'; }
       else if (R === '防守' && P === 'ease') { t = '可先布局 1/3'; s = '資金仍在<b>防守</b>，但恐慌<b>開始退燒</b>：可能接近底部，先小量布局，等資金輪動轉攻再加碼。'; c = 'amber'; }
       else if (R === '防守') { t = RL === '強烈防守' ? '以防守為主' : '降低進攻部位'; s = '資金<b>' + RL + '</b>' + (P === 'watch' ? '，恐慌指標開始轉差' : '，恐慌儀表尚未出現底部訊號') + '：以高息低波或現金為主，主動ETF重押股先觀望。'; c = RL === '強烈防守' ? 'red' : 'orange'; }
       else if (R === '進攻' && P === 'heat') { t = '進攻但要設停損'; s = '資金仍在成長股，但恐慌<b>升溫中</b>：降低部位、嚴設停損。'; c = 'orange'; }
       else if (R === '進攻') { t = RL === '進攻' ? '可以進攻' : '進攻，但留意'; s = '資金在<b>成長股</b>' + (RL !== '進攻' ? '，但大盤或科技股已轉弱' : '') + '：可依主動ETF高超配名單與技術面進場。'; c = RL === '進攻' ? 'gold' : 'amber'; }
+      else if (!SHOW_ROT) { el.style.display = 'none'; return; }   // 沒有資金輪動時，一般狀態看下方恐慌儀表卡片即可，不重複顯示
       else { t = '僅恐慌儀表'; s = '恐慌儀表：<b>' + esc(pan.state_text) + '</b>。'; c = PAN_C[P] || 'off'; }
       if (pre && (pre.overall === 'alert' || pre.overall === 'watch') && pre.fresh) s += ' 今日開盤前訊號<b>' + esc(pre.overall_text) + '</b>：開盤不追價。';
+      el.style.display = '';
       el.dataset.c = c;
       el.innerHTML = '<span class="t">' + t + '</span><span class="s">' + s + '</span>';
     }
@@ -620,7 +624,9 @@ html,body{background:var(--bg-main)!important}
     Promise.all([get('./data/correlations.json'), get('./data/rotation.json'), get('./data/panic.json')])
       .then(([pre, rot, pan]) => {
         pre = pre && pre.schema === 2 ? pre : null;
-        renderPre(pre); renderRot(rot); renderPan(pan); verdict(pre, rot, pan); renderToday(pan, pre);
+        if (!SHOW_ROT) rot = null;
+        else { $('ov-rot').hidden = false; $('ov-rot').parentElement.className = 'ov-grid two'; renderRot(rot); }
+        renderPre(pre); renderPan(pan); verdict(pre, rot, pan); renderToday(pan, pre);
       });
   })();
   </script>
