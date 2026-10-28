@@ -567,6 +567,24 @@ def mood_score(df: pd.DataFrame, breadth: pd.DataFrame) -> tuple[pd.Series, pd.D
     return parts.mean(axis=1, skipna=True).round(0), parts
 
 
+def ma_keys(close: pd.Series, ns=(20, 60), ahead: int = 5) -> dict:
+    """均線扣抵價位：下一交易日要扣掉的收盤（＝MA 翻轉門檻）＋之後幾天的扣抵值
+    下一交易日收盤 > 扣抵值 → 該均線上揚；< 扣抵值 → 下彎"""
+    c = close.dropna()
+    out = {}
+    for n in ns:
+        if len(c) < n + 1:
+            continue
+        ma, ma_prev = c.iloc[-n:].mean(), c.iloc[-n - 1:-1].mean()
+        ded = c.iloc[-n:-n + ahead] if ahead < n else c.iloc[-n:]
+        out[f"ma{n}"] = {
+            "n": n, "ma": _r(ma, 2), "chg": _r(ma - ma_prev, 2),
+            "dir": "up" if ma > ma_prev else ("down" if ma < ma_prev else "flat"),
+            "ded": [{"date": d.strftime("%Y-%m-%d"), "v": _r(v, 2)} for d, v in ded.items()],
+        }
+    return out
+
+
 def today_block(df: pd.DataFrame) -> dict:
     """首頁「今天市場」卡片：大盤漲跌、外資買賣超（近 10 日）、情緒分數、漲跌家數"""
     t = df.index[-1]
@@ -703,7 +721,7 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
         payload["notes"].append(f"上櫃融資已累積 {otc_days} 天，補齊後自動改用上市＋上櫃合計判斷；目前只用上市。")
     if vol_source != "vix":
         payload["notes"].append(f"台指VIX 已累積 {len(vix)} 天，滿 {VIX_MIN_DAYS} 天後自動改用VIX判斷；目前用加權指數實現波動率代替。")
-    payload["sig"] = (f"v4|{margin_src}|{payload['date']}|{payload['close']}|{comps[1]['value']}|{comps[2]['value']}|{payload['vix']}"
+    payload["sig"] = (f"v5|{margin_src}|{payload['date']}|{payload['close']}|{comps[1]['value']}|{comps[2]['value']}|{payload['vix']}"
                       f"|{comps[3]['value'] if len(comps) > 3 else None}|{comps[3]['date'] if len(comps) > 3 else None}"
                       f"|{payload['today'].get('up')}|{payload['today'].get('down')}|{(payload['today'].get('flow') or {}).get('date')}")
     return payload
@@ -875,6 +893,11 @@ def main() -> int:
             raise RuntimeError("沒有可計算的日子")
         bt = backtest(compute(close, realized_vol(close), net_oi, margin, parts, maint, maint_parts))   # 回測一律用實現波動率（歷史較長）
         payload = build_payload(df, "vix" if use_vix else "rv", vix, bt, margin_src, len(m_otc))
+        # 均線扣抵用完整的加權收盤（df 已濾掉期貨/波動率缺資料的日子，不能拿來算均線）
+        try:
+            payload["today"]["ma_keys"] = ma_keys(close.loc[:df.index[-1]])
+        except Exception as exc:  # noqa: BLE001   扣抵失敗不影響恐慌儀表
+            print(f"[ma_keys] 略過均線扣抵：{exc}")
     except Exception as exc:  # noqa: BLE001
         print(f"[error] 恐慌儀表產生失敗：{exc}", file=sys.stderr)
         return 1
