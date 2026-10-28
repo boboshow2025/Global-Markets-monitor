@@ -354,6 +354,8 @@ html,body{background:var(--bg-main)!important}
   .td-ext .v small{font:500 13px var(--mono); margin-left:6px}
   .td-ext .s{font-size:12px; color:var(--muted); margin-top:3px}
   .td-ext .flowv{color:var(--flow)}
+  .td-ma .v small.d{font:600 12.5px var(--sans,inherit)}
+  .td-ma .s b{font:600 12px var(--mono); color:var(--text)}
   @media (max-width:640px){ .td-ext{grid-template-columns:1fr} }
   .td-foot{border-top:1px solid var(--line); margin-top:14px; padding-top:9px; font-size:11px; line-height:1.6; color:var(--muted)}
   @media (max-width:640px){ .td{padding:14px 15px 12px} .td-body{grid-template-columns:1fr} }
@@ -531,9 +533,29 @@ html,body{background:var(--bg-main)!important}
           (say ? '<div class="td-say">' + say + '</div>' : '') +
           (t.up !== undefined ? '<div class="td-cnt">上漲 <span class="pos">' + fmt(t.up) + '</span> · 下跌 <span class="neg">' + fmt(t.down) + '</span> 家</div>' : '') +
         '</div></div>' +
-        extHtml(pre) +
+        extHtml(pre) + maKeysHtml(t.ma_keys, t.close) +
         '<div class="td-foot">情緒＝' + (t.parts || []).map((p) => esc(p.name) + ' ' + p.v).join('・') + ' 的平均' + dlt + '（門檻非回測）</div>';
       el.hidden = false;
+    }
+
+    /* 均線扣抵：下一交易日收盤 > 扣抵值 → 均線上揚，< 扣抵值 → 下彎（讀 panic.json today.ma_keys） */
+    function maKeysHtml(k, close) {
+      if (!k) return '';
+      const fmt = (x) => Number(x).toLocaleString('en-US', {maximumFractionDigits: 0});
+      const h = ['ma20', 'ma60'].map((key) => {
+        const m = k[key];
+        if (!m || !m.ded || !m.ded.length) return '';
+        const x = m.ded[0], up = m.dir === 'up', gap = (x.v / close - 1) * 100;
+        const dir = up ? '<span class="pos">↑ 上揚</span>' : m.dir === 'down' ? '<span class="neg">↓ 下彎</span>' : '走平';
+        const cond = (up ? '收盤跌破 ' : '收盤站上 ') + fmt(x.v) + (up ? ' 才下彎' : ' 才翻揚') +
+          '（' + (gap > 0 ? '+' : '') + gap.toFixed(1) + '%）';
+        const next = m.ded.slice(1).map((d) => md(d.date) + ' <b>' + fmt(d.v) + '</b>').join('・');
+        return '<div class="x"><div class="k">MA' + m.n + ' 扣抵 · 目前 ' + fmt(m.ma) + ' ' + dir + '</div>' +
+          '<div class="v">' + fmt(x.v) + '<small class="d" style="color:var(--muted)">下一交易日扣 ' + md(x.date) + '</small></div>' +
+          '<div class="s">' + cond + '</div>' +
+          (next ? '<div class="s">之後扣抵：' + next + '</div>' : '') + '</div>';
+      }).join('');
+      return h ? '<div class="td-ext td-ma">' + h + '</div>' : '';
     }
 
     /* 台指期夜盤收盤＋外資台指期淨空單（讀 correlations.json） */

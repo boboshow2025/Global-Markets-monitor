@@ -169,7 +169,16 @@ html,body{background:var(--bg-main)!important}
 .zs .tile,.zs .card,.zs .ctx{box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
 </style>
 
-<style>.fold>summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:8px}.fold>summary::-webkit-details-marker{display:none}.fold>summary::before{content:"▶";color:var(--acc);font-size:12px;transition:transform .15s}.fold[open]>summary::before{transform:rotate(90deg)}.fold>summary h2{margin:0;color:var(--acc)}.fold[open]>summary{margin-bottom:10px}</style>
+<style>.fold>summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:8px}.fold>summary::-webkit-details-marker{display:none}.fold>summary::before{content:"▶";color:var(--acc);font-size:12px;transition:transform .15s}.fold[open]>summary::before{transform:rotate(90deg)}.fold>summary h2{margin:0;color:var(--acc)}.fold[open]>summary{margin-bottom:10px}
+.makeys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.makeys .x{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.makeys .k{font-size:12.5px;color:var(--muted)}
+.makeys .v{font:700 22px/1.2 var(--mono);margin-top:4px;color:var(--text)}
+.makeys .v small{font-size:12.5px;font-weight:600;color:var(--muted);margin-left:6px}
+.makeys .s{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.55}
+.makeys .s b{font:600 12px var(--mono);color:var(--text)}
+.makeys .pos,.makeys .neg{font-weight:600}
+@media (max-width:640px){.makeys{grid-template-columns:1fr}}</style>
 </head>
 <body class="market-taiwan">
 <header class="top">
@@ -183,6 +192,7 @@ html,body{background:var(--bg-main)!important}
 <section class="zs zs-a">
 <h2>大盤條件<small>加權 MA60 下彎＋加權收盤 &lt; MA20・3 個策略共用</small></h2>
 <div class="ctx flat"><div class="tag">不放空</div><div class="txt">加權 MA60 上揚（5 日 +0.49%）、收盤 46,096 &lt; MA20 47,986。大盤 MA60 上揚（回測：3 個策略放空全部虧損，獲利因子 0.62–0.75），名單只供參考。</div></div>
+<div class="makeys"><div class="x"><div class="k">MA20 扣抵・目前 47,986 <span class="neg">↓ 下彎</span></div><div class="v">48,157<small>下一交易日扣 09/23</small></div><div class="s">收盤站上 48,157 才翻揚（+4.5%）</div><div class="s">之後扣抵：09/24 <b>48,025</b>・09/29 <b>47,632</b>・09/30 <b>47,940</b>・10/01 <b>48,353</b></div></div><div class="x"><div class="k">MA60 扣抵・目前 46,282 <span class="pos">↑ 上揚</span></div><div class="v">40,039<small>下一交易日扣 07/29</small></div><div class="s">收盤跌破 40,039 才下彎（-13.1%）</div><div class="s">之後扣抵：07/30 <b>39,933</b>・07/31 <b>43,120</b>・08/03 <b>43,386</b>・08/04 <b>43,361</b></div><div class="s">大盤條件「MA60 比 5 日前低」：下一交易日收盤 &lt; <b>28,464</b> 才成立（-38.3%）</div></div></div>
 </section>
 
 <section class="zs zs-d">
@@ -209,6 +219,6 @@ html,body{background:var(--bg-main)!important}
 <p class="note">回測 2021/8–2026/10（backtest_short_unified.py；個股訊號隔天開盤放空、20 日回補，扣手續費、證交稅、融券費）：
 大盤條件成立時，空1 勝率 65.6%・獲利因子 2.31、空2 61.5%・1.66、空3 64.5%・2.31；大盤 MA60 上揚時 3 個策略全部虧損。
 持有 5 天就回補效果差（獲利因子約 1.3 以下），要抱 10–20 天。獲利集中在大盤下跌段（2022、2025 Q1），2023 年急跌後 V 轉時勝率只有約 40%。
-放空另需確認融券資格、券源與停券期間。程式依規則篩選，不構成買賣建議。更新時間 2026-10-27 18:34</p>
+放空另需確認融券資格、券源與停券期間。程式依規則篩選，不構成買賣建議。更新時間 2026-10-28 16:57</p>
 </body>
 </html>
