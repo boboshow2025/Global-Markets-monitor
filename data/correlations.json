@@ -1,17 +1,17 @@
 {
  "schema": 2,
- "sig": "2026-10-28|2026-10-29|twse|2026-10-29|20261029",
- "generated_at": "2026-10-29T21:30:15+08:00",
- "us_date": "2026-10-28",
+ "sig": "2026-10-29|2026-10-29|twse|2026-10-29|20261030",
+ "generated_at": "2026-10-30T06:30:12+08:00",
+ "us_date": "2026-10-29",
  "tw_last_date": "2026-10-29",
  "tw_last_close": 46368.33,
  "tw_last_pct": -1.42,
- "fresh": false,
+ "fresh": true,
  "overall": "calm",
  "overall_text": "中性",
  "action": "照原計畫",
- "driver": "sox",
- "z_used": 0.68,
+ "driver": "night",
+ "z_used": -0.89,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -21,43 +21,43 @@
   {
    "key": "SOX",
    "label": "費城半導體",
-   "sub": "美股 10/28 收盤",
-   "value": 11684.0,
-   "pct": 1.75,
-   "z": 0.68,
+   "sub": "美股 10/29 收盤",
+   "value": 11518.2,
+   "pct": -1.42,
+   "z": -0.58,
    "state": "calm",
-   "used": true,
+   "used": false,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
    "key": "NIGHT",
    "label": "台指期夜盤",
    "sub": "近月 202611",
-   "value": 47121.0,
-   "pct": null,
-   "z": null,
-   "chg": null,
-   "ref": 47249.0,
-   "state": "unknown",
-   "used": false,
-   "date": "20261029",
-   "stale": true,
-   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
+   "value": 45926.0,
+   "pct": -1.38,
+   "z": -0.89,
+   "chg": -643.0,
+   "ref": 46569.0,
+   "state": "calm",
+   "used": true,
+   "date": "20261030",
+   "stale": false,
+   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
   }
  ],
  "flow": {
   "date": "2026-10-29",
-  "net": -688.2,
+  "net": -688.1,
   "sum5": -1404.2,
   "z": -0.6,
   "night": {
-   "date": "2026-10-29",
-   "tx_net": -1089,
-   "tx_long": 17164,
-   "tx_short": 18253,
-   "mtx_net": -657,
-   "net_equiv": -1253,
-   "fresh": false
+   "date": "2026-10-30",
+   "tx_net": 459,
+   "tx_long": 19301,
+   "tx_short": 18842,
+   "mtx_net": -235,
+   "net_equiv": 400,
+   "fresh": true
   },
   "fut": {
    "date": "2026-10-29",
@@ -72,46 +72,46 @@
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 109.54,
-   "metric": -3.21,
+   "value": 111.55,
+   "metric": -1.43,
    "unit": "%",
-   "z": -1.03,
+   "z": -0.71,
    "state": "calm"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
-   "value": 5.01,
-   "metric": -3.6,
+   "value": 4.99,
+   "metric": -5.6,
    "unit": "bp",
-   "z": -0.87,
+   "z": -1.27,
    "state": "calm"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 102.4,
-   "metric": 0.77,
+   "value": 101.85,
+   "metric": 0.24,
    "unit": "%",
-   "z": 0.95,
+   "z": 0.13,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 158.04,
-   "metric": -0.06,
+   "value": 157.69,
+   "metric": -0.28,
    "unit": "%",
-   "z": 0.02,
+   "z": -0.15,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 9.01,
-   "metric": 9.01,
+   "value": 8.75,
+   "metric": 8.75,
    "unit": "美元",
-   "z": 0.32,
+   "z": 0.24,
    "state": "calm"
   }
  ],
@@ -121,8 +121,8 @@
   "外資台指期淨空單增加 4,605 口，期貨端也在加碼避險。"
  ],
  "backtest": {
-  "n": 470,
-  "start": "2024-12-12",
+  "n": 469,
+  "start": "2024-12-13",
   "base": {
    "avg": 0.1,
    "down_pct": 44.0
@@ -131,25 +131,25 @@
    {
     "state": "alert",
     "label": "強烈偏空",
-    "n": 20,
-    "avg": -2.23,
-    "median": -1.4,
-    "down_pct": 85.0,
-    "worse_than_1pct": 65.0
+    "n": 21,
+    "avg": -2.17,
+    "median": -1.39,
+    "down_pct": 86.0,
+    "worse_than_1pct": 67.0
    },
    {
     "state": "watch",
     "label": "偏空",
-    "n": 53,
-    "avg": -1.14,
+    "n": 52,
+    "avg": -1.15,
     "median": -0.7,
     "down_pct": 81.0,
-    "worse_than_1pct": 42.0
+    "worse_than_1pct": 40.0
    },
    {
     "state": "calm",
     "label": "中性",
-    "n": 330,
+    "n": 329,
     "avg": 0.22,
     "median": 0.26,
     "down_pct": 41.0,
@@ -168,7 +168,7 @@
  },
  "live": {
   "n": 9,
-  "pending": 0,
+  "pending": 1,
   "buckets": [
    {
     "state": "alert",
@@ -200,6 +200,12 @@
    }
   ],
   "recent": [
+   {
+    "us_date": "2026-10-29",
+    "state": "calm",
+    "target": null,
+    "ret": null
+   },
    {
     "us_date": "2026-10-28",
     "state": "calm",
