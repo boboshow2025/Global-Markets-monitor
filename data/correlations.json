@@ -1,7 +1,7 @@
 {
  "schema": 2,
- "sig": "2026-10-29|2026-10-29|twse|2026-10-29|20261030",
- "generated_at": "2026-10-30T06:30:12+08:00",
+ "sig": "2026-10-29|2026-10-29|twse|2026-10-29|-",
+ "generated_at": "2026-10-30T08:12:51+08:00",
  "us_date": "2026-10-29",
  "tw_last_date": "2026-10-29",
  "tw_last_close": 46368.33,
@@ -10,8 +10,8 @@
  "overall": "calm",
  "overall_text": "中性",
  "action": "照原計畫",
- "driver": "night",
- "z_used": -0.89,
+ "driver": "sox",
+ "z_used": -0.58,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -26,21 +26,21 @@
    "pct": -1.42,
    "z": -0.58,
    "state": "calm",
-   "used": false,
+   "used": true,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
    "key": "NIGHT",
    "label": "台指期夜盤",
-   "sub": "近月 202611",
-   "value": 45926.0,
-   "pct": -1.38,
-   "z": -0.89,
-   "chg": -643.0,
-   "ref": 46569.0,
-   "state": "calm",
-   "used": true,
-   "date": "20261030",
+   "sub": "期交所",
+   "value": null,
+   "pct": null,
+   "z": null,
+   "chg": null,
+   "ref": null,
+   "state": "unknown",
+   "used": false,
+   "date": null,
    "stale": false,
    "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
   }
@@ -72,8 +72,8 @@
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 111.55,
-   "metric": -1.43,
+   "value": 111.57,
+   "metric": -1.41,
    "unit": "%",
    "z": -0.71,
    "state": "calm"
@@ -90,28 +90,28 @@
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 101.85,
-   "metric": 0.24,
+   "value": 101.88,
+   "metric": 0.27,
    "unit": "%",
-   "z": 0.13,
+   "z": 0.17,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 157.69,
-   "metric": -0.28,
+   "value": 157.7,
+   "metric": 0.77,
    "unit": "%",
-   "z": -0.15,
+   "z": 0.65,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 8.75,
-   "metric": 8.75,
+   "value": 8.78,
+   "metric": 8.78,
    "unit": "美元",
-   "z": 0.24,
+   "z": 0.25,
    "state": "calm"
   }
  ],

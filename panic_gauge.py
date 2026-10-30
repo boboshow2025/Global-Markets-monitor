@@ -60,6 +60,7 @@ VOL_EASE_DROP = 0.20        # 波動度從近 10 日高點回落 20% 以上
 SHORT_EASE_DROP = 0.25      # 淨空單從近 10 日高點減少 25% 以上
 HEAT_LOOKBACK = 15          # 「近期曾恐慌」的回看天數
 MARGIN_WASH_LOOKBACK = 15   # 「融資已大減過」的回看天數
+MAINT_WASH_DROP = 0.0       # 「已洗」另需維持率同步下滑：去槓桿當天的維持率 10 日變化 < 此值（百分點）；缺維持率資料時只看融資
 MARGIN_CAPIT_CHG = -0.15    # 融資 10 日減少 15% 以上 → 斷頭潮（可能的恐慌底）
 CAPIT_SHOW_DAYS = 5         # 斷頭警示觸發後維持顯示幾個交易日
 MAINT_PANIC = 160.0        # 融資維持率 < 160% → 恐慌（2024/10 以來 5 段，都在波段低點附近）
@@ -454,6 +455,7 @@ def compute(close: pd.Series, vol: pd.Series, net_oi: pd.Series, margin: pd.Seri
     df["vol_pct"] = _pct_rank(df["vol"], PCT_WINDOW)
     df["short_pct"] = _pct_rank(df["short"], PCT_WINDOW)
     df["margin_chg10"] = df["margin"] / df["margin"].shift(10) - 1
+    df["maint_chg10"] = df["maint"] - df["maint"].shift(10)   # 維持率 10 日變化（百分點）
 
     df["vol_panic"] = df["vol_pct"] >= VOL_PANIC_PCT
     df["short_panic"] = (df["short_pct"] >= SHORT_PANIC_PCT) & (df["short"] > 0)
@@ -468,7 +470,11 @@ def compute(close: pd.Series, vol: pd.Series, net_oi: pd.Series, margin: pd.Seri
     df["short_ease"] = (df["short_panic"].astype(float).rolling(10, min_periods=1).max() == 1) & \
                        (df["short"] <= smax10 * (1 - SHORT_EASE_DROP))
     has_margin = df["margin_chg10"].notna()
-    df["margin_washed"] = (df["margin_panic"].astype(float).rolling(MARGIN_WASH_LOOKBACK, min_periods=1).max() == 1) | ~has_margin
+    # 已洗＝近 N 日內曾「融資 10 日大減」且同一天維持率也在下滑（價跌＋砍倉，才是真的洗）；
+    # 維持率持平或上升時的融資減少多半是自願還款，不算。當天沒有維持率資料就只看融資。
+    maint_down = (df["maint_chg10"] < MAINT_WASH_DROP) | df["maint_chg10"].isna()
+    df["wash_event"] = df["margin_panic"] & maint_down
+    df["margin_washed"] = (df["wash_event"].astype(float).rolling(MARGIN_WASH_LOOKBACK, min_periods=1).max() == 1) | ~has_margin
     df["margin_stable"] = (df["margin"].diff() >= 0) & (df["margin"].diff().shift(1) >= 0)
 
     df["n_panic"] = df[["vol_panic", "short_panic", "margin_panic", "maint_panic"]].astype(int).sum(axis=1)
@@ -674,7 +680,7 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
          "chg10": _r(m["margin_chg10"] * 100, 2) if pd.notna(m["margin_chg10"]) else None,
          "flag": "capit" if last["capit_recent"] else "panic" if m["margin_panic"] else ("washed" if (m["margin_washed"] and pd.notna(m["margin_chg10"])) else "normal"),
          "stable": bool(m["margin_stable"]) if pd.notna(m["margin"]) else None,
-         "rule": f"10日減少{abs(int(MARGIN_PANIC_CHG * 100))}%以上＝去槓桿（恐慌）；{abs(int(MARGIN_CAPIT_CHG * 100))}%以上＝斷頭潮；近{MARGIN_WASH_LOOKBACK}日內發生過＝籌碼已洗",
+         "rule": f"10日減少{abs(int(MARGIN_PANIC_CHG * 100))}%以上＝去槓桿（恐慌）；{abs(int(MARGIN_CAPIT_CHG * 100))}%以上＝斷頭潮；近{MARGIN_WASH_LOOKBACK}日內發生過且當時維持率10日同步下滑＝籌碼已洗",
          "spark": spark("margin")},
     ]
     if mt_row is not None:
