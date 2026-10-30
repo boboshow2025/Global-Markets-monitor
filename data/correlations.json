@@ -1,17 +1,17 @@
 {
  "schema": 2,
- "sig": "2026-10-29|2026-10-29|twse|2026-10-29|20261030",
- "generated_at": "2026-10-30T08:15:52+08:00",
+ "sig": "2026-10-29|2026-10-30|twse|2026-10-30|20261030",
+ "generated_at": "2026-10-30T21:30:36+08:00",
  "us_date": "2026-10-29",
- "tw_last_date": "2026-10-29",
- "tw_last_close": 46368.33,
- "tw_last_pct": -1.42,
- "fresh": true,
+ "tw_last_date": "2026-10-30",
+ "tw_last_close": 45211.83,
+ "tw_last_pct": -2.49,
+ "fresh": false,
  "overall": "calm",
  "overall_text": "中性",
  "action": "照原計畫",
- "driver": "night",
- "z_used": -0.89,
+ "driver": "sox",
+ "z_used": -0.58,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -26,7 +26,7 @@
    "pct": -1.42,
    "z": -0.58,
    "state": "calm",
-   "used": false,
+   "used": true,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
@@ -34,22 +34,22 @@
    "label": "台指期夜盤",
    "sub": "近月 202611",
    "value": 45926.0,
-   "pct": -1.38,
-   "z": -0.89,
-   "chg": -643.0,
+   "pct": null,
+   "z": null,
+   "chg": null,
    "ref": 46569.0,
-   "state": "calm",
-   "used": true,
+   "state": "unknown",
+   "used": false,
    "date": "20261030",
-   "stale": false,
-   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
+   "stale": true,
+   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
   }
  ],
  "flow": {
-  "date": "2026-10-29",
-  "net": -688.1,
-  "sum5": -1404.2,
-  "z": -0.6,
+  "date": "2026-10-30",
+  "net": -1124.7,
+  "sum5": -2551.2,
+  "z": -1.18,
   "night": {
    "date": "2026-10-30",
    "tx_net": 459,
@@ -57,74 +57,73 @@
    "tx_short": 18842,
    "mtx_net": -235,
    "net_equiv": 400,
-   "fresh": true
+   "fresh": false
   },
   "fut": {
-   "date": "2026-10-29",
-   "net": -89522,
-   "long": 8362,
-   "short": 97884,
-   "chg": -4605,
-   "prev_date": "2026-10-28"
+   "date": "2026-10-30",
+   "net": -92241,
+   "long": 6528,
+   "short": 98769,
+   "chg": -2719,
+   "prev_date": "2026-10-29"
   }
  },
  "background": [
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 111.62,
-   "metric": -1.37,
+   "value": 113.03,
+   "metric": -3.16,
    "unit": "%",
-   "z": -0.7,
+   "z": -1.14,
    "state": "calm"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
-   "value": 4.99,
-   "metric": -5.6,
+   "value": 4.93,
+   "metric": -5.8,
    "unit": "bp",
-   "z": -1.27,
+   "z": -1.28,
    "state": "calm"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
    "value": 101.9,
-   "metric": 0.29,
+   "metric": 0.09,
    "unit": "%",
-   "z": 0.2,
+   "z": -0.15,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 157.71,
-   "metric": 0.78,
+   "value": 157.32,
+   "metric": 0.53,
    "unit": "%",
-   "z": 0.65,
+   "z": 0.45,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 8.73,
-   "metric": 8.73,
+   "value": 9.16,
+   "metric": 9.16,
    "unit": "美元",
-   "z": 0.24,
+   "z": 0.32,
    "state": "calm"
   }
  ],
  "notes": [
-  "外資近 5 日累計賣超 1404 億，籌碼面偏弱。",
-  "美股訊號雖不差，但外資持續撤出，不宜追高。",
-  "外資台指期淨空單增加 4,605 口，期貨端也在加碼避險。"
+  "外資近 5 日累計賣超 2551 億，籌碼面偏弱。",
+  "美股訊號雖不差，但外資持續撤出，不宜追高。"
  ],
  "backtest": {
-  "n": 469,
+  "n": 470,
   "start": "2024-12-13",
   "base": {
-   "avg": 0.1,
+   "avg": 0.09,
    "down_pct": 44.0
   },
   "buckets": [
@@ -149,7 +148,7 @@
    {
     "state": "calm",
     "label": "中性",
-    "n": 329,
+    "n": 330,
     "avg": 0.22,
     "median": 0.26,
     "down_pct": 41.0,
@@ -167,8 +166,8 @@
   ]
  },
  "live": {
-  "n": 9,
-  "pending": 1,
+  "n": 10,
+  "pending": 0,
   "buckets": [
    {
     "state": "alert",
@@ -187,9 +186,9 @@
    {
     "state": "calm",
     "label": "中性",
-    "n": 6,
-    "avg": -0.47,
-    "down_pct": 50.0
+    "n": 7,
+    "avg": -0.76,
+    "down_pct": 57.0
    },
    {
     "state": "up",
@@ -203,8 +202,8 @@
    {
     "us_date": "2026-10-29",
     "state": "calm",
-    "target": null,
-    "ret": null
+    "target": "2026-10-30",
+    "ret": -2.49
    },
    {
     "us_date": "2026-10-28",
@@ -263,10 +262,6 @@
   ]
  },
  "rolling_corr": [
-  {
-   "d": "2025-10-08",
-   "v": 0.278
-  },
   {
    "d": "2025-10-09",
    "v": 0.284
@@ -1262,6 +1257,10 @@
   {
    "d": "2026-10-29",
    "v": 0.615
+  },
+  {
+   "d": "2026-10-30",
+   "v": 0.624
   }
  ]
 }
