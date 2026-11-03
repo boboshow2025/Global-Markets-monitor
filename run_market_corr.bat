@@ -19,6 +19,15 @@ if errorlevel 1 echo [warn] panic_gauge failed, keeping previous panic.json
 
 REM 3) data\rotation.json is written every evening by ETF-Tracker2 (Etf_tracker_v2.py)
 
+REM 18:30 the stock-screener daily job also commits to this repo: wait (max ~2.5 min) if git is busy
+set /a LOCKWAIT=0
+:waitlock
+if exist ".git\index.lock" if %LOCKWAIT% lss 30 (
+    set /a LOCKWAIT+=1
+    timeout /t 5 /nobreak >nul
+    goto waitlock
+)
+
 if "%AUTO_PUSH%"=="1" (
     git add -A
     git diff --cached --quiet && (
