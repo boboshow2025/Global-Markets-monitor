@@ -1,17 +1,17 @@
 {
  "schema": 2,
- "sig": "2026-11-03|2026-11-04|twse|2026-11-04|20261104",
- "generated_at": "2026-11-04T18:30:19+08:00",
- "us_date": "2026-11-03",
+ "sig": "2026-11-04|2026-11-04|twse|2026-11-04|20261105",
+ "generated_at": "2026-11-05T06:30:12+08:00",
+ "us_date": "2026-11-04",
  "tw_last_date": "2026-11-04",
  "tw_last_close": 42948.91,
  "tw_last_pct": -0.83,
- "fresh": false,
- "overall": "up",
- "overall_text": "偏多",
- "action": "環境有利，可依計畫進場",
- "driver": "sox",
- "z_used": 1.13,
+ "fresh": true,
+ "overall": "calm",
+ "overall_text": "中性",
+ "action": "照原計畫",
+ "driver": "night",
+ "z_used": 0.37,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -21,28 +21,28 @@
   {
    "key": "SOX",
    "label": "費城半導體",
-   "sub": "美股 11/03 收盤",
-   "value": 10600.4,
-   "pct": 2.63,
-   "z": 1.13,
-   "state": "up",
-   "used": true,
+   "sub": "美股 11/04 收盤",
+   "value": 10268.65,
+   "pct": -3.13,
+   "z": -1.15,
+   "state": "watch",
+   "used": false,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
    "key": "NIGHT",
    "label": "台指期夜盤",
    "sub": "近月 202611",
-   "value": 43779.0,
-   "pct": null,
-   "z": null,
-   "chg": null,
-   "ref": 43353.0,
-   "state": "unknown",
-   "used": false,
-   "date": "20261104",
-   "stale": true,
-   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
+   "value": 43404.0,
+   "pct": 0.47,
+   "z": 0.37,
+   "chg": 201.0,
+   "ref": 43203.0,
+   "state": "calm",
+   "used": true,
+   "date": "20261105",
+   "stale": false,
+   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
   }
  ],
  "flow": {
@@ -51,13 +51,13 @@
   "sum5": -5120.1,
   "z": -1.62,
   "night": {
-   "date": "2026-11-04",
-   "tx_net": 1278,
-   "tx_long": 25113,
-   "tx_short": 23835,
-   "mtx_net": -271,
-   "net_equiv": 1210,
-   "fresh": false
+   "date": "2026-11-05",
+   "tx_net": -469,
+   "tx_long": 38711,
+   "tx_short": 39180,
+   "mtx_net": 2029,
+   "net_equiv": 38,
+   "fresh": true
   },
   "fut": {
    "date": "2026-11-04",
@@ -72,29 +72,29 @@
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 102.19,
-   "metric": -11.39,
+   "value": 94.63,
+   "metric": -17.94,
    "unit": "%",
-   "z": -2.62,
+   "z": -3.85,
    "state": "alert"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
-   "value": 4.95,
-   "metric": 5.8,
+   "value": 4.89,
+   "metric": -5.8,
    "unit": "bp",
-   "z": 1.07,
+   "z": -1.22,
    "state": "calm"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 101.3,
-   "metric": -0.87,
+   "value": 101.53,
+   "metric": -0.65,
    "unit": "%",
-   "z": -1.67,
-   "state": "watch"
+   "z": -1.32,
+   "state": "calm"
   },
   {
    "key": "USDJPY",
@@ -108,21 +108,21 @@
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 6.85,
-   "metric": 6.85,
+   "value": 6.59,
+   "metric": 6.59,
    "unit": "美元",
-   "z": -0.39,
+   "z": -0.46,
    "state": "calm"
   }
  ],
  "notes": [
   "外資近 5 日累計賣超 5120 億，籌碼面偏弱。",
   "美股訊號雖不差，但外資持續撤出，不宜追高。",
-  "布蘭特 5 日 波動異常（z=-2.6），留意是否擴散到股市。"
+  "布蘭特 5 日 波動異常（z=-3.9），留意是否擴散到股市。"
  ],
  "backtest": {
-  "n": 470,
-  "start": "2024-12-18",
+  "n": 469,
+  "start": "2024-12-19",
   "base": {
    "avg": 0.08,
    "down_pct": 45.0
@@ -131,11 +131,11 @@
    {
     "state": "alert",
     "label": "強烈偏空",
-    "n": 22,
-    "avg": -2.1,
-    "median": -1.34,
+    "n": 21,
+    "avg": -2.15,
+    "median": -1.39,
     "down_pct": 86.0,
-    "worse_than_1pct": 64.0
+    "worse_than_1pct": 62.0
    },
    {
     "state": "watch",
@@ -168,7 +168,7 @@
  },
  "live": {
   "n": 13,
-  "pending": 0,
+  "pending": 1,
   "buckets": [
    {
     "state": "alert",
@@ -200,6 +200,12 @@
    }
   ],
   "recent": [
+   {
+    "us_date": "2026-11-04",
+    "state": "calm",
+    "target": null,
+    "ret": null
+   },
    {
     "us_date": "2026-11-03",
     "state": "calm",
@@ -253,12 +259,6 @@
     "state": "alert",
     "target": "2026-10-27",
     "ret": 0.12
-   },
-   {
-    "us_date": "2026-10-21",
-    "state": "calm",
-    "target": "2026-10-22",
-    "ret": -1.8
    }
   ]
  },
