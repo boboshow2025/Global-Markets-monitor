@@ -1,19 +1,36 @@
 {
  "schema": 1,
- "generated_at": "2026-11-04T19:41",
+ "generated_at": "2026-11-04T20:02",
  "date": "2026-11-04",
  "n_etf": 28,
  "top_k": 10,
  "picks": {
   "共識持股": [
    {
+    "code": "3653.TW",
+    "name": "健策",
+    "rank": 6,
+    "holders": 21,
+    "agg_w": 3.101,
+    "bm_w": 0.59,
+    "over": 2.511,
+    "ret5": 1.18,
+    "close": 6450.0,
+    "vs_ma20": -1.83,
+    "vs_ma60": 8.45,
+    "market": "上市",
+    "mgr": 0.472,
+    "exits": null,
+    "bigcuts": null
+   },
+   {
     "code": "1303.TW",
     "name": "南亞",
     "rank": 11,
     "holders": 19,
-    "agg_w": 1.746,
+    "agg_w": 1.724,
     "bm_w": 1.42,
-    "over": 0.326,
+    "over": 0.304,
     "ret5": -13.32,
     "close": 276.5,
     "vs_ma20": -9.41,
@@ -28,34 +45,51 @@
     "name": "創意",
     "rank": 12,
     "holders": 18,
-    "agg_w": 2.183,
+    "agg_w": 2.136,
     "bm_w": 0.6,
-    "over": 1.583,
+    "over": 1.536,
     "ret5": -12.91,
     "close": 7115.0,
     "vs_ma20": -8.55,
     "vs_ma60": 4.64,
     "market": "上市",
-    "mgr": 3.328,
+    "mgr": 3.014,
     "exits": null,
     "bigcuts": null
    }
   ],
   "高超配": [
    {
+    "code": "3653.TW",
+    "name": "健策",
+    "rank": 3,
+    "holders": 21,
+    "agg_w": 3.101,
+    "bm_w": 0.59,
+    "over": 2.511,
+    "ret5": 1.18,
+    "close": 6450.0,
+    "vs_ma20": -1.83,
+    "vs_ma60": 8.45,
+    "market": "上市",
+    "mgr": 0.472,
+    "exits": null,
+    "bigcuts": null
+   },
+   {
     "code": "3443.TW",
     "name": "創意",
     "rank": 7,
     "holders": 18,
-    "agg_w": 2.183,
+    "agg_w": 2.136,
     "bm_w": 0.6,
-    "over": 1.583,
+    "over": 1.536,
     "ret5": -12.91,
     "close": 7115.0,
     "vs_ma20": -8.55,
     "vs_ma60": 4.64,
     "market": "上市",
-    "mgr": 3.328,
+    "mgr": 3.014,
     "exits": null,
     "bigcuts": null
    },
@@ -64,26 +98,43 @@
     "name": "聯茂",
     "rank": 24,
     "holders": 10,
-    "agg_w": 0.483,
+    "agg_w": 0.502,
     "bm_w": 0.0,
-    "over": 0.483,
+    "over": 0.502,
     "ret5": -21.34,
     "close": 612.0,
     "vs_ma20": -19.17,
     "vs_ma60": 0.88,
     "market": "上市",
-    "mgr": 1.728,
+    "mgr": 2.402,
+    "exits": null,
+    "bigcuts": null
+   },
+   {
+    "code": "3105.TW",
+    "name": "穩懋",
+    "rank": 26,
+    "holders": 4,
+    "agg_w": 0.425,
+    "bm_w": 0.0,
+    "over": 0.425,
+    "ret5": -7.22,
+    "close": 501.0,
+    "vs_ma20": -6.53,
+    "vs_ma60": 5.14,
+    "market": "上櫃",
+    "mgr": 0.949,
     "exits": null,
     "bigcuts": null
    },
    {
     "code": "1303.TW",
     "name": "南亞",
-    "rank": 29,
+    "rank": 30,
     "holders": 19,
-    "agg_w": 1.746,
+    "agg_w": 1.724,
     "bm_w": 1.42,
-    "over": 0.326,
+    "over": 0.304,
     "ret5": -13.32,
     "close": 276.5,
     "vs_ma20": -9.41,
@@ -96,19 +147,36 @@
   ],
   "合成權重": [
    {
+    "code": "3653.TW",
+    "name": "健策",
+    "rank": 6,
+    "holders": 21,
+    "agg_w": 3.101,
+    "bm_w": 0.59,
+    "over": 2.511,
+    "ret5": 1.18,
+    "close": 6450.0,
+    "vs_ma20": -1.83,
+    "vs_ma60": 8.45,
+    "market": "上市",
+    "mgr": 0.472,
+    "exits": null,
+    "bigcuts": null
+   },
+   {
     "code": "3443.TW",
     "name": "創意",
     "rank": 7,
     "holders": 18,
-    "agg_w": 2.183,
+    "agg_w": 2.136,
     "bm_w": 0.6,
-    "over": 1.583,
+    "over": 1.536,
     "ret5": -12.91,
     "close": 7115.0,
     "vs_ma20": -8.55,
     "vs_ma60": 4.64,
     "market": "上市",
-    "mgr": 3.328,
+    "mgr": 3.014,
     "exits": null,
     "bigcuts": null
    },
@@ -117,9 +185,9 @@
     "name": "南亞",
     "rank": 12,
     "holders": 19,
-    "agg_w": 1.746,
+    "agg_w": 1.724,
     "bm_w": 1.42,
-    "over": 0.326,
+    "over": 0.304,
     "ret5": -13.32,
     "close": 276.5,
     "vs_ma20": -9.41,
@@ -147,53 +215,31 @@
     "mgr": -0.038,
     "exits": 0,
     "bigcuts": 0
-   },
-   {
-    "code": "3653.TW",
-    "name": "健策",
-    "rank": 2,
-    "holders": 21,
-    "agg_w": 3.134,
-    "bm_w": 0.59,
-    "over": 2.544,
-    "ret5": 1.18,
-    "close": 6450.0,
-    "vs_ma20": -1.83,
-    "vs_ma60": 8.45,
-    "market": "上市",
-    "mgr": -0.016,
-    "exits": 0,
-    "bigcuts": 0
    }
   ]
  },
  "changes": {
   "共識持股": {
    "in": [],
-   "out": [
-    "3653.TW"
-   ]
+   "out": []
   },
   "高超配": {
    "in": [
     "6213.TW",
+    "3105.TW",
     "1303.TW"
    ],
    "out": [
-    "3653.TW",
     "1815.TW"
    ]
   },
   "合成權重": {
    "in": [],
-   "out": [
-    "3653.TW"
-   ]
+   "out": []
   },
   "減碼名單": {
    "in": [
-    "2887.TW",
-    "3653.TW"
+    "2887.TW"
    ],
    "out": []
   }
