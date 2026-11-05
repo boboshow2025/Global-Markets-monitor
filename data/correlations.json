@@ -1,17 +1,17 @@
 {
  "schema": 2,
- "sig": "2026-11-04|2026-11-05|twse|2026-11-05|20261105",
- "generated_at": "2026-11-05T18:30:08+08:00",
- "us_date": "2026-11-04",
+ "sig": "2026-11-05|2026-11-05|twse|2026-11-05|20261106",
+ "generated_at": "2026-11-06T06:30:11+08:00",
+ "us_date": "2026-11-05",
  "tw_last_date": "2026-11-05",
  "tw_last_close": 41574.72,
  "tw_last_pct": -3.2,
- "fresh": false,
- "overall": "watch",
- "overall_text": "偏空",
- "action": "保守操作，新倉等盤中確認",
- "driver": "sox",
- "z_used": -1.15,
+ "fresh": true,
+ "overall": "alert",
+ "overall_text": "強烈偏空",
+ "action": "開盤不追價，考慮先減碼或避險",
+ "driver": "night",
+ "z_used": -5.29,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -21,28 +21,28 @@
   {
    "key": "SOX",
    "label": "費城半導體",
-   "sub": "美股 11/04 收盤",
-   "value": 10268.65,
-   "pct": -3.13,
-   "z": -1.15,
-   "state": "watch",
-   "used": true,
+   "sub": "美股 11/05 收盤",
+   "value": 9011.14,
+   "pct": -12.25,
+   "z": -4.64,
+   "state": "alert",
+   "used": false,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
    "key": "NIGHT",
    "label": "台指期夜盤",
    "sub": "近月 202611",
-   "value": 43404.0,
-   "pct": null,
-   "z": null,
-   "chg": null,
-   "ref": 43203.0,
-   "state": "unknown",
-   "used": false,
-   "date": "20261105",
-   "stale": true,
-   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
+   "value": 38936.0,
+   "pct": -7.03,
+   "z": -5.29,
+   "chg": -2946.0,
+   "ref": 41882.0,
+   "state": "alert",
+   "used": true,
+   "date": "20261106",
+   "stale": false,
+   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
   }
  ],
  "flow": {
@@ -51,13 +51,13 @@
   "sum5": -5456.6,
   "z": -0.91,
   "night": {
-   "date": "2026-11-05",
-   "tx_net": -469,
-   "tx_long": 38711,
-   "tx_short": 39180,
-   "mtx_net": 2029,
-   "net_equiv": 38,
-   "fresh": false
+   "date": "2026-11-06",
+   "tx_net": 648,
+   "tx_long": 51736,
+   "tx_short": 51088,
+   "mtx_net": -262,
+   "net_equiv": 582,
+   "fresh": true
   },
   "fut": {
    "date": "2026-11-05",
@@ -72,58 +72,58 @@
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 96.23,
-   "metric": -16.23,
+   "value": 99.25,
+   "metric": -13.61,
    "unit": "%",
-   "z": -3.15,
+   "z": -2.7,
    "state": "alert"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
-   "value": 4.89,
-   "metric": -5.8,
+   "value": 4.84,
+   "metric": -5.7,
    "unit": "bp",
-   "z": -1.22,
+   "z": -1.18,
    "state": "calm"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 101.49,
-   "metric": -0.54,
+   "value": 101.59,
+   "metric": -0.44,
    "unit": "%",
-   "z": -1.11,
+   "z": -0.96,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 158.37,
-   "metric": 0.34,
+   "value": 157.62,
+   "metric": -0.13,
    "unit": "%",
-   "z": 0.3,
+   "z": -0.09,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 7.64,
-   "metric": 7.64,
+   "value": 8.05,
+   "metric": 8.05,
    "unit": "美元",
-   "z": -0.18,
+   "z": -0.06,
    "state": "calm"
   }
  ],
  "notes": [
   "外資近 5 日累計賣超 5457 億，籌碼面偏弱。",
-  "布蘭特 5 日 波動異常（z=-3.1），留意是否擴散到股市。"
+  "布蘭特 5 日 波動異常（z=-2.7），留意是否擴散到股市。"
  ],
  "backtest": {
-  "n": 470,
-  "start": "2024-12-19",
+  "n": 469,
+  "start": "2024-12-20",
   "base": {
-   "avg": 0.07,
+   "avg": 0.08,
    "down_pct": 45.0
   },
   "buckets": [
@@ -139,11 +139,11 @@
    {
     "state": "watch",
     "label": "偏空",
-    "n": 56,
-    "avg": -1.22,
-    "median": -0.73,
+    "n": 55,
+    "avg": -1.23,
+    "median": -0.77,
     "down_pct": 82.0,
-    "worse_than_1pct": 43.0
+    "worse_than_1pct": 44.0
    },
    {
     "state": "calm",
@@ -167,7 +167,7 @@
  },
  "live": {
   "n": 14,
-  "pending": 0,
+  "pending": 1,
   "buckets": [
    {
     "state": "alert",
@@ -199,6 +199,12 @@
    }
   ],
   "recent": [
+   {
+    "us_date": "2026-11-05",
+    "state": "alert",
+    "target": null,
+    "ret": null
+   },
    {
     "us_date": "2026-11-04",
     "state": "calm",
@@ -250,12 +256,6 @@
    {
     "us_date": "2026-10-23",
     "state": "calm",
-    "target": "2026-10-27",
-    "ret": 0.12
-   },
-   {
-    "us_date": "2026-10-22",
-    "state": "alert",
     "target": "2026-10-27",
     "ret": 0.12
    }
