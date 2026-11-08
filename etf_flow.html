@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#091426" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>ETF資金流向 · Global Markets Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* 深色莫蘭迪金融主題 v1.0（與首頁、主動ETF頁一致）：漲鮮紅、跌亮綠、外資黃 */
+  :root{
+    --bg-main:#091426; --bg-section:#1E2730; --bg-card:#151C23; --bg-card-hover:#1B2430;
+    --border-section:#36434F; --border-card:#2E3A45;
+    --text:#F0F1ED; --text2:#C1CBCB; --muted:#A3AFB3;
+    --risk-2:#D08A82; --sig-neutral:#8FA8BD; --sig-favor:#8FB7A5;
+    --up:#FF4D4F; --down:#2EE68A; --chart-1:#D99A6C; --sand:#C9B8A6; --flow:#D9BC6A;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:"Space Grotesk","PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+    --sans:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg-main);color:var(--text);font-family:var(--sans)}
+  body{min-height:100vh;padding:calc(18px + env(safe-area-inset-top)) clamp(14px,3vw,34px) calc(28px + env(safe-area-inset-bottom));max-width:1240px;margin:0 auto;font-variant-numeric:tabular-nums}
+  a{color:var(--sand)}
+  .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border-card);position:relative}
+  .top::after{content:"";position:absolute;left:0;bottom:-1px;width:120px;height:2px;background:linear-gradient(90deg,var(--sand),transparent)}
+  h1{font-family:var(--disp);font-size:clamp(20px,2.6vw,28px);font-weight:700;letter-spacing:.02em}
+  .sub{margin-top:6px;color:var(--muted);font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+  .links{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{display:inline-block;padding:7px 12px;border:1px solid var(--sand);border-radius:8px;color:var(--sand);font-size:13px;text-decoration:none}
+  .btn:hover{background:var(--bg-card-hover)}
+
+  .bar{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:16px 0 14px}
+  .seg{display:flex;align-items:center;gap:6px}
+  .seg .lab{font-size:12px;color:var(--muted);margin-right:2px}
+  .opt{background:var(--bg-section);border:1px solid var(--border-card);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:var(--sans)}
+  .opt.on{border-color:var(--sand);color:var(--text);background:var(--bg-card-hover)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(370px,1fr));gap:14px}
+  .card{container-type:inline-size;background:var(--bg-card);border:1px solid var(--border-section);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 8px 24px -12px rgba(0,0,0,.6)}
+  .card h2{font-family:var(--sans);font-size:16px;font-weight:700;padding:12px 14px 4px;display:flex;align-items:baseline;gap:8px}
+  .card h2 .k{display:inline-block;width:8px;height:8px;border-radius:2px;align-self:center}
+  .card .hint{font-size:12px;color:var(--muted);padding:0 14px 10px;line-height:1.5}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:9px 10px;text-align:right;white-space:nowrap;border-top:1px solid var(--border-card)}
+  th{font-size:12px;font-weight:500;color:var(--muted);background:var(--bg-section)}
+  th:nth-child(-n+2),td:nth-child(-n+2){text-align:left}
+  td.rk{font-family:var(--mono);color:var(--muted);width:28px}
+  td.num{font-family:var(--mono)}
+  td .nm{display:block}
+  td .code{font-family:var(--mono);color:var(--muted);font-size:12px}
+  .tag{display:inline-block;font-size:10px;line-height:15px;padding:0 4px;border-radius:3px;border:1px solid var(--border-section);color:var(--text2);margin-left:5px;vertical-align:1px}
+  .tag.lev{color:var(--risk-2);border-color:color-mix(in srgb,var(--risk-2) 50%,transparent)}
+  .tag.bond{color:var(--sig-neutral);border-color:color-mix(in srgb,var(--sig-neutral) 50%,transparent)}
+  .tag.act{color:var(--sig-favor);border-color:color-mix(in srgb,var(--sig-favor) 50%,transparent)}
+  .pos{color:var(--up);font-weight:600} .neg{color:var(--down);font-weight:600} .mut{color:var(--muted)}
+  .fi{color:var(--flow);font-weight:600}
+  .big{font-size:15px}
+  .empty{padding:28px 14px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6}
+  .note{font-size:12px;color:var(--muted);line-height:1.8;margin-top:16px}
+  td .x{display:none;font-size:11px;color:var(--muted);font-family:var(--mono)}
+  @container (max-width:560px){ .sec{display:none} td .x{display:inline} th,td{padding:9px 6px} td.rk{padding-left:12px} .big{font-size:14px} }
+  @media (max-width:640px){ .grid{grid-template-columns:1fr} th,td{padding:8px 7px;font-size:13px} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>ETF資金流向</h1>
+    <div class="sub" id="sub">載入中…</div>
+  </div>
+  <nav class="links">
+    <a class="btn" href="./etf.html">主動ETF選股名單</a>
+    <a class="btn" href="./index.html">← 回盤勢監控</a>
+  </nav>
+</header>
+
+<div class="bar">
+  <div class="seg" id="sortSeg"><span class="lab">排名依</span>
+    <button class="opt on" data-v="amt">金額</button><button class="opt" data-v="lots">張數</button>
+  </div>
+  <div class="seg" id="scopeSeg"><span class="lab">範圍</span>
+    <button class="opt on" data-v="all">全部</button><button class="opt" data-v="nolev">排除槓反</button><button class="opt" data-v="equity">只看股票型</button>
+  </div>
+</div>
+
+<div class="grid">
+  <section class="card"><h2><span class="k" style="background:var(--chart-1)"></span>受益權單位數增加 前5</h2>
+    <div class="hint">當日已發行單位數淨增加＝申購資金流入。金額＝增加單位數 × 成交價（估算）。</div>
+    <div class="scroll"><table id="t-units"></table></div></section>
+  <section class="card"><h2><span class="k" style="background:var(--flow)"></span>外資買超 前5</h2>
+    <div class="hint">外資及陸資（不含外資自營商）買賣超。</div>
+    <div class="scroll"><table id="t-fi"></table></div></section>
+  <section class="card"><h2><span class="k" style="background:var(--sig-favor)"></span>投信買超 前5</h2>
+    <div class="hint">投信買賣超；投信買 ETF 的量通常不大，金額很小時參考價值有限。</div>
+    <div class="scroll"><table id="t-it"></table></div></section>
+</div>
+
+<p class="note">
+  資料來源：受益權單位數－證交所 ETF 申贖資訊及即時淨值揭露專區（上市＋上櫃）；法人買賣超－證交所 T86（ETF）＋櫃買中心三大法人買賣明細。
+  每個交易日傍晚更新。單位數一天增加五成以上多半是分割，不列入排名。金額為股數 × 當日成交價的估算值。僅供參考，非投資建議。
+</p>
+
+<script>
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nf = (v, d = 0) => v == null || isNaN(v) ? "—" : Number(v).toLocaleString("zh-TW", {minimumFractionDigits: d, maximumFractionDigits: d});
+const sg = (v, d = 0) => v == null || isNaN(v) ? "—" : (v > 0 ? "+" : "") + nf(v, d);
+const cls = v => v == null ? "mut" : v > 0 ? "pos" : v < 0 ? "neg" : "mut";
+const amtD = v => Math.abs(v) >= 10 ? 1 : 2;
+const TAG = {"槓反": "lev", "債券": "bond", "主動": "act", "期貨": "", "股票": ""};
+
+let D = null, SORT = "amt", SCOPE = "all";
+
+function inScope(r) {
+  if (SCOPE === "nolev") return r.cat !== "槓反";
+  if (SCOPE === "equity") return r.cat === "股票" || r.cat === "主動";
+  return true;
+}
+function top5(lotsKey, amtKey, extra = () => true) {
+  const k = SORT === "amt" ? amtKey : lotsKey;
+  return D.rows.filter(r => inScope(r) && extra(r) && r[k] != null && r[k] > 0)
+    .sort((a, b) => b[k] - a[k] || b[lotsKey] - a[lotsKey]).slice(0, 5);
+}
+function nameCell(r, x = "") {
+  const t = r.cat !== "股票" ? `<span class="tag ${TAG[r.cat] || ""}">${r.cat}</span>` : "";
+  return `<td><span class="nm">${esc(r.name)}${t}</span><span class="code">${esc(r.code)}${r.market ? " · " + r.market : ""}</span>${x ? `<span class="x"> · ${x}</span>` : ""}</td>`;
+}
+const emptyRow = (n, msg) => `<tr><td colspan="${n}" class="empty">${msg}</td></tr>`;
+
+function renderUnits() {
+  const head = `<tr><th>#</th><th>ETF</th><th>增加張數</th><th>流入(億)</th><th class="sec">增幅</th><th class="sec">外資(張)</th></tr>`;
+  const rows = top5("d_units", "flow", r => !r.split);
+  const body = rows.map((r, i) => `<tr><td class="rk">${i + 1}</td>${nameCell(r, r.fi ? `外資 ${sg(r.fi)}` : "")}
+    <td class="num ${SORT === "lots" ? "big " : ""}${cls(r.d_units)}">${sg(r.d_units)}</td>
+    <td class="num ${SORT === "amt" ? "big " : ""}${cls(r.flow)}">${sg(r.flow, amtD(r.flow))}</td>
+    <td class="num sec ${cls(r.d_pct)}">${sg(r.d_pct, 2)}%</td>
+    <td class="num sec ${r.fi ? "fi" : "mut"}">${sg(r.fi)}</td></tr>`).join("");
+  document.getElementById("t-units").innerHTML = head + (body || emptyRow(6, "這個範圍內今天沒有單位數增加的 ETF"));
+}
+
+function renderInst(id, who, lotsKey, amtKey, ok) {
+  const isFi = lotsKey === "fi";
+  const head = `<tr><th>#</th><th>ETF</th><th>買超張數</th><th>金額(億)</th><th class="sec">單位數增減</th><th class="sec">${isFi ? "投信" : "外資"}(張)</th></tr>`;
+  if (!ok) { document.getElementById(id).innerHTML = head + emptyRow(6, `${who}資料還沒公布（證交所約 15:00～16:30），傍晚排程會再更新`); return; }
+  const rows = top5(lotsKey, amtKey);
+  const vcls = v => isFi ? (v > 0 ? "fi" : cls(v)) : cls(v);
+  const other = isFi ? "it" : "fi";
+  const body = rows.map((r, i) => `<tr><td class="rk">${i + 1}</td>${nameCell(r, r.d_units ? `單位 ${sg(r.d_units)}` : "")}
+    <td class="num ${SORT === "lots" ? "big " : ""}${vcls(r[lotsKey])}">${sg(r[lotsKey])}</td>
+    <td class="num ${SORT === "amt" ? "big " : ""}${vcls(r[amtKey])}">${sg(r[amtKey], amtD(r[amtKey]))}</td>
+    <td class="num sec ${cls(r.d_units)}">${sg(r.d_units)}</td>
+    <td class="num sec ${r[other] ? (other === "fi" ? "fi" : cls(r[other])) : "mut"}">${sg(r[other])}</td></tr>`).join("");
+  document.getElementById(id).innerHTML = head + (body || emptyRow(6, `這個範圍內今天沒有${who}買超的 ETF`));
+}
+
+function render() {
+  const instOk = D.inst && (D.inst.twse || D.inst.tpex);
+  renderUnits();
+  renderInst("t-fi", "外資", "fi", "fi_amt", instOk);
+  renderInst("t-it", "投信", "it", "it_amt", instOk);
+}
+
+function bindSeg(id, set) {
+  const seg = document.getElementById(id);
+  seg.querySelectorAll(".opt").forEach(b => b.onclick = () => {
+    seg.querySelectorAll(".opt").forEach(x => x.classList.toggle("on", x === b));
+    set(b.dataset.v); if (D) render();
+  });
+}
+bindSeg("sortSeg", v => SORT = v);
+bindSeg("scopeSeg", v => SCOPE = v);
+
+(async () => {
+  try { const r = await fetch("data/etf_flow.json?t=" + Date.now(), {cache: "no-store"}); D = r.ok ? await r.json() : null; } catch (e) { D = null; }
+  if (!D) {
+    document.getElementById("sub").textContent = "尚無資料";
+    ["t-units", "t-fi", "t-it"].forEach(id => document.getElementById(id).innerHTML = emptyRow(1, "還沒有 etf_flow.json —— 傍晚排程跑完 etf_flow.py 後會自動推上來。"));
+    return;
+  }
+  const miss = [];
+  if (D.inst && !D.inst.twse) miss.push("上市法人");
+  if (D.inst && !D.inst.tpex) miss.push("上櫃法人");
+  document.getElementById("sub").textContent =
+    `資料日 ${D.date} · ${D.n_units} 檔 ETF（上市＋上櫃）· 更新 ${String(D.generated_at).replace("T", " ")}` + (miss.length ? ` · 缺：${miss.join("、")}` : "");
+  render();
+})();
+</script>
+</body>
+</html>
