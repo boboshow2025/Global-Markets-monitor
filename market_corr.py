@@ -37,6 +37,7 @@ import argparse
 import csv
 import io
 import json
+import re
 import math
 import ssl
 import sys
@@ -388,6 +389,10 @@ def _night_foreign_one(day: date, commodity: str) -> dict | None:
         text = resp.read().decode("utf-8", errors="replace")
     if "<table" not in text.lower():
         return None
+    # 沒有那天的資料時，期交所會回別天（甚至別的商品）的預設頁，日期對不上就當作沒有
+    m = re.search(r"日期\s*(\d{4}/\d{2}/\d{2})", text)
+    if not m or m.group(1) != day.strftime("%Y/%m/%d"):
+        return None
     try:
         tabs = pd.read_html(io.StringIO(text))
     except Exception:  # noqa: BLE001  沒有表格＝當天沒有夜盤資料
@@ -436,6 +441,20 @@ def fetch_night_foreign(verbose: bool) -> dict | None:
     return None
 
 
+def fetch_night_tx_for(day: str, night_fx: dict | None, verbose: bool) -> int | None:
+    """未平倉那一天（例如 11/09）所歸屬的夜盤（前一晚 15:00～05:00）外資大台淨口數。
+    最新夜盤剛好是同一天就直接用，否則另外查那一天。"""
+    if night_fx and night_fx.get("date") == day:
+        return night_fx["tx_net"]
+    try:
+        r = _night_foreign_one(datetime.strptime(day, "%Y-%m-%d").date(), "TXF")
+    except Exception as exc:  # noqa: BLE001
+        if verbose:
+            print(f"[taifex] {day} 夜盤外資查詢失敗：{exc}")
+        return None
+    return r["net"] if r else None
+
+
 def _oi_from_csv(verbose: bool, end_candidates: list[date]) -> pd.DataFrame | None:
     """期交所「三大法人-區分各期貨契約」CSV 下載，可一次抓一段日期，算得出每日增減。
     結束日期不能晚於期交所最新資料日，否則回錯誤頁；所以從台股最近交易日開始往前試。"""
@@ -464,6 +483,13 @@ def _oi_from_csv(verbose: bool, end_candidates: list[date]) -> pd.DataFrame | No
             "long": df["多方未平倉口數"].astype(int),
             "short": df["空方未平倉口數"].astype(int),
         })
+        # 外資交易口數淨額：這是「整個交易日」＝前一晚夜盤＋當天日盤（2026/11 用全市場成交量核對過，
+        # 外資多方口數會大於日盤全市場成交量，所以一定含夜盤）。日盤＝這個數字－夜盤表（futContractsDateAh）。
+        if "多空交易口數淨額" in df.columns:
+            out["trade_net"] = pd.to_numeric(df["多空交易口數淨額"], errors="coerce").values
+        elif {"多方交易口數", "空方交易口數"} <= set(df.columns):
+            out["trade_net"] = (pd.to_numeric(df["多方交易口數"], errors="coerce")
+                                - pd.to_numeric(df["空方交易口數"], errors="coerce")).values
         return out if len(out) else None
     except Exception as exc:  # noqa: BLE001
         if verbose:
@@ -480,11 +506,13 @@ def _oi_from_openapi() -> pd.DataFrame:
     rows = json.loads(raw.decode("utf-8-sig"))
     rec = next(r for r in rows if str(r.get("ContractCode", "")).strip() == "臺股期貨"
                and str(r.get("Item", "")).startswith("外資"))
+    dn = _num(rec.get("TradingVolume(Net)", ""))
     return pd.DataFrame([{
         "date": pd.Timestamp(str(rec["Date"])),
         "net": int(_num(rec["OpenInterest(Net)"])),
         "long": int(_num(rec["OpenInterest(Long)"])),
         "short": int(_num(rec["OpenInterest(Short)"])),
+        "trade_net": dn,
     }])
 
 
@@ -502,9 +530,11 @@ def fetch_foreign_futures_oi(cache: Path, verbose: bool,
                 print(f"[taifex] 外資期貨未平倉抓不到：{exc}")
             new = None
 
-    hist = pd.DataFrame(columns=["date", "net", "long", "short"])
+    hist = pd.DataFrame(columns=["date", "net", "long", "short", "trade_net"])
     if cache.exists():
         hist = pd.read_csv(cache, parse_dates=["date"])
+        if "trade_net" not in hist.columns:        # 舊快取沒有交易淨額欄位
+            hist["trade_net"] = pd.NA
     if new is not None:
         hist = hist[~hist["date"].isin(new["date"])]
         hist = pd.concat([x for x in (hist, new) if len(x)])
@@ -520,8 +550,11 @@ def fetch_foreign_futures_oi(cache: Path, verbose: bool,
     if verbose:
         print(f"[taifex] 外資台指期淨未平倉 {net:+,} 口"
               + (f"（較前日 {chg:+,}）" if chg is not None else "（首日，明天起有增減）"))
+    tn = last.get("trade_net")
+    trade_net = int(tn) if tn is not None and pd.notna(tn) else None
     return {"date": last["date"].strftime("%Y-%m-%d"), "net": net,
             "long": int(last["long"]), "short": int(last["short"]), "chg": chg,
+            "trade_net": trade_net,
             "prev_date": prev["date"].strftime("%Y-%m-%d") if prev is not None else None}
 
 
@@ -887,7 +920,7 @@ def main() -> int:
             night_fx = {"date": "2026-10-19", "tx_net": 2143, "tx_long": 23937, "tx_short": 21794,
                         "mtx_net": -1200, "net_equiv": 1843}
             fut_oi = {"date": "2026-10-16", "net": -93675, "long": 9812, "short": 103487,
-                      "chg": -4210, "prev_date": "2026-10-15"}
+                      "chg": -4210, "trade_net": -4210, "day_net": -3100, "night_net": -1110, "prev_date": "2026-10-15"}
             taiex_src = "test"
             log_path = data_dir / "signal_log.test.csv"
             if log_path.exists():
@@ -906,6 +939,12 @@ def main() -> int:
             night = fetch_tx_night_csv(verbose) or fetch_tx_night(verbose)   # CSV 早上就有；抓不到才用 OpenAPI
             night_fx = fetch_night_foreign(verbose)
             fut_oi = fetch_foreign_futures_oi(data_dir / "foreign_fut_oi.csv", verbose, list(taiex.index))
+            if fut_oi:
+                nn = fetch_night_tx_for(fut_oi["date"], night_fx, verbose)
+                fut_oi["night_net"] = nn
+                # 日盤＝全日交易淨額－夜盤
+                fut_oi["day_net"] = (fut_oi["trade_net"] - nn
+                                     if fut_oi.get("trade_net") is not None and nn is not None else None)
             log_path = data_dir / "signal_log.csv"
 
         # 沒有新資料就不重寫（週末／假日）

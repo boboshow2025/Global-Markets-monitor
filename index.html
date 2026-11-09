@@ -357,6 +357,12 @@ html,body{background:var(--bg-main)!important}
   .td-ext .v small{font:500 13px var(--mono); margin-left:6px}
   .td-ext .s{font-size:12px; color:var(--muted); margin-top:3px}
   .td-ext .flowv{color:var(--flow)}
+  .td-ext .brk{display:grid; grid-template-columns:auto 1fr; gap:3px 0; margin-top:8px; padding-top:7px; border-top:1px dashed var(--line); font:500 13px/1.35 var(--mono); font-variant-numeric:tabular-nums}
+  .td-ext .brk .bk{color:var(--muted); font-family:inherit}
+  .td-ext .brk .bv{text-align:right; padding-left:12px}
+  .td-ext .brk .bv small{color:var(--muted); font-weight:400; margin-left:3px}
+  .td-ext .brk .tot{padding-top:4px; border-top:1px solid var(--line)}
+  .td-ext .brk-note{font-size:11px; color:var(--muted); margin-top:4px}
   .td-ma .v small.d{font:600 12.5px var(--sans,inherit)}
   .td-ma .s b{font:600 12px var(--mono); color:var(--text)}
   @media (max-width:640px){ .td-ext{grid-template-columns:1fr} }
@@ -409,6 +415,30 @@ html,body{background:var(--bg-main)!important}
       if (c < 0) { t = '當日淨空單增加 ' + n + ' 口'; cl = 'neg'; t += prev > 0 ? (net < 0 ? '（多翻空）' : '（多單調節）') : '（加空）'; }
       else       { t = '當日淨多單增加 ' + n + ' 口'; cl = 'pos'; t += prev < 0 ? (net > 0 ? '（空翻多）' : '（空單回補）') : '（加多）'; }
       return '<span class="' + cl + '">' + t + '</span>';
+    };
+    /* 外資台指期（大台）：夜盤淨額＋日盤淨額＝當天交易淨額；未平倉變化理論上要等於它 */
+    window.oiBreakdown = window.oiBreakdown || function (fu) {
+      if (!fu) return '';
+      const has = (v) => v !== null && v !== undefined && !isNaN(v);
+      const sg = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('en-US');
+      const cl = (v) => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+      // 期交所「交易口數」＝前一晚夜盤＋當天日盤；日盤＝交易淨額－夜盤（後端已算好 day_net）
+      const nt = fu.night_net, chg = fu.chg, tn = fu.trade_net;
+      let dy = fu.day_net, est = false;
+      if (!has(dy) && has(nt) && has(tn)) dy = tn - nt;
+      if (!has(dy) && has(nt) && has(chg)) { dy = chg - nt; est = true; }   // 舊資料沒有交易淨額時用推算
+      if (!has(nt) && !has(dy) && !has(chg)) return '';
+      const line = (k, v, extra, c) => '<span class="bk' + (c ? ' ' + c : '') + '">' + k + '</span><span class="bv' + (c ? ' ' + c : '') + '">' +
+        (has(v) ? '<span class="' + cl(v) + '">' + sg(v) + '</span><small>口</small>' : '<small>—</small>') + (extra || '') + '</span>';
+      let h = '<div class="brk">' +
+        line('夜盤淨額', nt) +
+        line('日盤淨額' + (est ? '（推算）' : ''), dy) +
+        line('未平倉變化', chg, has(chg) && chg !== 0 ? '<small>' + (chg < 0 ? (fu.net < 0 ? '加空' : '減多') : (fu.net < 0 ? '回補' : '加多')) + '</small>' : '', 'tot') +
+        '</div>';
+      if (!est && has(nt) && has(dy) && has(chg) && Math.abs(nt + dy - chg) > 50) {
+        h += '<div class="brk-note">全日交易淨額 ' + sg(nt + dy) + ' 口，與未平倉變化差 ' + Math.abs(Math.round(nt + dy - chg)).toLocaleString('en-US') + ' 口（期交所未說明差異原因）</div>';
+      }
+      return h;
     };
     function renderPre(d) {
       const el = $('ov-pre');
@@ -577,7 +607,7 @@ html,body{background:var(--bg-main)!important}
         const isShort = fu.net < 0;
         h += '<div class="x"><div class="k">外資台指期' + (isShort ? '淨空單' : '淨多單') + ' · ' + md(fu.date) + '</div>' +
           '<div class="v flowv">' + fmt(Math.abs(fu.net)) + '<small style="color:var(--muted)">口</small></div>' +
-          '<div class="s">' + (window.oiChgTxt ? oiChgTxt(fu) : '') + '</div></div>';
+          (window.oiBreakdown ? oiBreakdown(fu) : '<div class="s">' + (window.oiChgTxt ? oiChgTxt(fu) : '') + '</div>') + '</div>';
       }
       return h ? '<div class="td-ext">' + h + '</div>' : '';
     }
@@ -764,7 +794,10 @@ html,body{background:var(--bg-main)!important}
         '<div class="tx-row"><span class="k">現貨買賣超<br>' + md(f.date) + '</span><span><span class="v">' + n0(f.net) + '<small>億</small></span>' +
           '<span class="d">近 5 日 ' + n0(f.sum5) + ' 億</span></span></div>' +
         '<div class="tx-row"><span class="k">台指期淨未平倉<br>' + (fu ? md(fu.date) : '期交所') + '</span><span><span class="v">' + (fu ? n0(fu.net) : '—') + '<small>口</small></span>' +
-          '<span class="d">' + (fu ? (fu.chg === null ? '明天起顯示增減' : oiChgTxt(fu)) + '<br>多 ' + fu.long.toLocaleString() + ' / 空 ' + fu.short.toLocaleString() : '未取得') + '</span></span></div>' +
+          '<span class="d">' + (fu ? (fu.chg === null ? '明天起顯示增減' : oiChgTxt(fu)) +
+            ((fu.night_net !== null && fu.night_net !== undefined) || (fu.day_net !== null && fu.day_net !== undefined)
+              ? '<br>夜盤 ' + n0(fu.night_net) + ' · 日盤 ' + n0(fu.day_net) : '') +
+            '<br>多 ' + fu.long.toLocaleString() + ' / 空 ' + fu.short.toLocaleString() : '未取得') + '</span></span></div>' +
         (f.night ? '<div class="tx-row"><span class="k">夜盤外資交易<br>' + md(f.night.date) + ' 歸屬</span><span><span class="v">' + n0(f.night.net_equiv) + '<small>口</small></span>' +
           '<span class="d">大台 ' + n0(f.night.tx_net) + (f.night.mtx_net === null ? '' : ' · 小台 ' + n0(f.night.mtx_net)) + (f.night.fresh ? '' : ' · 台股已開過') + '</span></span></div>' : '') +
         '<div class="tx-rule">淨未平倉為負＝外資淨空單。空單擴大代表期貨端在避險，縮小代表回補。夜盤外資只公布交易口數（不公布未平倉），折算大台＝大台＋小台÷4。不單獨決定燈號。</div></div>');

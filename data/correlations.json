@@ -1,7 +1,7 @@
 {
  "schema": 2,
  "sig": "2026-11-06|2026-11-09|twse|2026-11-09|20261109",
- "generated_at": "2026-11-09T19:28:01+08:00",
+ "generated_at": "2026-11-09T20:43:50+08:00",
  "us_date": "2026-11-06",
  "tw_last_date": "2026-11-09",
  "tw_last_close": 41661.7,
@@ -65,17 +65,20 @@
    "long": 11571,
    "short": 113342,
    "chg": -1841,
-   "prev_date": "2026-11-06"
+   "trade_net": -2785,
+   "prev_date": "2026-11-06",
+   "night_net": -1113,
+   "day_net": -1672
   }
  },
  "background": [
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 94.83,
-   "metric": -9.49,
+   "value": 94.93,
+   "metric": -9.39,
    "unit": "%",
-   "z": -1.67,
+   "z": -1.65,
    "state": "watch"
   },
   {
@@ -90,28 +93,28 @@
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 101.8,
-   "metric": 0.05,
+   "value": 101.89,
+   "metric": 0.13,
    "unit": "%",
-   "z": -0.17,
+   "z": -0.05,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 157.91,
-   "metric": 0.15,
+   "value": 158.02,
+   "metric": 0.22,
    "unit": "%",
-   "z": 0.16,
+   "z": 0.22,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 6.9,
-   "metric": 6.9,
+   "value": 6.68,
+   "metric": 6.68,
    "unit": "美元",
-   "z": -0.4,
+   "z": -0.47,
    "state": "calm"
   }
  ],
