@@ -17,11 +17,7 @@ REM 2) panic gauge (VIX / foreign futures short / margin)
 "%PYEXE%" panic_gauge.py --out "data\panic.json"
 if errorlevel 1 echo [warn] panic_gauge failed, keeping previous panic.json
 
-REM 3) ETF flow (units increase / foreign / trust top lists, all listed+OTC ETFs)
-"%PYEXE%" etf_flow.py --out "data\etf_flow.json"
-if errorlevel 1 echo [warn] etf_flow failed, keeping previous etf_flow.json
-
-REM 4) data\rotation.json is written every evening by ETF-Tracker2 (Etf_tracker_v2.py)
+REM 3) data\rotation.json is written every evening by ETF-Tracker2 (Etf_tracker_v2.py)
 
 REM 18:30 the stock-screener daily job also commits to this repo: wait (max ~2.5 min) if git is busy
 set /a LOCKWAIT=0
