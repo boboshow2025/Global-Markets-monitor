@@ -366,6 +366,14 @@ html,body{background:var(--bg-main)!important}
   .td-ma .v small.d{font:600 12.5px var(--sans,inherit)}
   .td-ma .s b{font:600 12px var(--mono); color:var(--text)}
   @media (max-width:640px){ .td-ext{grid-template-columns:1fr} }
+  .td-ch{margin-top:16px; position:relative}
+  .td-ch-h{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:4px 12px; font-size:12.5px; color:var(--muted); margin-bottom:6px}
+  .td-ch-h .lg{display:flex; gap:12px; font-size:12px}
+  .td-ch-h .lg i{display:inline-block; width:14px; height:0; border-top:2px solid; vertical-align:middle; margin-right:5px}
+  .td-ch svg{display:block; max-width:100%; overflow:visible}
+  .td-ch svg text{font:11px var(--mono); fill:var(--muted)}
+  .td-ch .tip{position:absolute; top:26px; pointer-events:none; background:var(--bg-main,#091426); border:1px solid var(--line); border-radius:8px;
+    padding:6px 9px; font:12px/1.5 var(--mono); color:var(--text); white-space:nowrap; transform:translateX(-50%); display:none; z-index:2}
   .td-foot{border-top:1px solid var(--line); margin-top:14px; padding-top:9px; font-size:11px; line-height:1.6; color:var(--muted)}
   @media (max-width:640px){ .td{padding:14px 15px 12px} .td-body{grid-template-columns:1fr} }
   @media (max-width:900px){ .ov-grid.two{grid-template-columns:1fr} }
@@ -564,9 +572,11 @@ html,body{background:var(--bg-main)!important}
           (say ? '<div class="td-say">' + say + '</div>' : '') +
           (t.up !== undefined ? '<div class="td-cnt">上漲 <span class="pos">' + fmt(t.up) + '</span> · 下跌 <span class="neg">' + fmt(t.down) + '</span> 家</div>' : '') +
         '</div></div>' +
+        moodChartHtml(t.hist) +
         extHtml(pre) + maKeysHtml(t.ma_keys, t.close) +
         '<div class="td-foot">情緒＝' + (t.parts || []).map((p) => esc(p.name) + ' ' + p.v).join('・') + ' 的平均' + dlt + '（門檻非回測）</div>';
       el.hidden = false;
+      moodChartHover(el);
     }
 
     /* 均線扣抵：下一交易日收盤 > 扣抵值 → 均線上揚，< 扣抵值 → 下彎（讀 panic.json today.ma_keys） */
@@ -587,6 +597,62 @@ html,body{background:var(--bg-main)!important}
           (next ? '<div class="s">之後扣抵：' + next + '</div>' : '') + '</div>';
       }).join('');
       return h ? '<div class="td-ext td-ma">' + h + '</div>' : '';
+    }
+
+    /* 近 20 日情緒分數（橘，左軸 0–100，越高越恐慌）＋加權指數收盤（藍灰，右軸）；讀 panic.json today.hist
+       先放容器，插入頁面後依實際寬度畫 SVG（字級固定，不隨螢幕縮放） */
+    function moodChartHtml(h) {
+      if (!h || h.length < 3) return '';
+      const C1 = 'var(--chart-1,#D99A6C)', C2 = 'var(--sig-neutral,#8FA8BD)';
+      return '<div class="td-ch" data-h="' + esc(JSON.stringify(h)) + '">' +
+        '<div class="td-ch-h"><span>近 ' + h.length + ' 個交易日</span><span class="lg"><span><i style="border-color:' + C1 + '"></i>情緒分數（左）</span><span><i style="border-color:' + C2 + '"></i>加權指數（右）</span></span></div>' +
+        '<svg role="img" aria-label="近 ' + h.length + ' 日情緒分數與加權指數"></svg><div class="tip"></div></div>';
+    }
+    function moodChartDraw(root) {
+      const box = root && root.querySelector('.td-ch'); if (!box) return;
+      const h = JSON.parse(box.dataset.h), n = h.length, svg = box.querySelector('svg'), tip = box.querySelector('.tip');
+      const W = Math.max(280, box.clientWidth), H = W < 520 ? 170 : 210, L = 28, R = 54, T = 8, B = 20, iw = W - L - R, ih = H - T - B;
+      const x = (i) => L + i * iw / (n - 1), ys = (v) => T + ih * (1 - v / 100);
+      const cs = h.map((p) => p.close).filter((v) => v != null);
+      let lo = Math.min(...cs), hi = Math.max(...cs); const pad = (hi - lo) * 0.08 || hi * 0.01; lo -= pad; hi += pad;
+      const yc = (v) => T + ih * (1 - (v - lo) / (hi - lo));
+      const path = (key, fy) => { let d = '', pen = false; h.forEach((p, i) => { const v = p[key]; if (v == null) { pen = false; return; } d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + fy(v).toFixed(1); pen = true; }); return d; };
+      const fmt = (v) => Number(v).toLocaleString('en-US', {maximumFractionDigits: 0});
+      const C1 = 'var(--chart-1,#D99A6C)', C2 = 'var(--sig-neutral,#8FA8BD)';
+      let g = '<rect x="' + L + '" y="' + ys(100) + '" width="' + iw + '" height="' + (ys(70) - ys(100)) + '" fill="var(--risk-3,#D9665E)" opacity=".10"/>' +
+        '<rect x="' + L + '" y="' + ys(70) + '" width="' + iw + '" height="' + (ys(50) - ys(70)) + '" fill="var(--risk-2,#D08A82)" opacity=".05"/>';
+      [0, 30, 50, 70, 100].forEach((v) => {
+        g += '<line x1="' + L + '" x2="' + (L + iw) + '" y1="' + ys(v) + '" y2="' + ys(v) + '" stroke="var(--line)" opacity="' + (v % 100 ? .55 : .9) + '"/>' +
+          '<text x="' + (L - 6) + '" y="' + (ys(v) + 4) + '" text-anchor="end">' + v + '</text>';
+      });
+      [hi - pad, lo + pad].forEach((v) => { g += '<text x="' + (L + iw + 6) + '" y="' + (yc(v) + 4) + '">' + fmt(v) + '</text>'; });
+      [0, Math.floor((n - 1) / 2), n - 1].forEach((i) => { g += '<text x="' + x(i) + '" y="' + (H - 4) + '" text-anchor="' + (i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle') + '">' + md(h[i].date) + '</text>'; });
+      g += '<path d="' + path('close', yc) + '" fill="none" stroke="' + C2 + '" stroke-width="1.6" stroke-linejoin="round"/>' +
+        '<path d="' + path('score', ys) + '" fill="none" stroke="' + C1 + '" stroke-width="2.4" stroke-linejoin="round"/>';
+      const last = h[n - 1];
+      if (last.score != null) g += '<circle cx="' + x(n - 1) + '" cy="' + ys(last.score) + '" r="3.5" fill="' + C1 + '"/>';
+      if (last.close != null) g += '<circle cx="' + x(n - 1) + '" cy="' + yc(last.close) + '" r="3" fill="' + C2 + '"/>';
+      g += '<line class="cur" x1="0" x2="0" y1="' + T + '" y2="' + (T + ih) + '" stroke="var(--muted)" stroke-dasharray="3 3" opacity="0"/>';
+      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('width', W); svg.setAttribute('height', H);
+      svg.innerHTML = g;
+      const cur = svg.querySelector('.cur');
+      svg.onpointermove = svg.onpointerdown = (ev) => {
+        const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * W;
+        const i = Math.max(0, Math.min(n - 1, Math.round((px - L) / iw * (n - 1)))), xx = x(i), p = h[i];
+        cur.setAttribute('x1', xx); cur.setAttribute('x2', xx); cur.setAttribute('opacity', '.8');
+        const prev = i > 0 ? h[i - 1].close : null, chg = prev && p.close ? (p.close / prev - 1) * 100 : null;
+        tip.innerHTML = md(p.date) + '　情緒 <b>' + (p.score ?? '—') + '</b><br>加權 ' + (p.close != null ? fmt(p.close) : '—') +
+          (chg != null ? ' <span class="' + (chg > 0 ? 'pos' : chg < 0 ? 'neg' : '') + '">' + (chg > 0 ? '+' : '') + chg.toFixed(2) + '%</span>' : '');
+        tip.style.display = 'block'; tip.style.top = (svg.offsetTop + 6) + 'px';
+        const half = tip.offsetWidth / 2;
+        tip.style.left = Math.max(half, Math.min(r.width - half, xx / W * r.width)) + 'px';
+      };
+      svg.onpointerleave = () => { tip.style.display = 'none'; cur.setAttribute('opacity', '0'); };
+    }
+    let moodChartRoot = null;
+    function moodChartHover(root) {
+      moodChartRoot = root; moodChartDraw(root);
+      if (!window.__moodRz) { window.__moodRz = 1; let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => moodChartDraw(moodChartRoot), 150); }); }
     }
 
     /* 台指期夜盤收盤＋外資台指期淨空單（讀 correlations.json） */

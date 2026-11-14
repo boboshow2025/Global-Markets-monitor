@@ -558,6 +558,9 @@ def _read_breadth() -> pd.DataFrame:
         return pd.DataFrame()
 
 
+MOOD_HIST_DAYS = 20          # 首頁情緒曲線顯示幾個交易日
+
+
 def mood_score(df: pd.DataFrame, breadth: pd.DataFrame) -> tuple[pd.Series, pd.DataFrame]:
     """情緒分數 0~100（越高越恐慌）＝下列各項 0~100 的平均（缺資料的項目不算）：
        下跌家數占比、空方擴散度（60% 視為滿分）、外資期貨淨空單百分位、波動度百分位、融資維持率（200%→0、140%→100）"""
@@ -609,6 +612,9 @@ def today_block(df: pd.DataFrame) -> dict:
         "label": band[1], "c": band[2],
         "parts": [{"name": k, "v": _r(v, 0)} for k, v in parts.iloc[-1].items() if pd.notna(v)],
         "bands": [[b[0], b[1]] for b in MOOD_BANDS],
+        # 近 20 個交易日：情緒分數＋加權指數收盤（首頁曲線圖）
+        "hist": [{"date": d.strftime("%Y-%m-%d"), "score": None if pd.isna(v) else int(v), "close": _r(close.loc[d], 2)}
+                 for d, v in score.tail(MOOD_HIST_DAYS).items()],
     }
     if len(breadth) and t in breadth.index:
         r = breadth.loc[t]
@@ -727,7 +733,7 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
         payload["notes"].append(f"上櫃融資已累積 {otc_days} 天，補齊後自動改用上市＋上櫃合計判斷；目前只用上市。")
     if vol_source != "vix":
         payload["notes"].append(f"台指VIX 已累積 {len(vix)} 天，滿 {VIX_MIN_DAYS} 天後自動改用VIX判斷；目前用加權指數實現波動率代替。")
-    payload["sig"] = (f"v5|{margin_src}|{payload['date']}|{payload['close']}|{comps[1]['value']}|{comps[2]['value']}|{payload['vix']}"
+    payload["sig"] = (f"v6|{margin_src}|{payload['date']}|{payload['close']}|{comps[1]['value']}|{comps[2]['value']}|{payload['vix']}"
                       f"|{comps[3]['value'] if len(comps) > 3 else None}|{comps[3]['date'] if len(comps) > 3 else None}"
                       f"|{payload['today'].get('up')}|{payload['today'].get('down')}|{(payload['today'].get('flow') or {}).get('date')}")
     return payload
