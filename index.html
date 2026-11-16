@@ -366,7 +366,10 @@ html,body{background:var(--bg-main)!important}
   .td-ma .v small.d{font:600 12.5px var(--sans,inherit)}
   .td-ma .s b{font:600 12px var(--mono); color:var(--text)}
   @media (max-width:640px){ .td-ext{grid-template-columns:1fr} }
-  .td-ch{margin-top:16px; position:relative}
+  .td-ch{margin-top:16px; position:relative; min-width:0}
+  .td-top.two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 28px; align-items:center}
+  .td-top.two .td-ch{margin-top:0; padding-left:28px; border-left:1px solid var(--line)}
+  @media (max-width:1000px){ .td-top.two{display:block} .td-top.two .td-ch{margin-top:16px; padding-left:0; border-left:0} }
   .td-ch-h{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:4px 12px; font-size:12.5px; color:var(--muted); margin-bottom:6px}
   .td-ch-h .lg{display:flex; gap:12px; font-size:12px}
   .td-ch-h .lg i{display:inline-block; width:14px; height:0; border-top:2px solid; vertical-align:middle; margin-right:5px}
@@ -560,7 +563,7 @@ html,body{background:var(--bg-main)!important}
         ' · 前一日 ' + prev + (t.score > prev ? '（升溫 ' + (t.score - prev) + '）' : t.score < prev ? '（降溫 ' + (prev - t.score) + '）' : '');
       el.style.setProperty('--c', C[t.c] || C.off);
       el.innerHTML = '<div class="td-h">大盤多空力道 <span style="font:400 12px var(--mono);color:var(--muted);margin-left:6px">' + md(t.date) + ' 收盤</span></div>' +
-        '<div class="td-body"><div>' +
+        '<div class="td-top' + (t.hist && t.hist.length >= 3 ? ' two' : '') + '"><div class="td-body"><div>' +
           '<div class="td-chg ' + (chg > 0 ? 'up' : chg < 0 ? 'down' : '') + '">' + (chg > 0 ? '+' : '') + Number(chg).toFixed(2) + '%</div>' +
           '<div class="td-lbl">大盤 <span style="color:var(--muted);font-family:var(--mono);font-size:12.5px">' + fmt(t.close) + '</span></div>' +
           (f ? '<div class="td-flow">外資' + (f.net >= 0 ? '買超' : '賣超') + ' <b>' + fmt(Math.abs(f.net)) + '</b> 億</div>' + bars : '') +
@@ -572,7 +575,7 @@ html,body{background:var(--bg-main)!important}
           (say ? '<div class="td-say">' + say + '</div>' : '') +
           (t.up !== undefined ? '<div class="td-cnt">上漲 <span class="pos">' + fmt(t.up) + '</span> · 下跌 <span class="neg">' + fmt(t.down) + '</span> 家</div>' : '') +
         '</div></div>' +
-        moodChartHtml(t.hist) +
+        moodChartHtml(t.hist) + '</div>' +
         extHtml(pre) + maKeysHtml(t.ma_keys, t.close) +
         '<div class="td-foot">情緒＝' + (t.parts || []).map((p) => esc(p.name) + ' ' + p.v).join('・') + ' 的平均' + dlt + '（門檻非回測）</div>';
       el.hidden = false;
