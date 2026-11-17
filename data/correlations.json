@@ -1,17 +1,17 @@
 {
  "schema": 2,
- "sig": "2026-11-16|2026-11-17|twse|2026-11-17|20261117",
- "generated_at": "2026-11-17T18:32:17+08:00",
- "us_date": "2026-11-16",
+ "sig": "2026-11-17|2026-11-17|twse|2026-11-17|20261118",
+ "generated_at": "2026-11-18T06:31:35+08:00",
+ "us_date": "2026-11-17",
  "tw_last_date": "2026-11-17",
  "tw_last_close": 40092.11,
  "tw_last_pct": -2.31,
- "fresh": false,
- "overall": "watch",
- "overall_text": "偏空",
- "action": "保守操作，新倉等盤中確認",
- "driver": "sox",
- "z_used": -1.57,
+ "fresh": true,
+ "overall": "calm",
+ "overall_text": "中性",
+ "action": "照原計畫",
+ "driver": "night",
+ "z_used": -0.29,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -21,28 +21,28 @@
   {
    "key": "SOX",
    "label": "費城半導體",
-   "sub": "美股 11/16 收盤",
-   "value": 9610.65,
-   "pct": -5.28,
-   "z": -1.57,
-   "state": "watch",
-   "used": true,
+   "sub": "美股 11/17 收盤",
+   "value": 9642.88,
+   "pct": 0.34,
+   "z": 0.19,
+   "state": "calm",
+   "used": false,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
    "key": "NIGHT",
    "label": "台指期夜盤",
    "sub": "近月 202611",
-   "value": 40935.0,
-   "pct": null,
-   "z": null,
-   "chg": null,
-   "ref": 40781.0,
-   "state": "unknown",
-   "used": false,
-   "date": "20261117",
-   "stale": true,
-   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
+   "value": 39792.0,
+   "pct": -0.55,
+   "z": -0.29,
+   "chg": -219.0,
+   "ref": 40011.0,
+   "state": "calm",
+   "used": true,
+   "date": "20261118",
+   "stale": false,
+   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
   }
  ],
  "flow": {
@@ -51,13 +51,13 @@
   "sum5": -809.0,
   "z": -0.02,
   "night": {
-   "date": "2026-11-17",
-   "tx_net": 2317,
-   "tx_long": 41010,
-   "tx_short": 38693,
-   "mtx_net": 1101,
-   "net_equiv": 2592,
-   "fresh": false
+   "date": "2026-11-18",
+   "tx_net": -65,
+   "tx_long": 31220,
+   "tx_short": 31285,
+   "mtx_net": -448,
+   "net_equiv": -177,
+   "fresh": true
   },
   "fut": {
    "date": "2026-11-17",
@@ -67,59 +67,60 @@
    "chg": -1109,
    "trade_net": -1144,
    "prev_date": "2026-11-16",
-   "night_net": 2317,
-   "day_net": -3461
+   "night_net": null,
+   "day_net": null
   }
  },
  "background": [
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 92.38,
-   "metric": 0.97,
+   "value": 93.07,
+   "metric": 1.73,
    "unit": "%",
-   "z": 0.09,
+   "z": 0.2,
    "state": "calm"
   },
   {
    "key": "US10Y",
    "label": "美10Y 單日",
-   "value": 5.12,
-   "metric": -3.3,
+   "value": 5.1,
+   "metric": -1.8,
    "unit": "bp",
-   "z": -0.75,
+   "z": -0.45,
    "state": "calm"
   },
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 103.59,
-   "metric": 1.33,
+   "value": 103.55,
+   "metric": 1.29,
    "unit": "%",
-   "z": 1.52,
-   "state": "watch"
+   "z": 1.47,
+   "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 159.06,
-   "metric": 0.68,
+   "value": 159.35,
+   "metric": 0.86,
    "unit": "%",
-   "z": 0.54,
+   "z": 0.69,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 6.61,
-   "metric": 6.61,
+   "value": 7.46,
+   "metric": 7.46,
    "unit": "美元",
-   "z": -0.49,
+   "z": -0.25,
    "state": "calm"
   }
  ],
  "notes": [
-  "外資近 5 日累計賣超 809 億，籌碼面偏弱。"
+  "外資近 5 日累計賣超 809 億，籌碼面偏弱。",
+  "美股訊號雖不差，但外資持續撤出，不宜追高。"
  ],
  "backtest": {
   "n": 469,
@@ -169,7 +170,7 @@
  },
  "live": {
   "n": 22,
-  "pending": 0,
+  "pending": 1,
   "buckets": [
    {
     "state": "alert",
@@ -201,6 +202,12 @@
    }
   ],
   "recent": [
+   {
+    "us_date": "2026-11-17",
+    "state": "calm",
+    "target": null,
+    "ret": null
+   },
    {
     "us_date": "2026-11-16",
     "state": "calm",
@@ -254,12 +261,6 @@
     "state": "calm",
     "target": "2026-11-05",
     "ret": -3.2
-   },
-   {
-    "us_date": "2026-11-03",
-    "state": "calm",
-    "target": "2026-11-04",
-    "ret": -0.83
    }
   ]
  },
