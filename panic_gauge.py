@@ -362,11 +362,14 @@ def fetch_margin_otc(tw_dates: list[pd.Timestamp], verbose: bool) -> pd.Series:
 # 融資維持率的分子：每日 Σ(個股融資餘額張 × 1000 × 收盤價)，依市場分開（億元）
 MV_SQL = """
 SELECT m.date, m.market,
-       SUM(CASE WHEN p.close > 0 THEN m.bal * 1000.0 * p.close ELSE 0 END) / 1e8 AS mv
-FROM margin m JOIN prices p ON p.code = m.code AND p.date = m.date
+       SUM(CASE WHEN p.close > 0 THEN m.bal * 1000.0 * p.close ELSE 0 END) / 1e8 AS mv,
+       SUM(m.bal) AS bal_all,
+       SUM(CASE WHEN p.close > 0 THEN m.bal ELSE 0 END) AS bal_priced
+FROM margin m LEFT JOIN prices p ON p.code = m.code AND p.date = m.date
 WHERE m.date >= ?
 GROUP BY m.date, m.market
 """
+MV_MIN_COVER = 0.95   # 有收盤價的融資張數須占該市場融資餘額 95% 以上，否則當天分子不完整（例如上櫃行情沒抓到），視為缺資料
 
 
 def fetch_margin_mv(verbose: bool, since: str = "2024-01-01") -> dict:
@@ -395,7 +398,14 @@ def fetch_margin_mv(verbose: bool, since: str = "2024-01-01") -> dict:
         return {k: v for k, v in old.items() if len(v)}
     raw["date"] = pd.to_datetime(raw["date"])
     for k, mkt in (("twse", "TWSE"), ("otc", "TPEx")):
-        new = raw[raw["market"] == mkt].set_index("date")["mv"].astype(float)
+        r_ = raw[raw["market"] == mkt].set_index("date")
+        new = r_["mv"].astype(float)
+        bad = (r_["bal_priced"] / r_["bal_all"].where(r_["bal_all"] > 0)) < MV_MIN_COVER
+        if bad.any():
+            new[bad] = np.nan          # 蓋掉快取裡先前算的不完整數字
+            if verbose:
+                print(f"[maint] {'上市' if k == 'twse' else '上櫃'} 行情不齊、當天不算維持率："
+                      + "、".join(d.strftime("%m/%d") for d in new.index[bad]))
         merged = pd.concat([x for x in (old[k], new) if len(x)]) if (len(old[k]) or len(new)) else pd.Series(dtype=float)
         if len(merged):
             out[k] = _save_cache(caches[k], merged, "mv_100m")
@@ -691,9 +701,19 @@ def build_payload(df: pd.DataFrame, vol_source: str, vix: pd.Series, bt: dict,
     ]
     if mt_row is not None:
         v = mt_row["maint"]
+        # 上櫃當天缺資料時，合計其實只有上市：標示照實寫，單日變化也改用上市跟上市比（同一口徑）
+        mt_both = "otc_maint" in df and pd.notna(mt_row.get("otc_maint"))
+        if mt_both:
+            prev_ = df.loc[:pd.Timestamp(mt_date)].iloc[:-1]
+            prev_ = prev_[prev_["maint"].notna()]
+            same_basis = len(prev_) and pd.notna(prev_.iloc[-1].get("otc_maint"))
+            mt_chg_total = mt_chg1("maint") if same_basis else None
+        else:
+            mt_chg_total = mt_chg1("twse_maint") if "twse_maint" in df else None
+        mt_sub = "上市＋上櫃（融資市值 ÷ 融資金額）" if mt_both else "僅上市（上櫃當天行情缺漏）（融資市值 ÷ 融資金額）"
         comps.append(
-            {"key": "maint", "label": "融資維持率", "sub": "上市＋上櫃（融資市值 ÷ 融資金額）", "value": _r(v, 1), "unit": "%",
-             "date": mt_date, "lagged": mt_date != t.strftime("%Y-%m-%d"), "chg1": mt_chg1("maint"),
+            {"key": "maint", "label": "融資維持率", "sub": mt_sub, "value": _r(v, 1), "unit": "%",
+             "date": mt_date, "lagged": mt_date != t.strftime("%Y-%m-%d"), "chg1": mt_chg_total, "scope": "all" if mt_both else "twse",
              "parts": {k: {"value": _r(mt_row.get(f"{k}_maint"), 1), "chg1": mt_chg1(f"{k}_maint")}
                        for k in ("twse", "otc") if f"{k}_maint" in df and pd.notna(mt_row.get(f"{k}_maint"))},
              "pct": _r(_pct_rank(df["maint"].dropna(), PCT_WINDOW).iloc[-1] * 100, 0)
