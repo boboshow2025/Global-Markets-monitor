@@ -1,7 +1,7 @@
 {
  "schema": 2,
- "sig": "2026-11-20|2026-11-20|twse|2026-11-20|20261123",
- "generated_at": "2026-11-21T06:30:52+08:00",
+ "sig": "2026-11-20|2026-11-20|twse|2026-11-20|20261120",
+ "generated_at": "2026-11-21T21:31:39+08:00",
  "us_date": "2026-11-20",
  "tw_last_date": "2026-11-20",
  "tw_last_close": 36033.29,
@@ -10,8 +10,8 @@
  "overall": "alert",
  "overall_text": "強烈偏空",
  "action": "開盤不追價，考慮先減碼或避險",
- "driver": "night",
- "z_used": -2.5,
+ "driver": "sox",
+ "z_used": -3.18,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -26,23 +26,23 @@
    "pct": -10.73,
    "z": -3.18,
    "state": "alert",
-   "used": false,
+   "used": true,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
    "key": "NIGHT",
    "label": "台指期夜盤",
    "sub": "近月 202612",
-   "value": 33919.0,
-   "pct": -5.25,
-   "z": -2.5,
-   "chg": -1881.0,
+   "value": 38107.0,
+   "pct": null,
+   "z": null,
+   "chg": null,
    "ref": 35800.0,
-   "state": "alert",
-   "used": true,
-   "date": "20261123",
-   "stale": false,
-   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
+   "state": "unknown",
+   "used": false,
+   "date": "20261120",
+   "stale": true,
+   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
   }
  ],
  "flow": {
@@ -55,8 +55,8 @@
    "tx_net": 1430,
    "tx_long": 55920,
    "tx_short": 54490,
-   "mtx_net": 6102,
-   "net_equiv": 2956,
+   "mtx_net": null,
+   "net_equiv": 1430,
    "fresh": true
   },
   "fut": {
@@ -75,10 +75,10 @@
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 89.87,
-   "metric": -6.23,
+   "value": 92.57,
+   "metric": -3.41,
    "unit": "%",
-   "z": -0.98,
+   "z": -0.56,
    "state": "calm"
   },
   {
@@ -93,28 +93,28 @@
   {
    "key": "DXY",
    "label": "美元指數 5 日",
-   "value": 103.84,
-   "metric": 0.42,
+   "value": 103.81,
+   "metric": 0.39,
    "unit": "%",
-   "z": 0.04,
+   "z": -0.0,
    "state": "calm"
   },
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 158.51,
-   "metric": -0.85,
+   "value": 159.71,
+   "metric": -0.11,
    "unit": "%",
-   "z": -0.72,
+   "z": -0.11,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 6.25,
-   "metric": 6.25,
+   "value": 8.59,
+   "metric": 8.59,
    "unit": "美元",
-   "z": -0.62,
+   "z": 0.04,
    "state": "calm"
   }
  ],
