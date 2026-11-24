@@ -715,6 +715,7 @@ def live_score(rows: list[dict]) -> dict:
 
 def data_signature(mk, taiex, flow, night, taiex_src) -> str:
     return "|".join([
+        "bg2",   # 背景指標加入新台幣（2026-11）：版本變了就重寫一次
         mk["SOX"].dropna().index[-1].strftime("%Y-%m-%d"),
         taiex.index[-1].strftime("%Y-%m-%d"), taiex_src,
         flow.index[-1].strftime("%Y-%m-%d") if len(flow) else "-",
@@ -807,7 +808,7 @@ def build_payload(mk: pd.DataFrame, taiex: pd.Series, flow: pd.Series,
     # 背景
     bg = []
 
-    def add_bg(key, label, series, n, unit, as_bp=False, level=False):
+    def add_bg(key, label, series, n, unit, as_bp=False, level=False, note=None):
         s = series.dropna()
         if len(s) <= n + Z_WINDOW // 2:
             return
@@ -815,14 +816,17 @@ def build_payload(mk: pd.DataFrame, taiex: pd.Series, flow: pd.Series,
         z = zscore_last(chg.iloc[::1])
         bg.append({"key": key, "label": label, "value": _r(s.iloc[-1], 2),
                    "metric": _r(chg.iloc[-1], 2 if not as_bp else 1), "unit": unit,
-                   "z": _r(z, 2), "state": bg_state(z)})
+                   "z": _r(z, 2), "state": bg_state(z), **({"note": note} if note else {})})
 
+    # 順序：新台幣、美元指數、布蘭特、美10Y、日圓、油價價差
+    if "USDTWD" in mk:
+        add_bg("USDTWD", "新台幣 5 日", mk["USDTWD"], 5, "%", note="美元/台幣；正值＝台幣貶值")
+    if "DXY" in mk:
+        add_bg("DXY", "美元指數 5 日", mk["DXY"], 5, "%")
     if "BRENT" in mk:
         add_bg("BRENT", "布蘭特 5 日", mk["BRENT"], 5, "%")
     if "US10Y" in mk:
         add_bg("US10Y", "美10Y 單日", mk["US10Y"], 1, "bp", as_bp=True)
-    if "DXY" in mk:
-        add_bg("DXY", "美元指數 5 日", mk["DXY"], 5, "%")
     if "USDJPY" in mk:
         add_bg("USDJPY", "美元/日圓 5 日", mk["USDJPY"], 5, "%")
     if "BRENT" in mk and "WTI" in mk:

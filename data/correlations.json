@@ -1,7 +1,7 @@
 {
  "schema": 2,
- "sig": "2026-11-23|2026-11-24|twse|2026-11-24|20261124",
- "generated_at": "2026-11-24T18:30:15+08:00",
+ "sig": "bg2|2026-11-23|2026-11-24|twse|2026-11-24|20261124",
+ "generated_at": "2026-11-24T20:32:57+08:00",
  "us_date": "2026-11-23",
  "tw_last_date": "2026-11-24",
  "tw_last_close": 40122.35,
@@ -73,12 +73,31 @@
  },
  "background": [
   {
+   "key": "USDTWD",
+   "label": "新台幣 5 日",
+   "value": 32.91,
+   "metric": -0.16,
+   "unit": "%",
+   "z": -0.8,
+   "state": "calm",
+   "note": "美元/台幣；正值＝台幣貶值"
+  },
+  {
+   "key": "DXY",
+   "label": "美元指數 5 日",
+   "value": 103.95,
+   "metric": 0.44,
+   "unit": "%",
+   "z": 0.09,
+   "state": "calm"
+  },
+  {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 86.77,
-   "metric": -6.84,
+   "value": 86.72,
+   "metric": -6.89,
    "unit": "%",
-   "z": -1.08,
+   "z": -1.09,
    "state": "calm"
   },
   {
@@ -91,30 +110,21 @@
    "state": "calm"
   },
   {
-   "key": "DXY",
-   "label": "美元指數 5 日",
-   "value": 104.17,
-   "metric": 0.65,
-   "unit": "%",
-   "z": 0.41,
-   "state": "calm"
-  },
-  {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 159.5,
-   "metric": -0.01,
+   "value": 159.08,
+   "metric": -0.28,
    "unit": "%",
-   "z": -0.02,
+   "z": -0.23,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 6.62,
-   "metric": 6.62,
+   "value": 6.73,
+   "metric": 6.73,
    "unit": "美元",
-   "z": -0.55,
+   "z": -0.52,
    "state": "calm"
   }
  ],
