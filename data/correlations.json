@@ -1,17 +1,17 @@
 {
  "schema": 2,
- "sig": "bg2|2026-11-25|2026-11-25|twse|2026-11-25|20261126",
- "generated_at": "2026-11-26T06:30:12+08:00",
+ "sig": "bg2|2026-11-25|2026-11-26|twse|2026-11-26|20261126",
+ "generated_at": "2026-11-26T19:06:13+08:00",
  "us_date": "2026-11-25",
- "tw_last_date": "2026-11-25",
- "tw_last_close": 38195.43,
- "tw_last_pct": -4.8,
- "fresh": true,
+ "tw_last_date": "2026-11-26",
+ "tw_last_close": 39151.81,
+ "tw_last_pct": 2.5,
+ "fresh": false,
  "overall": "calm",
  "overall_text": "中性",
  "action": "照原計畫",
- "driver": "night",
- "z_used": 0.29,
+ "driver": "sox",
+ "z_used": -0.07,
  "thresholds": {
   "watch": -1.0,
   "alert": -2.0,
@@ -26,7 +26,7 @@
    "pct": -0.65,
    "z": -0.07,
    "state": "calm",
-   "used": false,
+   "used": true,
    "rule": "台股隔日報酬與費半隔夜漲跌的相關最高。z 分數＝今天的漲跌是近 60 日波動的幾倍。"
   },
   {
@@ -34,22 +34,22 @@
    "label": "台指期夜盤",
    "sub": "近月 202612",
    "value": 38397.0,
-   "pct": 0.72,
-   "z": 0.29,
-   "chg": 274.0,
+   "pct": null,
+   "z": null,
+   "chg": null,
    "ref": 38123.0,
-   "state": "calm",
-   "used": true,
+   "state": "unknown",
+   "used": false,
    "date": "20261126",
-   "stale": false,
-   "rule": "夜盤收在美股收盤之後，已經消化美股的影響，是開盤前最直接的指標。以台股近 60 日波動換算 z 分數。"
+   "stale": true,
+   "rule": "期交所開盤前公布的是更早一場夜盤（台股收盤前已結束），不能用來判斷今天，燈號改看費半。"
   }
  ],
  "flow": {
-  "date": "2026-11-25",
-  "net": -1236.5,
-  "sum5": -2368.2,
-  "z": -1.3,
+  "date": "2026-11-26",
+  "net": -491.8,
+  "sum5": -2616.9,
+  "z": -0.16,
   "night": {
    "date": "2026-11-26",
    "tx_net": 1122,
@@ -57,28 +57,28 @@
    "tx_short": 51664,
    "mtx_net": -717,
    "net_equiv": 943,
-   "fresh": true
+   "fresh": false
   },
   "fut": {
-   "date": "2026-11-25",
-   "net": -105709,
-   "long": 11439,
-   "short": 117148,
-   "chg": -2527,
-   "trade_net": -2508,
-   "prev_date": "2026-11-24",
-   "night_net": -3892,
-   "day_net": 1384
+   "date": "2026-11-26",
+   "net": -106275,
+   "long": 9083,
+   "short": 115358,
+   "chg": -566,
+   "trade_net": -583,
+   "prev_date": "2026-11-25",
+   "night_net": 1122,
+   "day_net": -1705
   }
  },
  "background": [
   {
    "key": "USDTWD",
    "label": "新台幣 5 日",
-   "value": 33.2,
-   "metric": 0.87,
+   "value": 32.95,
+   "metric": 0.06,
    "unit": "%",
-   "z": 0.94,
+   "z": -0.46,
    "state": "calm",
    "note": "美元/台幣；正值＝台幣貶值"
   },
@@ -86,18 +86,18 @@
    "key": "DXY",
    "label": "美元指數 5 日",
    "value": 103.71,
-   "metric": -0.15,
+   "metric": -0.18,
    "unit": "%",
-   "z": -0.83,
+   "z": -0.85,
    "state": "calm"
   },
   {
    "key": "BRENT",
    "label": "布蘭特 5 日",
-   "value": 90.82,
-   "metric": -1.23,
+   "value": 90.91,
+   "metric": -1.16,
    "unit": "%",
-   "z": -0.25,
+   "z": -0.23,
    "state": "calm"
   },
   {
@@ -112,28 +112,29 @@
   {
    "key": "USDJPY",
    "label": "美元/日圓 5 日",
-   "value": 159.16,
-   "metric": -0.22,
+   "value": 159.3,
+   "metric": -0.05,
    "unit": "%",
-   "z": -0.17,
+   "z": -0.03,
    "state": "calm"
   },
   {
    "key": "SPREAD",
    "label": "布蘭特−WTI",
-   "value": 6.67,
-   "metric": 6.67,
+   "value": 6.46,
+   "metric": 6.46,
    "unit": "美元",
-   "z": -0.56,
+   "z": -0.66,
    "state": "calm"
   }
  ],
  "notes": [
-  "外資近 5 日累計賣超 2368 億，籌碼面偏弱。",
+  "前一日台股上漲但外資賣超 492 億，漲勢不是外資推的。",
+  "外資近 5 日累計賣超 2617 億，籌碼面偏弱。",
   "美股訊號雖不差，但外資持續撤出，不宜追高。"
  ],
  "backtest": {
-  "n": 469,
+  "n": 470,
   "start": "2025-01-14",
   "base": {
    "avg": 0.06,
@@ -161,10 +162,10 @@
    {
     "state": "calm",
     "label": "中性",
-    "n": 325,
+    "n": 326,
     "avg": 0.2,
     "median": 0.26,
-    "down_pct": 41.0,
+    "down_pct": 40.0,
     "worse_than_1pct": 17.0
    },
    {
@@ -179,8 +180,8 @@
   ]
  },
  "live": {
-  "n": 28,
-  "pending": 1,
+  "n": 29,
+  "pending": 0,
   "buckets": [
    {
     "state": "alert",
@@ -199,9 +200,9 @@
    {
     "state": "calm",
     "label": "中性",
-    "n": 17,
-    "avg": -1.51,
-    "down_pct": 65.0
+    "n": 18,
+    "avg": -1.29,
+    "down_pct": 61.0
    },
    {
     "state": "up",
@@ -215,8 +216,8 @@
    {
     "us_date": "2026-11-25",
     "state": "calm",
-    "target": null,
-    "ret": null
+    "target": "2026-11-26",
+    "ret": 2.5
    },
    {
     "us_date": "2026-11-24",
@@ -275,10 +276,6 @@
   ]
  },
  "rolling_corr": [
-  {
-   "d": "2025-11-06",
-   "v": 0.289
-  },
   {
    "d": "2025-11-07",
    "v": 0.313
@@ -1274,6 +1271,10 @@
   {
    "d": "2026-11-25",
    "v": 0.578
+  },
+  {
+   "d": "2026-11-26",
+   "v": 0.569
   }
  ]
 }
